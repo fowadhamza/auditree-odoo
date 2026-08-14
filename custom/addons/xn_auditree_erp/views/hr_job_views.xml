@@ -1,0 +1,17 @@
+<odoo>
+    <record id="view_job_form_inherit_employee_customisation_act" model="ir.ui.view">
+        <field name="name">view.job.form.inherit.employee.customisation.act</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form" />
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <header>
+                    <button name="approve_job_position" string="Approve" class="oe_highlight" type="object" group="xn_auditree_erp.group_job_position_approve" invisible="is_published==True"></button>
+                </header>
+            </field>
+
+
+        </field>
+    </record>
+
+</odoo>

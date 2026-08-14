@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+
+       <record id="recruitment_chhecklist1" model="recruitment.checklist">
+            <field name="name">Department Recruitment Request Form</field>
+       </record>
+  <record id="recruitment_chhecklist2" model="recruitment.checklist">
+            <field name="name">CV, Degree Certificate, Professional Certificates and Licenses</field>
+       </record>
+      <record id="recruitment_chhecklist3" model="recruitment.checklist">
+            <field name="name">Experience Letters</field>
+       </record>
+      <record id="recruitment_chhecklist4" model="recruitment.checklist">
+            <field name="name">Saudi ID/Iqama( Old ) / Licence</field>
+       </record>
+      <record id="recruitment_chhecklist5" model="recruitment.checklist">
+            <field name="name">Interview Evaluation</field>
+       </record>
+      <record id="recruitment_chhecklist6" model="recruitment.checklist">
+            <field name="name">Signed Job Offer</field>
+       </record>
+      <record id="recruitment_chhecklist7" model="recruitment.checklist">
+            <field name="name">Issue Visa or Transfer Iqama (Non- Saudi)</field>
+       </record>
+
+</odoo>

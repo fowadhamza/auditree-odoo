@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_crm_task_wizard,access_crm_task_wizard,model_crm_task_wizard,base.group_user,1,1,1,1
+access_crm_project_wizard,access_crm_project_wizard,model_crm_project_wizard,base.group_user,1,1,1,1
+access_service_task_line,access_service_task_line,model_service_task_line,base.group_user,1,1,1,1

@@ -1,0 +1,62 @@
+<odoo>
+    <record id="view_employee_form_inherit_employee_customisation_act" model="ir.ui.view">
+        <field name="name">view.employee.form.inherit.employee.customisation.act</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <field name="identification_id" position="after">
+                <field name="adhar_no"/>
+                <field name="pan_no"/>
+            </field>
+            <field name="private_phone" position="after">
+                <field name="personal_mobile"/>
+                <field name="homeland_phone"/>
+                <field name="emp_blood_type"/>
+            </field>
+            <field name="joining_date" position="after">
+
+                <label for="notice_perioid"/>
+                <div class="o_row">
+                    <field name="notice_perioid"/>
+                    <span>days</span>
+                </div>
+                <label for="probation_period"/>
+                <div class="o_row">
+                    <field name="probation_period"/>
+                    <span>days</span>
+                </div>
+                <field name="probation_notification_type"/>
+            </field>
+
+
+        </field>
+    </record>
+
+
+    <data noupdate="1">
+        <record id="ir_crone_hr_employee_type_check" model="ir.cron">
+            <field name="name">Employee Type Check</field>
+            <field name="model_id" ref="model_hr_employee"/>
+            <field name="state">code</field>
+            <field name="code">model.action_check_employee_type()</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+        </record>
+
+
+        <!-- Scheduled action to sent mail about the document expiry.-->
+        <record id="ir_cron_scheduler_employee_data_probation_reminder" model="ir.cron">
+            <field name="name">Employee Probation Remainder</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model_id" ref="model_hr_employee"/>
+            <field name="state">code</field>
+            <field name="code">model.mail_probation_reminder()</field>
+        </record>
+    </data>
+
+</odoo>

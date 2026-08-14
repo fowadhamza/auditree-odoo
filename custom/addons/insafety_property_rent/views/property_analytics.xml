@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="property_analytics_view_graph" model="ir.ui.view">
+        <field name="name">property.analytics.view.graph</field>
+        <field name="model">insafety.property.building</field>
+        <field name="arch" type="xml">
+            <graph string="Property Analysis" sample="1">
+                <!-- <field name="current_balance" type="measure"/> -->
+                <!-- <field name="account_expense_ids" type="column"/> -->
+                <field name="total_expense" />
+                <field name="total_income" />
+            </graph>
+        </field>
+    </record>
+    <record id="property_analytics_action" model="ir.actions.act_window">
+        <field name="name">Property Analysis</field>
+        <field name="res_model">insafety.property.building</field>
+        <field name="view_mode">graph,pivot</field>
+        <!-- <field name="context">{'group_by':['property_id','partner_id','creation_date:day']}</field> -->
+        <field name="view_id" ref="property_analytics_view_graph"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No data for analysis
+            </p><p>
+                Manage efficiently your Properties with Odoo.
+            </p>
+            </field>
+    </record>
+</odoo>

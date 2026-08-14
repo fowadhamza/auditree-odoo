@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="paperformat_tax_invoice_report" model="report.paperformat">
+        <field name="name">Tax Invoice</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">55</field>
+        <field name="margin_bottom">25</field>
+        <field name="margin_left">3</field>
+        <field name="margin_right">3</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">55</field>
+    </record>
+        <record id="paperformat_payslip_report" model="report.paperformat">
+        <field name="name">Payslip</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">45</field>
+        <field name="margin_bottom">25</field>
+        <field name="margin_left">3</field>
+        <field name="margin_right">3</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">45</field>
+    </record>
+
+
+
+        <record id="action_report_invoice" model="ir.actions.report">
+            <field name="name">TAX INVOICE</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">xn_auditree_erp.report_invoice_custom</field>
+            <field name="report_file">xn_auditree_erp.report_invoice_custom</field>
+            <field name="print_report_name">('TAX INVOICE - %s' % (object.name))</field>
+            <field name="binding_model_id" ref="account.model_account_move"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="xn_auditree_erp.paperformat_tax_invoice_report"/>
+        </record>
+  <record id="action_report_payslip" model="ir.actions.report">
+            <field name="name">Payslip Print</field>
+            <field name="model">hr.payslip</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">xn_auditree_erp.hakka_report_employee_payslip</field>
+            <field name="report_file">xn_auditree_erp.hakka_report_employee_payslip</field>
+            <field name="print_report_name">('PAYSLIP - %s' % (object.name))</field>
+            <field name="binding_model_id" ref="hr_payroll_community.model_hr_payslip"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="xn_auditree_erp.paperformat_payslip_report"/>
+        </record>
+
+
+
+    </data>
+</odoo>

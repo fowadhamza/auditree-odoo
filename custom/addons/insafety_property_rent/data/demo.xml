@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+          <record id="demo_account_1" model="account.account">
+            <field name="name">Rent Income Building 1</field>
+            <field name="code">450001</field>
+            <field name="account_type">income_other</field>
+          </record>
+          <record id="demo_account_2" model="account.account">
+            <field name="name">Costs Building 1</field>
+            <field name="code">450002</field>
+            <field name="account_type">income_other</field>
+          </record>
+          <record id="demo_account_3" model="account.account">
+            <field name="name">Administrative Fees Building 1</field>
+            <field name="code">450003</field>
+            <field name="account_type">income_other</field>
+          </record>
+
+          <record id="demo_building_1" model="insafety.property.building">
+            <field name="name">Building 1</field>
+            <field name="description">Appartement Building 1</field>
+            <field name="account_receivable_id" ref="demo_account_1"/>
+            <field name="invoice_payment_term_id" eval="4"/>
+            <field name="total_cost_factor_custom" eval="1"/>
+            <field name="billing_period_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="billing_period_to" eval="time.strftime('%Y-12-31')"/>
+            <field name="cost_billing_receivable_id" ref="demo_account_2"/>
+            <field name="cost_billing_payment_term_id" eval="4"/>
+            <field name="cost_billing_administrative_fees_id" ref="demo_account_3"/>
+            <field name="total_administrative_expenses" eval="2.5"/>
+          </record>
+          <record id="demo_appartement_1" model="insafety.property">
+            <field name="name">Appartement 1</field>
+            <field name="building_id" ref="demo_building_1"/>
+            <field name="description">First Floor</field>
+            <field name="bedrooms">1</field>
+            <field name="total_rooms">3.5</field>
+            <field name="volume">1.5</field>
+            <field name="living_area">75</field>
+          </record>
+          <record id="demo_appartement_2" model="insafety.property">
+            <field name="name">Appartement 2</field>
+            <field name="building_id" ref="demo_building_1"/>
+            <field name="description">Second Floor</field>
+            <field name="bedrooms">2</field>
+            <field name="total_rooms">5</field>
+            <field name="volume">2.5</field>
+            <field name="living_area">115</field>
+          </record>
+
+          <record id="demo_demo_rent_contract_1" model="insafety.property.rent.contract">
+            <field name="tenant_id" eval="27"/>
+            <field name="property_id" ref="demo_appartement_1"/>
+            <field name="rent_date_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="monthly_rent">1000</field>
+            <field name="monthly_extra_costs">100</field>
+            <field name="monthly_lump_sum_costs">10</field>
+          </record>
+
+          <record id="demo_demo_rent_contract_2" model="insafety.property.rent.contract">
+            <field name="tenant_id" eval="18"/>
+            <field name="property_id" ref="demo_appartement_2"/>
+            <field name="rent_date_from" eval="time.strftime('%Y-01-01')"/>
+            <field name="rent_date_to" eval="time.strftime('%Y-05-31')"/>
+            <field name="monthly_rent">1200</field>
+            <field name="monthly_extra_costs">400</field>
+            <field name="monthly_lump_sum_costs">15</field>
+          </record>
+
+          <record id="demo_demo_rent_contract_3" model="insafety.property.rent.contract">
+            <field name="tenant_id" eval="19"/>
+            <field name="property_id" ref="demo_appartement_2"/>
+            <field name="rent_date_from" eval="time.strftime('%Y-07-01')"/>
+            <field name="monthly_rent">1400</field>
+            <field name="monthly_extra_costs">140</field>
+            <field name="monthly_lump_sum_costs">20</field>
+          </record>   
+
+          <record id="demo_account_4" model="account.account">
+            <field name="name">Genereal Expenses Building 1</field>
+            <field name="code">650004</field>
+            <field name="account_type">expense</field>
+            <field name="building_id" ref="demo_building_1"/>
+          </record>
+          <record id="demo_account_5" model="account.account">
+            <field name="name">Engergy Expenses Building 1</field>
+            <field name="code">650005</field>
+            <field name="account_type">expense</field>
+            <field name="building_id" ref="demo_building_1"/>
+          </record>
+          <record id="demo_account_6" model="account.account">
+            <field name="name">Water Expenses Building 1</field>
+            <field name="code">650006</field>
+            <field name="account_type">expense</field>
+            <field name="building_id" ref="demo_building_1"/>
+          </record>
+
+
+          <function model="insafety.property.building" name="create_demo_invoice"
+          eval="[[ref('demo_building_1')]]"
+            context="{'install_mode': True}"/>
+
+    </data>
+</odoo>

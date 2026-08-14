@@ -1,0 +1,17 @@
+[options]
+admin_passwd = CHANGE_ME
+
+db_host = False
+db_port = False
+db_user = fowadhamza
+db_password = False
+
+http_port = 8069
+
+addons_path=/home/fowadhamza/Projects/Auditree/auditreelive-server/addons,/home/fowadhamza/Projects/Auditree/custom/addons
+
+data_dir=/home/fowadhamza/.local/share/Odoo
+
+dbfilter=AUDITREE_LIVE_NEW
+
+logfile=/home/fowadhamza/Projects/Auditree/odoo.log

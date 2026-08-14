@@ -1,0 +1,17 @@
+<odoo>
+    <record id="view_base_document_layout_inherit_company_header" model="ir.ui.view">
+        <field name="name">viewbase.document.layout.inherit.company.header</field>
+        <field name="model">base.document.layout</field>
+        <field name="inherit_id" ref="web.view_base_document_layout" />
+        <field name="arch" type="xml">
+            <field name="logo" position="after">
+                <field name="header_image" widget='image' class="oe_avatar" />
+                <field name="footer_image" widget='image' class="oe_avatar" />
+                <field name="water_mark_log" widget='image' class="oe_avatar" />
+                <field name="signature" widget='image' class="oe_avatar" />
+                <field name="stamp" widget='image' class="oe_avatar" />
+
+            </field>
+        </field>
+    </record>
+</odoo>

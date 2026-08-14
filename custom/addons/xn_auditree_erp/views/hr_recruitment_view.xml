@@ -1,0 +1,52 @@
+<odoo>
+
+      <record id="hr_applicant_view_form_custom1" model="ir.ui.view">
+        <field name="name">Jobs - Recruitment Form.act</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form" />
+        <field name="arch" type="xml">
+            <field name="stage_id" position="replace">
+                <field name="stage_id" widget="statusbar"  invisible="not active and not emp_id"/>
+            </field>
+            <xpath expr="//form/header[1]/button[@name='create_employee_from_applicant']" position="after">
+                <field name="is_hired_stage" invisible="1"/>
+                <field name="is_hide_revert_back" invisible="1"/>
+                <button string="Approve And Move To Next" name="approve_and_move_next" type="object" data-hotkey="q" groups="hr_recruitment.group_hr_recruitment_manager" class="oe_highlight" invisible="is_hired_stage==True"/>
+                <button string="Revert" name="revert_and_move_back" type="object" data-hotkey="q" groups="hr_recruitment.group_hr_recruitment_manager" class="oe_highlight" invisible="is_hide_revert_back==True"/>
+
+            </xpath>
+
+            <xpath expr="//form/sheet/notebook/page[1]" position="after">
+<!--                <page string="Resume" name="resume">-->
+<!--                    <group>-->
+<!--                        <group col="2">-->
+<!--                              <div class="o_attachment_preview" groups="hr_recruitment.group_applicant_cv_display"/>-->
+<!--                        </group>-->
+<!--                    </group>-->
+
+<!--                </page>-->
+
+            </xpath>
+
+        </field>
+    </record>
+
+
+    <record id="hr_applicant_view_kanban_custom1" model="ir.ui.view">
+        <field name="name">Jobs - Recruitment kanban.act</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_kanban_view_applicant" />
+           <field name="arch" type="xml">
+               <xpath expr="//kanban" position="attributes">
+                   <attribute name="records_draggable">False</attribute>
+               </xpath>
+           </field>
+
+
+
+
+    </record>
+
+
+
+</odoo>

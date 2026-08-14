@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <template id="hakka_employee_payslip_report">
+            <t t-call="msr_company_header.company_layout">
+
+                <center>
+                    <table>
+                        <tr>
+                            <td align="center"
+                                style="border: 1px solid black;font-size: x-large;font-family: Calibri;letter-spacing: .06rem;">
+                                Salary Voucher for the Month of
+                                <span t-esc="o.date_from.strftime('%B %Y')"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                </center>
+
+
+                <div style="font-size: 15px;font-family: Calibri;letter-spacing: .05rem;" class="row">
+                    <div class="col-7">
+                    </div>
+                    <div class="col-5">
+                        <div class="row">
+                            <div class="col-4">
+                                Date:
+                            </div>
+                            <div class="col-1 text-center">
+                                :
+                            </div>
+                            <div class="col-7 text-left">
+                                <span t-esc="o.create_date.strftime('%d-%m-%Y')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 15px;font-family: Calibri;letter-spacing: .05rem;" class="row">
+                    <div class="col-7">
+                    </div>
+                    <div class="col-5">
+                        <div class="row">
+                            <div class="col-4">
+                                Period:
+                            </div>
+                            <div class="col-1 text-center">
+                                :
+                            </div>
+                            <div class="col-7 text-left">
+                                <span t-field="o.date_from" t-options='{"format": "dd/MM/yyyy"}'></span>
+                                <span>To</span><![CDATA[&nbsp;]]>
+                                <span t-field="o.date_to" t-options='{"format": "dd/MM/yyyy"}'></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <br/>
+
+                <t t-set="o" t-value="o.with_context(lang=lang).sudo()"/>
+                <t t-set="ot"
+                   t-value="sum(line.number_of_hours for line in o.worked_days_line_ids if line.code == 'OT')"/>
+                <div class="page" style="letter-spacing: .05rem;position: relative;">
+                    <table style="width: 100%;font-family: Calibri;border: 1px solid black;font-size: 15px;"
+                           width="100%">
+                        <tr style="padding: 5px;">
+                            <td style="padding: 5px;">Name:</td>
+                            <td style="padding: 5px;">
+                                <span t-field="o.employee_id.name"/>
+                            </td>
+                            <td style="padding: 5px;">Month:</td>
+                            <td style="padding: 5px;">
+                                <span t-esc="o.date_from.strftime('%B %Y')"/>
+                            </td>
+                        </tr>
+                        <tr style="padding: 5px;">
+                            <td style="padding: 5px;">Employee ID:
+                            </td>
+                            <td style="padding: 5px;">
+                                <span t-field="o.employee_id.identification_id"/>
+                            </td>
+                            <td style="padding: 5px;">Total working days:
+                            </td>
+                            <td style="padding: 5px;">
+                                <span t-esc="'{:,.2f}'.format(sum(map(lambda x: (x.number_of_days), o.worked_days_line_ids)))"/>
+                            </td>
+                        </tr>
+                        <tr style="padding: 5px;">
+                            <td style="padding: 5px;">Designation
+                            </td>
+                            <td style="padding: 5px;">
+                                <span t-field="o.employee_id.job_id"/>
+                            </td>
+                            <td style="padding: 5px;">
+                                <span>No. of Days worked</span>
+                            </td>
+                            <td style="padding: 5px;">
+
+                            </td>
+
+                        </tr>
+                        <tr style="padding: 5px;">
+                            <td style="padding: 5px;">Bank
+                            </td>
+                            <td style="padding: 5px;">
+                                <span t-field="o.employee_id.bank_account_id.bank_id"/>
+                            </td>
+                            <td style="padding: 5px;">
+                                <span>LOP</span>
+                            </td>
+                            <td style="padding: 5px;">
+
+                            </td>
+
+                        </tr>
+
+                        <tr style="padding: 5px;">
+                            <td style="padding: 5px;">A/C No:
+                            </td>
+                            <td style="padding: 5px;">
+                                <span t-field="o.employee_id.bank_account_id.acc_number"/>
+                            </td>
+                            <td style="padding: 5px;">DOJ</td>
+                            <td style="padding: 5px;">
+                                <span t-field="o.employee_id.joining_date"/>
+                            </td>
+
+                        </tr>
+
+                    </table>
+                    <table style="width: 100%;font-family:Calibri;border: 1px solid black;font-size: 15px;">
+                        <tr>
+                            <td colspan="2" style="width:50%;text-align:center;border:1px solid black;color:#0000FF;">
+                                EARNINGS
+                            </td>
+                            <td colspan="2" style="width:50%;text-align:center;border:1px solid black;color:#0000FF">
+                                DEDUCTIONS
+                                (SAR)
+                            </td>
+                        </tr>
+
+                        <tr style="text-align:center;border:1px solid black">
+                            <td style="width:25%;text-align:left;padding: 5px;border-right:1px solid black;border-left:1px solid black;color:#0000FF;">
+                                PARTICULARS
+                            </td>
+                            <td style="width:25%;text-align:right;padding: 5px;color:#0000FF;">AMOUNT (INR)</td>
+                            <td style="border-right:1px solid black;border-left:1px solid black;width:25%;text-align:left;padding: 5px;color:#0000FF;">
+                                PARTICULARS
+                            </td>
+                            <td style="width:25%;text-align:right;padding: 5px;color:#0000FF;">AMOUNT(INR)</td>
+                        </tr>
+                        <t t-foreach="o.get_report_values()" t-as="d">
+                            <tr>
+                                <td style="text-align:left;padding: 5px;">
+                                    <t
+                                            t-esc="d['earnings']"/>
+                                </td>
+                                <td style="text-align:right;padding: 5px;border-right:1px solid black;border-left:1px solid black;">
+                                    <t t-esc="d['amount']"/>
+                                </td>
+                                <td style="text-align:left;padding: 5px;">
+                                    <t
+                                            t-esc="d['deductions']"/>
+                                </td>
+                                <td style="text-align:right;padding: 5px;border-right:1px solid black;border-left:1px solid black;">
+                                    <t t-esc="d['deduction_amount']"/>
+                                </td>
+                            </tr>
+                        </t>
+                        <tr style="border-top:1px solid black">
+                            <t t-set="gross_total"
+                               t-value="sum(line.total for line in o.line_ids if line.category_id.code == 'GROSS')"/>
+                            <t t-set="net_total"
+                               t-value="sum(line.total for line in o.line_ids if line.category_id.code == 'NET')"/>
+                            <t t-set="deduction_total" t-value="gross_total - net_total"/>
+                            <td style="text-align:left;padding: 5px;font-weight: bold">
+                                <span>Gross Pay</span>
+                            </td>
+                            <td style="text-align:right;padding: 5px;border-right:1px solid black">
+                                <span
+                                        t-esc="'%.2f'%(gross_total)"/>
+                            </td>
+                            <td style="text-align:left;padding: 5px;font-weight: bold">
+                                <span>Deductions</span>
+                            </td>
+                            <td style="text-align:right;padding: 5px;">
+                                <span t-if="deduction_total &gt; 0" t-esc="'%.2f'%(deduction_total)"/>
+                            </td>
+                        </tr>
+
+                        <tr style="border-top:1px solid black">
+                            <td style="text-align:left;padding: 5px;">
+                                <span>
+                                    <strong>GROSS</strong>
+                                </span>
+                            </td>
+                            <td style="text-align:right;padding: 5px;font-weight: bold">
+                                <span t-esc="'{0:,.2f}'.format(net_total)"
+                                      options="{'currency_field': 'o.company_id.currency_id'}"/>
+                            </td>
+                            <td>
+                                <span>
+                                    <strong>TOTAL DEDUCTIONS</strong>
+                                </span>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="text-align:left;padding: 5px;">
+                                <span>
+                                    <strong>NET AMOUNT</strong>
+                                </span>
+                            </td>
+                            <td style="text-align:left;padding: 5px;border-right:1px solid black; font-weight: bold">
+                                <span t-esc="o.company_id.currency_id.name"></span>,<![CDATA[&nbsp;]]>
+                                <span t-esc="o.amount_to_words(net_total)"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:left;padding: 5px;">
+                                <span>
+                                    <strong>Amount In Words</strong>
+                                </span>
+                            </td>
+                            <td colspan="3"
+                                style="text-align:left;padding: 5px;border-right:1px solid black; font-weight: bold">
+                                <span t-esc="o.company_id.currency_id.name"></span>,<![CDATA[&nbsp;]]>
+                                <span t-esc="o.amount_to_words(net_total)"/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </t>
+        </template>
+        <template id="hakka_report_employee_payslip">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="xn_auditree_erp.hakka_employee_payslip_report"/>
+                </t>
+            </t>
+        </template>
+
+
+        <template id="auditree_external_layout_payslip">
+            <t t-if="not o" t-set="o" t-value="doc"/>
+
+            <t t-if="not company">
+                <!-- Multicompany -->
+                <t t-if="company_id">
+                    <t t-set="company" t-value="company_id"/>
+                </t>
+                <t t-elif="o and 'company_id' in o and o.company_id.sudo()">
+                    <t t-set="company" t-value="o.company_id.sudo()"/>
+                </t>
+                <t t-else="else">
+                    <t t-set="company" t-value="res_company"/>
+                </t>
+            </t>
+
+            <t t-call="xn_auditree_erp.auditree_external_layout_custom_payslip">
+                <t t-out="0"/>
+            </t>
+
+        </template>
+
+
+        <template id="auditree_external_layout_custom_payslip">
+            <div class="header">
+                <div class="row">
+                    <div class="col-12">
+                        <img t-if="company.header_image" t-att-src="image_data_uri(company.header_image)"
+                             style="max-height: 65px;" alt="Logo"/>
+                    </div>
+                </div>
+                <div class="row">
+
+                </div>
+            </div>
+
+            <div t-attf-class="article o_report_layout_standard o_company_#{company.id}_layout {{  'o_report_layout_background' if company.layout_background in ['Geometric', 'Custom']  else  '' }}"
+                 t-attf-style="background-image: url({{ 'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else '/base/static/img/bg_background_template.jpg' if company.layout_background == 'Geometric' else ''}});"
+                 t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+                 t-att-data-oe-lang="o and o.env.context.get('lang')">
+                <div class="pt-5">
+                    <!-- This div ensures that the address is not cropped by the header. -->
+                    <t t-call="web.address_layout"/>
+                </div>
+                <t t-out="0"/>
+            </div>
+
+            <div class="footer">
+                <div class="row" style="border:2px solid black;">
+                    <div class="col-12">
+                        <img t-if="company.footer_image" t-att-src="image_data_uri(company.footer_image)"
+                             style="max-height: 65px;" alt="Logo"/>
+
+
+                        <div t-if="report_type == 'pdf'" class="text-muted">
+                            Page:
+                            <span class="page"/>
+                            /
+                            <span class="topage"/>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </template>
+    </data>
+</odoo>

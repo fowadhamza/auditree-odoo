@@ -1,0 +1,18 @@
+<odoo>
+    <record id="attendance_view_custom" model="ir.ui.view">
+ <field name="name">hr.attendance.form</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form" />
+        <field name="arch" type="xml">
+            <field name="check_in" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </field>
+             <field name="check_out" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </field>
+
+
+        </field>
+    </record>
+
+</odoo>

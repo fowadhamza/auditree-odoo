@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="external_layout_standard" inherit_id="web.external_layout_standard">
+        <xpath expr="//div[hasclass('row')]" position="replace">
+            <t t-if="company.header_image">
+                <div class="row">
+                    <div class="mb4">
+                        <img t-if="company.header_image"
+                            t-att-src="image_data_uri(company.header_image)"
+                            style="height:110px; width:680px;" alt="Logo" />
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="row">
+                    <div class="col-3 mb4">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"
+                            style="max-height: 45px;" alt="Logo" />
+                    </div>
+                    <div class="col-9 text-end" style="margin-top:22px;"
+                        t-if="company.report_header" t-field="company.report_header" name="moto">Company
+                        tagline</div>
+                </div>
+            </t>
+        </xpath>
+        <div t-field="company.report_footer" position="replace">
+            <t t-if="company.footer_image">
+                <img t-if="company.footer_image" t-att-src="image_data_uri(company.footer_image)"
+                    alt="Logo" style="height:110px; width:680px;" />
+            </t>
+            <t t-else="">
+                <div t-field="company.report_footer" />
+            </t>
+        </div>
+    </template>
+
+    <template id="external_layout_bold" inherit_id="web.external_layout_bold">
+        <xpath expr="//div[hasclass('row')]" position="replace">
+            <t t-if="company.header_image">
+                <div class="row">
+                    <div class="mb4">
+                        <img t-if="company.header_image"
+                            t-att-src="image_data_uri(company.header_image)"
+                            style="height:110px; width:680px;" alt="Logo" />
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="row">
+                    <div class="col-6">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logo" />
+                    </div>
+                    <div class="col-5 offset-1" name="company_address">
+                        <ul class="list-unstyled" name='company_address_list'>
+                            <li t-if="company.is_company_details_empty">
+                                <span t-field="company.partner_id"
+                                    t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": true}'>
+                                    <div
+                                        class="bg-light border-1 rounded h-100 d-flex flex-column align-items-center justify-content-center p-4 w-100 opacity-75 text-muted text-center">
+                                        <strong>Company address block</strong>
+                                        <div>Contains the company address.</div>
+                                    </div>
+                                </span>
+                            </li>
+                            <li t-if="company.header_image">
+                                <span t-field="company.company_details">
+                                    <div
+                                        class="bg-light border-1 rounded h-100 d-flex flex-column align-items-center justify-content-center p-4 w-100 opacity-75 text-muted text-center">
+                                        <strong>Company details block</strong>
+                                        <div>Contains the company details.</div>
+                                    </div>
+                                </span>
+                            </li>
+                            <li t-if="not forced_vat" />
+                            <li t-if="company.header_image">
+                                <t t-esc="company.country_id.vat_label or 'Tax ID'">Tax ID</t>: <span
+                                    t-esc="forced_vat">US12345671</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+        <span t-if="company.is_company_details_empty" position="replace">
+            <t t-if="not company.footer_image">
+                <span t-if="company.is_company_details_empty" t-field="company.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": true}' />
+            </t>
+        </span>
+        <span t-field="company.company_details" position="replace">
+            <t t-if="not company.footer_image">
+                <span t-if="company.header_image" t-field="company.company_details" />
+            </t>
+        </span>
+        <span t-field="company.report_footer" position="replace">
+            <t t-if="company.footer_image">
+                <img t-if="company.footer_image" t-att-src="image_data_uri(company.footer_image)"
+                    alt="Logo" style="height:110px; width:680px;" />
+            </t>
+            <t t-else="">
+                <span t-field="company.report_footer"/>
+            </t>
+        </span>
+    </template>
+
+    <template id="external_layout_boxed" inherit_id="web.external_layout_boxed">
+        <xpath expr="//div[hasclass('row')]" position="replace">
+            <t t-if="company.header_image">
+                <div class="row">
+                    <div class="mb4">
+                        <img t-if="company.header_image"
+                            t-att-src="image_data_uri(company.header_image)"
+                            style="height:110px; width:680px;" alt="Logo" />
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="row mb8">
+                    <div class="col-6">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logo" />
+                    </div>
+                    <div class="col-6 text-end mb4">
+                        <div class="mt0 h4" t-if="company.report_header"
+                            t-field="company.report_header">Company tagline</div>
+                        <div name="company_address" class="float-end mb4">
+                            <ul class="list-unstyled" name="company_address_list">
+                                <li t-if="company.is_company_details_empty">
+                                    <span t-field="company.partner_id"
+                                        t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": true}'>
+                                        <div
+                                            class="bg-light border-1 rounded h-100 d-flex flex-column align-items-center justify-content-center p-4 w-100 opacity-75 text-muted text-center">
+                                            <strong>Company address block</strong>
+                                            <div>Contains the company address.</div>
+                                        </div>
+                                    </span>
+                                </li>
+                                <li t-if="company.header_image">
+                                    <span t-field="company.company_details">
+                                        <div
+                                            class="bg-light border-1 rounded h-100 d-flex flex-column align-items-center justify-content-center p-4 w-100 opacity-75 text-muted text-center">
+                                            <strong>Company details block</strong>
+                                            <div>Contains the company details.</div>
+                                        </div>
+                                    </span>
+                                </li>
+                                <li t-if="not forced_vat" />
+                                <li t-if="company.header_image">
+                                    <t t-esc="company.country_id.vat_label or 'Tax ID'">Tax ID</t>: <span
+                                        t-esc="forced_vat">US12345671</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+        <div t-field="company.report_footer" position="replace">
+            <t t-if="company.footer_image">
+                <img t-if="company.footer_image" t-att-src="image_data_uri(company.footer_image)"
+                    alt="Logo" style="height:110px; width:680px;" />
+            </t>
+            <t t-else="">
+                <div t-field="company.report_footer">Company Report Footer</div>
+            </t>
+        </div>
+    </template>
+
+    <template id="external_layout_striped" inherit_id="web.external_layout_striped">
+        <div t-field="company.report_header" position="replace">
+            <t t-if="company.header_image">
+                <img t-if="company.header_image" t-att-src="image_data_uri(company.header_image)"
+                    alt="Logo" style="height:110px; width:680px;" />
+            </t>
+            <t t-else="">
+                <div class="mt0 text-end h3" t-if="company.report_header"
+                    t-field="company.report_header">Company tagline</div>
+            </t>
+        </div>
+        <div t-field="company.report_footer" position="replace">
+            <t t-if="company.footer_image">
+                <img t-if="company.footer_image" t-att-src="image_data_uri(company.footer_image)"
+                    alt="Logo" style="height:110px; width:680px;" />
+            </t>
+            <t t-else="">
+                <div t-field="company.report_footer"/>
+            </t>
+        </div>
+    </template>
+</odoo>
