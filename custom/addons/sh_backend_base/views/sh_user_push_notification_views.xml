@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="sh_backend_base_tree_view" model="ir.ui.view">
+        <field name="name">sh.user.push.notification.tree</field>
+        <field name="model">sh.user.push.notification</field>
+        <field name="arch" type="xml">
+            <tree string="Notifications" create="0" edit="0">
+            	<field name="user_id"/>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="datetime"/>
+                <button name="open_record" type="object" class="btn btn-primary" string="View"/>
+            </tree>
+         </field>
+    </record>	
+            
+    <record id="sh_backend_base_action" model="ir.actions.act_window">
+        <field name="name">Notifications</field>
+        <field name="res_model">sh.user.push.notification</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name='view_mode'>tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_recruitment_checklist,recruitment.checklist,model_recruitment_checklist,,1,1,1,1
+access_application_recruitment_checklist,application.recruitment.checklist,model_application_recruitment_checklist,,1,1,1,1
+

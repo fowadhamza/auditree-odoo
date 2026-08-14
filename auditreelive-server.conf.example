@@ -1,0 +1,7 @@
+[options]
+; This is the password that allows database operations:
+admin_passwd = CHANGE_ME
+http_port = 8001
+dbfilter = AUDITREE_LIVE_NEW
+logfile = /var/log/auditreelive/auditreelive-server.log
+addons_path=/opt/odoo17/auditreelive/auditreelive-server/addons,/opt/odoo17/auditreelive/custom/addons

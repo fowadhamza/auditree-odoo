@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+        <record id="insafety_property_tree_view" model="ir.ui.view">
+            <field name="name">insafety.property.tree</field>
+            <field name="model">insafety.property</field>
+            <field name="arch" type="xml">
+                <tree decoration-success="status == 'rented'" decoration-danger="status == 'canceled'">
+                    <field name="name"/>
+                    <field name="description" />
+                    <field name="status"/>
+                    <field name="type_id"/>
+                    <field name="id" invisible="1"/>             
+                </tree>
+            </field>
+        </record>
+
+        <record id="insafety_property_search_view" model="ir.ui.view">
+            <field name="name">insafety.property.search</field>
+            <field name="model">insafety.property</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="status"/>
+                    <field name="type_id"/>
+                    <filter name="state_rented" string="Rented" domain="[('status','=','rented')]"/>    
+                    <filter name="state_free" string="Free" domain="[('status','=','free')]"/> 
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter string="Status" name="group_by_status" context="{'group_by': 'status'}"/>
+                    </group>
+                    <!-- <searchpanel>
+                        <field name="status" icon="fa-filter" groupby="group_by_status" limit="0"/>
+                    </searchpanel>                -->
+                </search>
+            </field>
+        </record>
+
+
+
+        <record id="insafety_property_kanban_view" model="ir.ui.view">
+            <field name="name">insafety.property.kanban</field>
+            <field name="model">insafety.property</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="status" 
+                records_draggable="0"
+                group_create="0"
+                >
+                    <field name="name"/>
+                    <field name="status"/>
+                    <field name="type_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click">
+                                <div class="oe_kanban_details">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>  
+                                    <div class="o_kanban_tags_section">
+                                        <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                    </div>
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <field name="status"/>          
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>      
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="insafety_property_pivot_view" model="ir.ui.view">
+            <field name="name">insafety.property.pivot</field>
+            <field name="model">insafety.property</field>
+            <field name="arch" type="xml">
+                <pivot sample="1">      
+                    <field name="count" type="measure"/>
+                    <field name="living_area" type="measure"/>
+                    <field name="total_rooms" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="insafety_property_graph_view" model="ir.ui.view">
+            <field name="name">insafety.property.graph</field>
+            <field name="model">insafety.property</field>
+            <field name="arch" type="xml">
+                <graph string="Analysis" >        
+                    <field name="name"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="insafety_property_form_view" model="ir.ui.view">
+            <field name="name">insafety.property.form</field>
+            <field name="model">insafety.property</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <field name="status" widget="statusbar"/>
+                    </header>
+                    <sheet>            
+                         <group>
+                            <div>
+                                <button string=" " icon="fa-external-link" name="open_building" type="object"/>
+                                <field name="building_id" placeholder="Building" style="width:90%%"/>
+                            </div>
+                            <!-- <field name="name" placeholder="Property Name"/>
+                            <field name="tag_ids" placeholder="Property Tags" widget="many2many_tags" options="{'color_field': 'color','no_create': True,  'no_create_edit':True, 'no_edit_color': 1 }" /> -->
+                            <group>
+                                <!-- <field name="type_id" widget='selection' />   -->
+                                <field name="current_rent_contract_id" />
+                            </group>  
+                         </group>
+                         <notebook>
+                            <page string="Description">
+                               <group>
+                                <group>
+                                    <field name="name"/>
+                                    <field name="description" placeholder="Property Description / Address" />   
+                                </group>
+                                
+                                <group>           
+                                    <field name="living_area" />
+                                    <field name="garden" ></field>
+                                    <field name="garden_area" />            
+                                    <field name="garden_orientation" widget="selection_badge" />
+                                    <field name="total_area" readonly="1"/>
+                                </group> 
+                                <group>
+                                    <field name="cost_factor_custom"/>     
+                                    <field name="total_rooms"/>
+                                    <field name="bedrooms" />
+                                    <field name="volume" />
+                                    <field name="garage" />                     
+                                </group>      
+                               </group>                            
+                            </page>
+                            <page string="Rent Contracts">
+                                <div style="height:5px"/>
+                                <field name="rent_contract_ids">
+                                    <tree>  
+                                        <button string=" " icon="fa-external-link" name="open_contract" type="object"/> 
+                                        <field name="tenant_id" widget="many2one_avatar"/> 
+                                        <field name="rent_date_from"/>
+                                        <field name="rent_date_to"/>
+                                        <field name="monthly_rent"/>
+                                        <field name="monthly_extra_costs"/>
+                                        <field name="monthly_lump_sum_costs"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>       
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_property" model="ir.actions.act_window">
+            <field name="name">Property</field>
+            <field name="res_model">insafety.property</field>
+            <!-- <field name="view_mode">tree,pivot,graph,form,kanban</field> -->
+            <field name="view_mode">tree,pivot,graph,form</field>
+            <field name="view_id" ref="insafety_property_tree_view"/>
+            <field name="context">{'group_by':['building_id']}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create Property
+                </p>
+            </field>
+        </record>
+        <!-- <record id="account.action_account_form" model="ir.actions.act_window">
+            <field name="context">{'group_by':['building_id']}</field>
+        </record> -->
+        
+        <record id="action_account_form" model="ir.actions.act_window">
+            <field name="name">Chart of Accounts to Distribute Costs</field>
+            <field name="res_model">account.account</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="view_id" ref="account.view_account_list"/>
+            <field name="context">{'group_by':['building_id']}</field>
+        </record>
+</odoo>

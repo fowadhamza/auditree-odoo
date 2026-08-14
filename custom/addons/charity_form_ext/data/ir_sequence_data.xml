@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+
+
+    <record id="seq_charity_appl_id" model="ir.sequence">
+        <field name="name">AMITY Charity</field>
+        <field name="code">amity.charity</field>
+        <field name="prefix">AMTC</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+
+
+</odoo>

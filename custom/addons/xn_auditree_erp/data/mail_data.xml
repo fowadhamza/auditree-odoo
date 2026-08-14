@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Template and notification section -->
+    <data noupdate="1">
+        <record id="email_template_job_appli_approve" model="mail.template">
+            <field name="name">Applicant: Job Application Approval Request</field>
+            <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+            <field name="subject">Job Application Approval Request for the Position: {{ object.job_id.name }}</field>
+            <field name="partner_to">{{object.partner_id.id or '' }}</field>
+            <field name="body_html" type="html">
+                <table border="0" cellpadding="0" cellspacing="0" width="590"
+                       style="background-color: white; border-collapse: collapse; margin-left: 20px;">
+                    <tr>
+                        <td valign="top" style="padding: 0px 10px;">
+                            <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                                Hello,
+                                <br/>
+                                <br/>
+                                You received job application approval request from application
+                                " <strong t-out="object.name or ''"></strong> for the job position "
+                                <strong t-out="object.job_id.name or ''">Experienced Developer</strong>
+                                " at <strong>AudiTree</strong>.
+                                <br/>
+                                  <br/>
+                                  <br/>
+
+                                <a t-attf-href="{{object._notify_get_action_link('view')}}" style="padding: 5px 10px; color: #FFFFFF; text-decoration: none; background-color: #875A7B; border: 1px solid #875A7B; border-radius: 3px"> View Details </a>
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </field>
+            <!--        <field name="report_template" ref="action_report_job_offer_letter"/>-->
+            <!--            <field name="report_name">${(object.name or '').replace('/','_')}</field>-->
+            <field name="auto_delete" eval="True"/>
+            <!--        <field name="lang">${object.partner_id.lang or ''}</field>-->
+        </record>
+
+    </data>
+</odoo>

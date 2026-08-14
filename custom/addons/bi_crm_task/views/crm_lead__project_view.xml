@@ -1,0 +1,88 @@
+<odoo>
+    <data>
+
+        <record id="view_crm_project_form" model="ir.ui.view">
+            <field name="name">crm.project.wizard</field>
+            <field name="model">crm.project.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Create Service">
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Service"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                        </group>
+                        <group>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="create_service" string="Create Service" type="object"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_view_crm_project_form" model="ir.actions.act_window">
+            <field name="name">Create Service</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">crm.project.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_crm_project_form"/>
+            <field name="target">new</field>
+        </record>
+
+        <record id="action_view_project_id" model="ir.actions.act_window">
+            <field name="name">Service</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="domain">[('lead_id', '=', active_id)]</field>
+            <field name="context">{'search_default_lead_id': active_id, 'default_lead_id': active_id}</field>
+            <field name="help" type="html">
+                <p>
+                    Odoo's project management allows you to manage the pipeline of your tasks efficiently. You can track
+                    progress, discuss on tasks, attach documents, etc.
+                </p>
+            </field>
+        </record>
+
+        <record id="crm_inherit_form" model="ir.ui.view">
+            <field name="name">Crm Lead</field>
+            <field name="model">crm.lead</field>
+            <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+            <field name="arch" type="xml">
+                <div name="button_box" position="inside">
+                    <button class="oe_stat_button" type="action" name="%(action_view_project_id)d"
+                            context="{'default_partner_id': partner_id }"
+                            icon="fa-tasks">
+                        <field string="Services" name="project_number" widget="statinfo"/>
+                    </button>
+                </div>
+                <button name="%(crm.action_crm_lead2opportunity_partner)d" position="after">
+                    <button name="%(action_view_crm_project_form)d" string="Create Service" type="action"/>
+                </button>
+
+
+            </field>
+        </record>
+
+
+        <record id="view_project_form2_inherit" model="ir.ui.view">
+            <field name="name">Service</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet/group[1]/group[1]/field[@name='company_id']" position="after">
+                      <field name="lead_id"/>
+                </xpath>
+
+            </field>
+        </record>
+
+
+
+    </data>
+</odoo>
+        
+        

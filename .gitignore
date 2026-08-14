@@ -1,0 +1,25 @@
+# Odoo core (its own git repo already, ~2GB stock source - not tracked here)
+/auditreelive-server/
+
+# Python virtualenv
+/venv/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Backups, dumps, archives
+*.tar.gz
+*.dump
+/CAuditreeBackup/
+/C:AuditreeBackup/
+
+# Logs
+*.log
+
+# Local configs containing real secrets - use the .example templates instead
+/odoo.conf
+/auditreelive-server.conf
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db

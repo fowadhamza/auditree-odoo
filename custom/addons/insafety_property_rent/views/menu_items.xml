@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="action_open_rent_cron" model="ir.actions.server">
+            <field name="name">Open Rent Cron Job</field>
+            <field name="model_id" ref="insafety_property_rent.model_insafety_property_building"/>
+            <field name="state">code</field>
+            <field name="code">action = model.open_cron()</field>
+        </record>
+        <menuitem name="Insafety Property Rent" id="menu_root_insafety_property" web_icon="insafety_property_rent/static/description/icon.png">
+            <menuitem id="menu_property_building" name="Buildings" action="insafety_property_rent.action_property_building" sequence="190"></menuitem>
+            <menuitem id="menu_property" name="Units" action="insafety_property_rent.action_property" sequence="200"></menuitem>
+            <menuitem id="menu_rent_conracts" name="Rental Contracts" action="insafety_property_rent.action_property_rent_contract" sequence="210"></menuitem>
+            <menuitem id="menu_financial" name="Finance" sequence="220">
+                <menuitem id="menu_action_invoices" name="Invoices" action="account.open_account_journal_dashboard_kanban"/>
+                <menuitem id="menu_action_account_form" name="Chart of Accounts" action="action_account_form"/>
+                <menuitem id="menu_action_account_journal_line" name="Journal Entries" action="account.action_move_journal_line"/>
+                <menuitem id="menu_action_account_moves_all" name="Journal Items" action="account.action_account_moves_all"/>
+            </menuitem>   
+            <menuitem id="menu_property_ads_settings" name="Settings" sequence="400">
+                <menuitem id="menu_property_rent_log" name="Rent Invoices Log" action="insafety_property_rent.action_property_rent_log"></menuitem>
+                <menuitem id="menu_property_rent_cron" name="Configure Monthly Rent Invoice Task" action="action_open_rent_cron"></menuitem>
+            </menuitem>  
+        </menuitem>
+    </data>
+    
+
+</odoo>

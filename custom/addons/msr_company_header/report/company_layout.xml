@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="company_layout">
+        <t t-if="not o" t-set="o" t-value="doc"/>
+        <t t-if="not company">
+            <t t-if="company_id">
+                <t t-set="company" t-value="company_id"/>
+            </t>
+            <t t-elif="o and 'company_id' in o">
+                <t t-set="company" t-value="o.company_id.sudo()"/>
+            </t>
+            <t t-else="else">
+                <t t-set="company" t-value="res_company"/>
+            </t>
+        </t>
+        <div class="header" style="font-family:Arial;font-size:11px;">
+            <table width="100%" class="table table-borderless">
+                <tr>
+                    <td t-if="company.header_image">
+                        <img t-if="company.header_image"
+                             t-att-src="image_data_uri(company.header_image)" alt="Logo"
+                              style="height:110px; width:900px;"/>
+                    </td>
+                </tr>
+            </table>
+            <div t-if="report_type == 'pdf'" class="text-muted"
+                 style="float:right;font-size:13px;">Page:
+                <span class="page"/>
+                /
+                <span
+                        class="topage"/>
+            </div>
+        </div>
+        <div class="article">
+            <t t-raw="0"/>
+        </div>
+        <div class="footer" style="font-family:Arial;font-size:15px;">
+            <table width="100%" class="table table-borderless">
+                <tr>
+                    <td t-if="company.footer_image">
+                        <img t-if="company.footer_image"
+                             t-att-src="image_data_uri(company.footer_image)" alt="Logo"
+                             style="height:110px; width:900px;"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </template>
+</odoo>

@@ -1,0 +1,25 @@
+<odoo>
+    <record id="view_department_form_inherit_employee_customisation_act" model="ir.ui.view">
+        <field name="name">view.department.form.inherit.employee.customisation.act</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <notebook>
+                    <page string="Stage Aapprovers">
+                        <field name="stage_approval_lines" mode="tree">
+                             <tree editable="bottom">
+                                <field name="stage_id"/>
+                                 <field name="approve_user_ids" widget="many2many_tags"/>
+                             </tree>
+
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+
+
+</odoo>

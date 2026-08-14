@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+	<t t-name="mail.systray.UserNotificationMenu">
+        <div class="o_notification_systray_item">
+            <a class="openDropdown js_bell_notification" data-toggle="dropdown" aria-expanded="false" title="Notificatons" href="#" t-on-click="_onActivityMenuShow">
+                <i class="fa fa-bell" role="img" aria-label="Activities"/> <span class="o_notification_counter badge badge-pill"/>
+            </a>
+            <div class="o_notification_systray_dropdown dropdown-menu dropdown-menu-right" role="menu">
+            	
+                <div class="o_notification_systray_dropdown_items d-none">
+                    <div class="tile_header">
+                        <div class="rd_all_btn_left">
+                            <a class="sh_view_read_all_btn" t-on-click="_onClickReadAllNotification">
+                                <span class="sh_view_read_all_notification">Read All</span>
+                            </a>
+                        </div>
+                        <div class="view_all_btn_right">
+                            <a class="sh_view_all_btn" t-on-click="_onClickAllNotification">
+                                <span class="sh_view_all_notification">View All</span>
+                            </a>
+                        </div>
+                    </div>
+                    <t t-esc="console.log('>>>>>>>>>>', notifications)"></t>
+                    <t t-if="notifications.length === 0">
+                        <t t-esc="notifications"/>
+                        <div class="dropdown-item-text text-center o_no_activity">
+                            <span>You have No Notification !</span>
+                        </div>
+                    </t>
+                    <!-- <t t-foreach="notifications" t-as="notification"> -->
+                    <t t-foreach='notifications' t-as="notification" t-key="notification_index">
+            
+                            <div class="o_mail_preview" t-on-click.stop.prevent="() => this._onPushNotificationClick(notification)" t-att-data-id="notification.id" t-att-data-res_model="notification.res_model" t-att-data-model_name="notification.res_model" t-att-data-res_id="notification.res_id" >
+                            <div t-attf-class="o_preview_info #{notification.msg_read ? 'sh_read' : 'sh_unread'}">
+                                <div class="o_preview_title">
+                                    <span class="o_preview_name">
+                                        <div class="d-flex">
+                                            <b><t t-esc="notification.name"/></b>
+                                             <h6><t t-esc="notification.datetime"/></h6>
+                                         </div>
+                                        <p class="para_text"><t t-esc="notification.desc"/></p>
+                                    </span>
+                                </div>            
+                            </div>
+                        </div>            
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

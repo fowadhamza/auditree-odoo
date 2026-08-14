@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record model="ir.rule" id="not_share_model_insafety_property_building">
+            <field name="name">Non Shared Records:model</field>
+            <field name="model_id" ref="model_insafety_property_building"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+               [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+        <record model="ir.rule" id="not_share_model_insafety_property">
+            <field name="name">Non Shared Records:model</field>
+            <field name="model_id" ref="model_insafety_property"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+               [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+        <record model="ir.rule" id="not_share_model_insafety_property_rent_contract">
+            <field name="name">Non Shared Records:model</field>
+            <field name="model_id" ref="model_insafety_property_rent_contract"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+               [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+    </data>
+</odoo>

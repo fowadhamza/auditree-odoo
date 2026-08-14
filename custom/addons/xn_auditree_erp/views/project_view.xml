@@ -1,0 +1,83 @@
+<odoo>
+    <menuitem
+        name="Project"
+        id="project.menu_main_pm"
+        active="False"
+
+    />
+       <menuitem
+        name="Services"
+        id="menu_main_service"
+        web_icon="project,static/description/icon.png"
+        sequence="70"
+    />
+
+        <record id="action_view_project_new" model="ir.actions.act_window">
+            <field name="name">Service</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form,calendar,pivot,graph</field>
+            <field name="help" type="html">
+                <p>
+                    Odoo's service management allows you to manage the pipeline of your tasks efficiently. You can track
+                    progress, discuss on tasks, attach documents, etc.
+                </p>
+            </field>
+        </record>
+    <menuitem
+            name="Services"
+            id="menu_services"
+            action="xn_auditree_erp.action_view_project_new"
+            sequence="1"
+            parent="menu_main_service"
+        />
+
+
+        <record id="project.act_project_project_2_project_task_all" model="ir.actions.act_window">
+                <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+                  <field name="context">{
+                'default_project_id': active_id,
+                'show_project_update': True,
+            }</field>
+        </record>
+
+
+        <record id="project.project_task_kanban_action_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="30"/>
+        <field name="view_mode">kanban</field>
+        <field name="act_window_id" ref="project.act_project_project_2_project_task_all"/>
+    </record>
+
+
+
+    <record id="project_edit_custom" model="ir.ui.view">
+        <field name="name">project.project.customisation.act</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project" />
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/group[1]/group[2]" position="after">
+                <group>
+                      <field name="actual_start_date"/>
+                </group>
+            </xpath>
+        </field>
+
+
+
+    </record>
+
+
+    <record id="view_task_form2_custom" model="ir.ui.view">
+        <field name="name">project.task.customisation.act</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2" />
+        <field name="arch" type="xml">
+            <field name="user_ids" position="attributes">
+                <attribute name="domain">[('is_freelancer','=',True)]</attribute>
+            </field>
+        </field>
+
+
+
+    </record>
+
+</odoo>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <record id="bank_details_form_custom" model="ir.ui.view">
+            <field name="name">res.partner.bank.form</field>
+             <field name="model">res.partner.bank</field>
+            <field name="inherit_id" ref="base.view_partner_bank_form"/>
+            <field name="arch" type="xml">
+                <field name="acc_number" position="after">
+                    <field name="intl_acc_num"/>
+                </field>
+                <field name="partner_id" position="after">
+                    <field name="iban"/>
+                     <field name="swift_code"/>
+                     <field name="branch"/>
+                </field>
+
+            </field>
+        </record>
+
+                  
+                  
+
+
+        
+
+    </data>
+
+</odoo>

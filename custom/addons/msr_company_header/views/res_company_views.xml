@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_company_header" model="ir.ui.view">
+        <field name="name">view.company.form.inherit.company.header</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Header and Footer">
+                    <group>
+                        <group>
+                            <field name="header_image" />
+                            <field name="footer_image" />
+                            <field name="water_mark_log"/>
+                              <field name="signature"/>
+                              <field name="stamp"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+
+        </field>
+    </record>
+</odoo>
