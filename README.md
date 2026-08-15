@@ -95,6 +95,11 @@ On top of the standard apps above, the following custom-built or vendor add-on m
 | Auditree ERP | Main custom module tying together HR, attendance, recruitment, and project management for Auditree |
 | Auditree USER Custom ERP | Custom user-view customizations |
 
+### Document Signing
+| Module | What it does |
+|---|---|
+| Sign Oca (OCA, free/open-source) | DocuSign-style e-signature workflow: upload a document, place signature/date/text fields, send to one or more signers, track signing status. Community Edition equivalent of Odoo Enterprise's "Sign" app. |
+
 ---
 
 ## Available But Not Turned On
@@ -152,5 +157,5 @@ These modules are already present in the codebase but not currently installed/ac
 1. **Security & hygiene (highest priority)**: rotate the admin password, update outdated dependencies, fix the minor code issues above, and plan an operating system upgrade for the production server.
 2. **Git remote setup**: push this repository to a hosted remote (GitHub/GitLab) so history is backed up off the local machine.
 3. **Quick wins**: evaluate enabling high-value dormant modules (HR Dashboard, Assets Management, Dynamic Accounting Reports, Document Management) — after resolving the `Open HRMS Core` dependency question first.
-4. **New feature additions**: consider longer-term additions such as Appraisals, Approvals workflows, Digital Signatures, or a Helpdesk system, depending on business needs.
+4. **New feature additions**: Digital Signatures added (see "Document Signing" above via the free OCA `sign_oca` module). Consider further longer-term additions such as Appraisals, Approvals workflows, or a Helpdesk system, depending on business needs.
 5. **Odoo version upgrade**: evaluate moving beyond Odoo 17 in the future as part of a broader modernization effort.
