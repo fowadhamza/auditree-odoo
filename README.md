@@ -57,6 +57,7 @@ On top of the standard apps above, the following custom-built or vendor add-on m
 | Open HRMS Employees From User | Auto-create employee records for new users |
 | Open HRMS Employee Documents Expiry | Alerts for expiring employee documents |
 | Hide Any Menu User Wise | Hide menu items based on user permissions |
+| Open HRMS HR Dashboard | Consolidated HR analytics dashboard (attendance, leave, recruitment, timesheets) |
 
 ### Accounting & Finance
 | Module | What it does |
@@ -66,6 +67,8 @@ On top of the standard apps above, the following custom-built or vendor add-on m
 | Advanced Cash Flow Statements | Multi-level cash flow reports (PDF/Excel) |
 | Bank Customization | Customized bank/payment details |
 | Company Header | Custom headers on reports and documents |
+| Odoo 17 Assets Management | Fixed asset tracking and depreciation |
+| Odoo17 Dynamic Accounting Reports | Ledgers, trial balance, balance sheet reports |
 
 ### CRM & Sales
 | Module | What it does |
@@ -79,6 +82,7 @@ On top of the standard apps above, the following custom-built or vendor add-on m
 |---|---|
 | Equipment Request & IT Operation | Employee equipment requests and approvals |
 | PostgreSQL Query Deluxe | Run database queries directly from the UI (admin tool) |
+| Document Management System | Centralized document storage/management |
 
 ### Look & Feel
 | Module | What it does |
@@ -108,13 +112,9 @@ These modules are already present in the codebase but not currently installed/ac
 
 | Module | What it does |
 |---|---|
-| Open HRMS HR Dashboard | Consolidated HR analytics dashboard |
 | Open HRMS Custody | Track company property assigned to employees |
 | Open HRMS Gratuity Settlement | Gratuity calculation on employee exit |
-| Document Management System | Centralized document storage/management |
-| Odoo 17 Assets Management | Fixed asset tracking and depreciation |
 | Odoo 17 Account Bank Statement Import | Import bank statements (CSV/XLSX) |
-| Odoo17 Dynamic Accounting Reports | Ledgers, trial balance, balance sheet reports |
 | Accounting Dashboard Odoo17 | Visual accounting dashboard |
 | Odoo17 Invoice Format Editor | Custom invoice templates |
 | MSR - Recruitment Checklist | Checklist-driven hiring process |
@@ -123,7 +123,7 @@ These modules are already present in the codebase but not currently installed/ac
 | Advanced Property Management, Property Management, Insafety Property Rent | Three different property-management modules (renting/selling) |
 | Charity Forms | Charity donation form management |
 
-> **Note:** `Open HRMS Core` is uninstalled even though it's typically a dependency for other active OHRMS modules — worth checking before enabling any more HR modules from this vendor family.
+> **Note:** `Open HRMS Core` is uninstalled. Checked: none of the currently installed OHRMS modules actually declare it as a dependency, so it's safe to leave off unless a future module specifically requires it.
 >
 > **Note:** There are three overlapping property-management modules on disk, all uninstalled. If property management becomes a need, pick one rather than enabling all three.
 
@@ -149,6 +149,7 @@ These modules are already present in the codebase but not currently installed/ac
 - **Local development**: Odoo 17, WSL-based environment.
 - **Production**: DigitalOcean-hosted server, running as a managed background service.
 - As of the last review, **the code running in production is verified identical, file-for-file, to what's in this repository** — local development is a reliable mirror of production.
+- The HR Dashboard module requires the Python `pandas` package, which has been added to the local dev virtual environment. Production will need the same `pip install pandas` step applied before this module can be enabled there.
 
 ---
 
@@ -156,6 +157,6 @@ These modules are already present in the codebase but not currently installed/ac
 
 1. **Security & hygiene (highest priority)**: rotate the admin password, update outdated dependencies, fix the minor code issues above, and plan an operating system upgrade for the production server.
 2. **Git remote setup**: push this repository to a hosted remote (GitHub/GitLab) so history is backed up off the local machine.
-3. **Quick wins**: evaluate enabling high-value dormant modules (HR Dashboard, Assets Management, Dynamic Accounting Reports, Document Management) — after resolving the `Open HRMS Core` dependency question first.
+3. **Quick wins**: done — HR Dashboard, Assets Management, Dynamic Accounting Reports, and Document Management are now enabled (see tables above). The `Open HRMS Core` dependency question was checked and resolved (nothing currently installed requires it).
 4. **New feature additions**: Digital Signatures added (see "Document Signing" above via the free OCA `sign_oca` module). Consider further longer-term additions such as Appraisals, Approvals workflows, or a Helpdesk system, depending on business needs.
 5. **Odoo version upgrade**: evaluate moving beyond Odoo 17 in the future as part of a broader modernization effort.
