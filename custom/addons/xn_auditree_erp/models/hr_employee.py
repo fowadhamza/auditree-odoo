@@ -1,7 +1,8 @@
 from odoo import models, fields, api, _
-from datetime import date
-from dateutil import parser
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class HREmployee(models.Model):
@@ -25,13 +26,19 @@ class HREmployee(models.Model):
         [('a+', 'A+'), ('a-', 'A-'), ('b+', 'B+'), ('b-', 'B-'), ('o+', 'O+'), ('o-', 'O-'), ('ab+', 'AB+'),
          ('ab-', 'AB-')], string="Blood Group")
 
+    probation_notified = fields.Boolean(
+        string="Probation Notification Sent",
+        default=False,
+        help="Set to True once a probation reminder email has been sent, "
+             "preventing duplicate emails on subsequent cron runs.",
+    )
+
     def action_check_employee_type(self):
         employees = self.env['hr.employee'].sudo().search([])
         for emp in employees:
             if emp.joining_date and emp.employee_type == 'temporary':
-                past = datetime.now() - timedelta(days=90)
-                joining_date = emp.joining_date
-                if past > parser.parse(str(joining_date)):
+                cutoff = datetime.now().date() - timedelta(days=90)
+                if cutoff > emp.joining_date:
                     emp.update({'employee_type': 'employee'})
 
     notice_perioid = fields.Integer(string="Notice Period", related='contract_id.notice_days')
@@ -45,63 +52,59 @@ class HREmployee(models.Model):
         help="Select type of the documents expiry notification.")
 
     def mail_probation_reminder(self):
-        print("mail_probation_reminder")
-        for record in self.env['hr.employee'].sudo().search([('active','=',True)]):
+        """Cron: send probation-end notification emails.
 
-            if record.probation_notification_type == 'after_2_half_month':
-                if record.joining_date:
-                    past = datetime.now() - timedelta(days=75)
-                    joining_date = record.joining_date
-                    if past > parser.parse(str(joining_date)):
-                        employee_name = record.name
+        A `probation_notified` flag prevents duplicate emails from being
+        sent on subsequent cron runs after the trigger date has been reached.
+        """
+        _logger.info("mail_probation_reminder: starting cron run")
+        today = datetime.now().date()
 
-                        probation_date_str = str(record.probation_period)
-                        mail_content = (
-                            f"Hello {employee_name},<br>You have completed Probation Period of 75 days"""
-                        )
-                        subject = _('Probation Period-Notification')
-                        main_content = {
-                            'subject': subject,
-                            'author_id': self.env.user.partner_id.id,
-                            'body_html': mail_content,
-                            'email_to': record.work_email,
-                        }
-                        self.env['mail.mail'].create(main_content).send()
-            if record.probation_notification_type == 'after_3months':
-                if record.joining_date:
-                    past = datetime.now() - timedelta(days=90)
-                    joining_date = record.joining_date
-                    print("past",past,joining_date)
-                    if past > parser.parse(str(joining_date)):
-                        employee_name = record.name
-                        mail_content = (
-                            f"Hello {employee_name},<br>You have completed Probation Period of 90 days"""
-                        )
-                        subject = _('Probation Period-Notification')
-                        main_content = {
-                            'subject': subject,
-                            'author_id': self.env.user.partner_id.id,
-                            'body_html': mail_content,
-                            'email_to': record.work_email,
-                        }
-                        self.env['mail.mail'].create(main_content).send()
-            if record.probation_notification_type == 'before_months':
-                            if record.joining_date:
-                                past = datetime.now() - timedelta(days=80)
-                                joining_date = record.joining_date
-                                if past > parser.parse(str(joining_date)):
-                                    employee_name = record.name
-                                    mail_content = (
-                                        f"Hello {employee_name},<br>You have completed Probation Period of 80 days"""
-                                    )
-                                    subject = _('Probation Period-Notification')
-                                    main_content = {
-                                        'subject': subject,
-                                        'author_id': self.env.user.partner_id.id,
-                                        'body_html': mail_content,
-                                        'email_to': record.work_email,
-                                    }
-                                    self.env['mail.mail'].create(main_content).send(force_send=True)
+        # Map notification type -> threshold days
+        thresholds = {
+            'after_2_half_month': 75,
+            'before_months': 80,
+            'after_3months': 90,
+        }
+
+        employees = self.env['hr.employee'].sudo().search([
+            ('active', '=', True),
+            ('probation_notification_type', '!=', False),
+            ('probation_notified', '=', False),   # skip already-notified
+            ('joining_date', '!=', False),
+        ])
+
+        for record in employees:
+            days = thresholds.get(record.probation_notification_type)
+            if not days:
+                continue
+
+            cutoff = today - timedelta(days=days)
+            if cutoff <= record.joining_date:
+                # Not yet reached the threshold date
+                continue
+
+            employee_name = record.name
+            mail_content = (
+                f"Hello {employee_name},<br>"
+                f"You have completed Probation Period of {days} days."
+            )
+            subject = _('Probation Period-Notification')
+            mail_values = {
+                'subject': subject,
+                'author_id': self.env.user.partner_id.id,
+                'body_html': mail_content,
+                'email_to': record.work_email,
+            }
+            self.env['mail.mail'].create(mail_values).send()
+            # Mark as notified so we don't send again next cron run
+            record.sudo().write({'probation_notified': True})
+            _logger.info(
+                "mail_probation_reminder: sent notification to %s (employee %s)",
+                record.work_email, record.id,
+            )
+
+        _logger.info("mail_probation_reminder: done")
 
 
 class HrJob(models.Model):
