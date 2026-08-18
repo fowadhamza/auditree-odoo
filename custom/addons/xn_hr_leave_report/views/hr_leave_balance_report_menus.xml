@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sits under the existing Leaves app top-level menu -->
+    <menuitem id="menu_hr_leave_balance_report"
+              name="Leave Balance Report"
+              parent="hr_holidays.menu_hr_holidays_management"
+              action="action_hr_leave_balance_report"
+              sequence="20"
+              groups="hr.group_hr_user"/>
+
+</odoo>
