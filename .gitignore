@@ -20,6 +20,9 @@
 /odoo.conf
 /auditreelive-server.conf
 
+# GCP deployment scripts/secrets generated during provisioning
+/deploy/
+
 # Editor/OS cruft
 .DS_Store
 Thumbs.db

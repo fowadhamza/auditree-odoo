@@ -78,19 +78,21 @@ class HrEmployee(models.Model):
         state='validate'""" % (today, today)
         cr = self._cr
         cr.execute(query)
-        leaves_today = cr.fetchall()
+        leaves_today_res = cr.fetchall()
+        leaves_today = leaves_today_res[0][0] if leaves_today_res else 0
         first_day = date.today().replace(day=1)
         last_day = (date.today() + relativedelta(months=1, day=1)) - timedelta(
             1)
         query = """
                 select count(id)
                 from hr_leave
-                WHERE (hr_leave.date_from::DATE,hr_leave.date_to::DATE) 
+                WHERE (hr_leave.date_from::DATE,hr_leave.date_to::DATE)
                 OVERLAPS ('%s', '%s')
                 and  state='validate'""" % (first_day, last_day)
         cr = self._cr
         cr.execute(query)
-        leaves_this_month = cr.fetchall()
+        leaves_this_month_res = cr.fetchall()
+        leaves_this_month = leaves_this_month_res[0][0] if leaves_this_month_res else 0
         leaves_alloc_req = self.env['hr.leave.allocation'].sudo().search_count(
             [('state', 'in', ['confirm', 'validate1'])])
         timesheet_count = self.env['account.analytic.line'].sudo().search_count(
