@@ -465,11 +465,16 @@ class HrEmployee(models.Model):
         self._cr.execute(sql)
         month_start_list = self._cr.fetchall()
         for month_date in month_start_list:
-            self._cr.execute("""select count(id), 
-            to_char(date '%s', 'Month YYYY') as l_month from hr_employee
-            where resign_date> date '%s' or resign_date is null and 
-            joining_date < date '%s'
-            """ % (month_date[0], month_date[0], month_date[0],))
+            self._cr.execute(
+                """
+                SELECT count(id),
+                       to_char(%s::date, 'Month YYYY') AS l_month
+                FROM hr_employee
+                WHERE resign_date > %s::date
+                   OR (resign_date IS NULL AND joining_date < %s::date)
+                """,
+                (month_date[0], month_date[0], month_date[0]),
+            )
             month_emp = self._cr.fetchone()
             match_join = \
                 list(filter(
