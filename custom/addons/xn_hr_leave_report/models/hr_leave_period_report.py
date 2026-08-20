@@ -4,29 +4,41 @@ from odoo import fields, models
 from .leave_type_columns import LEAVE_TYPE_COLUMNS, resolve_leave_type_ids, sql_id_literal
 
 
-class HrLeaveBalanceReport(models.Model):
-    """Wide-format leave balance report - one row per active employee.
+class HrLeavePeriodReport(models.Model):
+    """Wide-format leave ACTIVITY report - one row per employee per year/month.
 
-    Each leave type gets its own Allocated / Taken / Balance columns so HR
-    can compare every employee side-by-side in a single scrollable table.
-    The SQL view uses conditional aggregation (FILTER clause) to pivot the
-    narrow allocation / leave tables into a single wide row per employee.
+    Unlike hr.leave.balance.report (a lifetime running balance), every
+    number here is scoped to the row's own year/month: Allocated is what
+    was granted in that period, Taken is what was used in that period, and
+    Balance is simply their difference - so the three numbers always add up
+    on screen for the period you're looking at. This intentionally does NOT
+    answer "how many days does this employee have left today" (that's what
+    hr.leave.balance.report is for); it answers "what happened in this
+    period".
 
-    This is a lifetime, all-time running balance - it does not accept a
-    date/period filter. See hr.leave.period.report for the period-scoped
-    activity view (Allocated/Taken/Balance for a specific year and month).
+    Period is derived from each allocation/leave request's date_from, same
+    as hr_holidays' own hr.leave.employee.type.report.
     """
-    _name = 'hr.leave.balance.report'
-    _description = 'HR Leave Balance Report'
+    _name = 'hr.leave.period.report'
+    _description = 'HR Leave Activity by Period'
     _auto = False          # backed by a SQL view, no ORM table
     _rec_name = 'employee_id'
-    _order = 'employee_name'
+    _order = 'year desc, month desc, employee_name'
 
     # -- Identity --
     employee_id = fields.Many2one('hr.employee', string='Employee', readonly=True)
     employee_name = fields.Char(string='Employee', readonly=True)
     department_id = fields.Many2one('hr.department', string='Department', readonly=True)
     company_id = fields.Many2one('res.company', string='Company', readonly=True)
+
+    # -- Period --
+    year = fields.Integer('Year', readonly=True, group_operator=None)
+    month = fields.Selection([
+        ('1', 'January'), ('2', 'February'), ('3', 'March'),
+        ('4', 'April'), ('5', 'May'), ('6', 'June'),
+        ('7', 'July'), ('8', 'August'), ('9', 'September'),
+        ('10', 'October'), ('11', 'November'), ('12', 'December'),
+    ], string='Month', readonly=True)
 
     # -- Casual Leave --
     casual_allocated = fields.Float(string='Casual - Allocated', readonly=True, digits=(16, 1))
@@ -60,7 +72,7 @@ class HrLeaveBalanceReport(models.Model):
 
     def init(self):
         """Drop and recreate the SQL view that backs this model."""
-        self.env.cr.execute("DROP VIEW IF EXISTS hr_leave_balance_report CASCADE")
+        self.env.cr.execute("DROP VIEW IF EXISTS hr_leave_period_report CASCADE")
 
         type_ids = resolve_leave_type_ids(self.env.cr)
 
@@ -91,29 +103,40 @@ class HrLeaveBalanceReport(models.Model):
         )
 
         self.env.cr.execute("""
-            CREATE OR REPLACE VIEW hr_leave_balance_report AS (
+            CREATE OR REPLACE VIEW hr_leave_period_report AS (
                 WITH alloc AS (
                     SELECT
                         employee_id,
+                        EXTRACT(YEAR FROM date_from)::integer AS year,
+                        EXTRACT(MONTH FROM date_from)::integer::text AS month,
                         %(alloc_cols)s
                     FROM hr_leave_allocation
-                    WHERE state = 'validate'
-                    GROUP BY employee_id
+                    WHERE state = 'validate' AND date_from IS NOT NULL
+                    GROUP BY employee_id, year, month
                 ),
                 taken AS (
                     SELECT
                         employee_id,
+                        EXTRACT(YEAR FROM date_from)::integer AS year,
+                        EXTRACT(MONTH FROM date_from)::integer::text AS month,
                         %(taken_cols)s
                     FROM hr_leave
-                    WHERE state = 'validate'
-                    GROUP BY employee_id
+                    WHERE state = 'validate' AND date_from IS NOT NULL
+                    GROUP BY employee_id, year, month
+                ),
+                periods AS (
+                    SELECT employee_id, year, month FROM alloc
+                    UNION
+                    SELECT employee_id, year, month FROM taken
                 )
                 SELECT
-                    e.id                             AS id,
+                    row_number() OVER (ORDER BY p.employee_id, p.year, p.month) AS id,
                     e.id                             AS employee_id,
                     e.name                           AS employee_name,
                     e.department_id                  AS department_id,
                     e.company_id                     AS company_id,
+                    p.year                           AS year,
+                    p.month                          AS month,
 
                     %(select_cols)s,
 
@@ -121,14 +144,11 @@ class HrLeaveBalanceReport(models.Model):
                     (%(total_taken_expr)s)                               AS total_taken,
                     (%(total_allocated_expr)s) - (%(total_taken_expr)s)  AS total_balance
 
-                FROM hr_employee e
-                LEFT JOIN alloc a ON a.employee_id = e.id
-                LEFT JOIN taken t ON t.employee_id = e.id
+                FROM periods p
+                JOIN hr_employee e ON e.id = p.employee_id
+                LEFT JOIN alloc a ON a.employee_id = p.employee_id AND a.year = p.year AND a.month = p.month
+                LEFT JOIN taken t ON t.employee_id = p.employee_id AND t.year = p.year AND t.month = p.month
                 WHERE e.active = True
-                  AND (
-                        a.employee_id IS NOT NULL
-                     OR t.employee_id IS NOT NULL
-                  )
             )
         """ % {
             'alloc_cols': alloc_cols,

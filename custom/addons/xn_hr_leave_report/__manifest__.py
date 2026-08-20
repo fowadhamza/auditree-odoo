@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'HR Leave Balance Report',
-    'version': '17.0.1.0.0',
+    'version': '17.0.2.0.0',
     'summary': 'Consolidated leave balance table for all employees (HR/Admin view)',
     'description': """
-        Adds a "Leave Balance Report" menu under Leaves > Management.
-        HR managers see every employee, every leave type, with columns:
-        Allocated, Taken, and Balance — filterable and pivotable.
+        Adds two menus under Leaves > Management:
+
+        - Leave Balance Report: one row per employee, lifetime running
+          Allocated/Taken/Balance per leave type. "How many days does this
+          employee have left right now."
+        - Leave Activity by Period: one row per employee per year/month,
+          Allocated/Taken/Balance scoped to that period. "What happened in
+          this period" - filterable by year and month.
     """,
     'category': 'Human Resources/Time Off',
     'author': 'Auditree',
@@ -16,6 +21,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/hr_leave_balance_report_views.xml',
+        'views/hr_leave_period_report_views.xml',
         'views/hr_leave_balance_report_menus.xml',
     ],
     'installable': True,

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===================================================================
+         Wide List View - one row per employee per year/month, all leave
+         types as columns. Every number is scoped to that period (see the
+         model docstring) - this is activity, not a running balance.
+         =================================================================== -->
+    <record id="view_hr_leave_period_report_list" model="ir.ui.view">
+        <field name="name">hr.leave.period.report.list</field>
+        <field name="model">hr.leave.period.report</field>
+        <field name="arch" type="xml">
+            <tree string="Leave Activity by Period"
+                  create="false" edit="false" delete="false"
+                  default_order="year desc, month desc, employee_name">
+
+                <!-- Identity / period -->
+                <field name="employee_name" string="Employee" optional="show"/>
+                <field name="department_id" string="Department" optional="show"/>
+                <field name="company_id" string="Company" groups="base.group_multi_company" optional="hide"/>
+                <field name="year" optional="show"/>
+                <field name="month" optional="show"/>
+
+                <!-- Casual Leave -->
+                <field name="casual_allocated" string="CL Alloc" sum="Total" optional="show"/>
+                <field name="casual_taken"     string="CL Taken" sum="Total" optional="show"/>
+                <field name="casual_balance"   string="CL Balance" sum="Total" optional="show"
+                       decoration-danger="casual_balance &lt; 0"
+                       decoration-success="casual_balance &gt; 0"/>
+
+                <!-- Sick Leave -->
+                <field name="sick_allocated" string="SL Alloc" sum="Total" optional="show"/>
+                <field name="sick_taken"     string="SL Taken" sum="Total" optional="show"/>
+                <field name="sick_balance"   string="SL Balance" sum="Total" optional="show"
+                       decoration-danger="sick_balance &lt; 0"
+                       decoration-success="sick_balance &gt; 0"/>
+
+                <!-- Earned Leave b/f -->
+                <field name="earned_allocated" string="EL Alloc" sum="Total" optional="show"/>
+                <field name="earned_taken"     string="EL Taken" sum="Total" optional="show"/>
+                <field name="earned_balance"   string="EL Balance" sum="Total" optional="show"
+                       decoration-danger="earned_balance &lt; 0"
+                       decoration-success="earned_balance &gt; 0"/>
+
+                <!-- Maternity Leave -->
+                <field name="maternity_allocated" string="ML Alloc" sum="Total" optional="show"/>
+                <field name="maternity_taken"     string="ML Taken" sum="Total" optional="show"/>
+                <field name="maternity_balance"   string="ML Balance" sum="Total" optional="show"
+                       decoration-danger="maternity_balance &lt; 0"
+                       decoration-success="maternity_balance &gt; 0"/>
+
+                <!-- Comp-off -->
+                <field name="compoff_allocated" string="CO Alloc" sum="Total" optional="show"/>
+                <field name="compoff_taken"     string="CO Taken" sum="Total" optional="show"/>
+                <field name="compoff_balance"   string="CO Balance" sum="Total" optional="show"
+                       decoration-danger="compoff_balance &lt; 0"
+                       decoration-success="compoff_balance &gt; 0"/>
+
+                <!-- Period Totals -->
+                <field name="total_allocated" string="Total Alloc" sum="Grand Total" optional="show"/>
+                <field name="total_taken"     string="Total Taken" sum="Grand Total" optional="show"/>
+                <field name="total_balance"   string="Total Balance" sum="Grand Total" optional="show"
+                       decoration-danger="total_balance &lt; 0"
+                       decoration-success="total_balance &gt; 0"/>
+
+                <!-- Hidden Many2one used for domain/search only -->
+                <field name="employee_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ===================================================================
+         Search View
+         =================================================================== -->
+    <record id="view_hr_leave_period_report_search" model="ir.ui.view">
+        <field name="name">hr.leave.period.report.search</field>
+        <field name="model">hr.leave.period.report</field>
+        <field name="arch" type="xml">
+            <search string="Search Leave Activity">
+                <field name="employee_id"   string="Employee"/>
+                <field name="department_id" string="Department"/>
+                <field name="year"/>
+                <field name="month"/>
+
+                <filter name="current_year"
+                        string="Current Year"
+                        domain="[('year', '=', context_today().year)]"/>
+
+                <separator/>
+                <filter name="negative_balance"
+                        string="Has Negative Balance"
+                        domain="[('total_balance', '&lt;', 0)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_by_year" string="Year" context="{'group_by': 'year'}"/>
+                    <filter name="group_by_month" string="Month" context="{'group_by': 'month'}"/>
+                    <filter name="group_by_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_by_company" string="Company" context="{'group_by': 'company_id'}"
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================================================================
+         Window Action
+         =================================================================== -->
+    <record id="action_hr_leave_period_report" model="ir.actions.act_window">
+        <field name="name">Leave Activity by Period</field>
+        <field name="res_model">hr.leave.period.report</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_hr_leave_period_report_search"/>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No leave activity found for this period.
+            </p>
+            <p>Shows what was allocated and taken in a given year/month - clear
+               the Current Year filter to see all periods. For each employee's
+               current running balance, see Employee Leave Balances instead.</p>
+        </field>
+    </record>
+
+</odoo>

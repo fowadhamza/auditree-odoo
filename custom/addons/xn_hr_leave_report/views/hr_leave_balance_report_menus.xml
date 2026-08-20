@@ -9,4 +9,11 @@
               sequence="20"
               groups="hr.group_hr_user"/>
 
+    <menuitem id="menu_hr_leave_period_report"
+              name="Leave Activity by Period"
+              parent="hr_holidays.menu_hr_holidays_management"
+              action="action_hr_leave_period_report"
+              sequence="21"
+              groups="hr.group_hr_user"/>
+
 </odoo>
