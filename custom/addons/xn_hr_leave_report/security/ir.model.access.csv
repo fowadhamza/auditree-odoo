@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_leave_balance_report_manager,hr_leave_balance_report_manager,model_hr_leave_balance_report,hr.group_hr_manager,1,0,0,0
 access_hr_leave_balance_report_user,hr_leave_balance_report_user,model_hr_leave_balance_report,hr.group_hr_user,1,0,0,0
+access_hr_leave_period_report_manager,hr_leave_period_report_manager,model_hr_leave_period_report,hr.group_hr_manager,1,0,0,0
+access_hr_leave_period_report_user,hr_leave_period_report_user,model_hr_leave_period_report,hr.group_hr_user,1,0,0,0

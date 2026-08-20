@@ -1,31 +1,7 @@
 # -*- coding: utf-8 -*-
-import logging
-
 from odoo import fields, models
 
-_logger = logging.getLogger(__name__)
-
-# (column_prefix, leave type name, output label)
-# Leave types are resolved by NAME at upgrade time in init() below - never by
-# hardcoded database id. Auto-generated ids are not portable across
-# environments (dev, staging, a fresh DR restore can all assign different
-# ids to the same leave type), which was the cause of a real bug in an
-# earlier version of this report: it silently showed zero balances outside
-# of the one database it was written against.
-#
-# Adding a new leave type to this table means adding an entry here and
-# running an -u upgrade. That one-line-of-code cost is a fundamental
-# limitation of SQL-view-backed wide tables, not a shortcut: a SQL view
-# requires a fixed, known-at-creation-time column list, so a per-type
-# column can't appear automatically without a schema (and therefore code)
-# change somewhere.
-LEAVE_TYPE_COLUMNS = [
-    ('casual', 'Casual Leave', 'Casual'),
-    ('sick', 'Sick Leave', 'Sick'),
-    ('earned', 'Earned Leave balance b/f', 'Earned b/f'),
-    ('maternity', 'Maternity Leave', 'Maternity'),
-    ('compoff', 'Comp-off', 'Comp-off'),
-]
+from .leave_type_columns import LEAVE_TYPE_COLUMNS, resolve_leave_type_ids, sql_id_literal
 
 
 class HrLeaveBalanceReport(models.Model):
@@ -35,6 +11,10 @@ class HrLeaveBalanceReport(models.Model):
     can compare every employee side-by-side in a single scrollable table.
     The SQL view uses conditional aggregation (FILTER clause) to pivot the
     narrow allocation / leave tables into a single wide row per employee.
+
+    This is a lifetime, all-time running balance - it does not accept a
+    date/period filter. See hr.leave.period.report for the period-scoped
+    activity view (Allocated/Taken/Balance for a specific year and month).
     """
     _name = 'hr.leave.balance.report'
     _description = 'HR Leave Balance Report'
@@ -78,40 +58,14 @@ class HrLeaveBalanceReport(models.Model):
     total_taken = fields.Float(string='Total Taken', readonly=True, digits=(16, 1))
     total_balance = fields.Float(string='Total Balance', readonly=True, digits=(16, 1))
 
-    def _get_leave_type_id(self, name):
-        """Resolve a leave type's database id by name.
-
-        Returns None (with a warning logged) if the type is missing or
-        inactive, so the view still builds - the affected columns just
-        report zero instead of breaking the upgrade.
-        """
-        self.env.cr.execute(
-            "SELECT id FROM hr_leave_type WHERE name->>'en_US' = %s AND active = True LIMIT 1",
-            (name,),
-        )
-        row = self.env.cr.fetchone()
-        if not row:
-            _logger.warning(
-                "hr.leave.balance.report: leave type '%s' not found (or inactive) in "
-                "this database - its columns will show zero. Check Time Off > "
-                "Configuration > Time Off Types.", name,
-            )
-            return None
-        type_id = row[0]
-        assert isinstance(type_id, int)
-        return type_id
-
     def init(self):
         """Drop and recreate the SQL view that backs this model."""
         self.env.cr.execute("DROP VIEW IF EXISTS hr_leave_balance_report CASCADE")
 
-        type_ids = {key: self._get_leave_type_id(name) for key, name, _label in LEAVE_TYPE_COLUMNS}
+        type_ids = resolve_leave_type_ids(self.env.cr)
 
         def sql_id(key):
-            """SQL literal for a leave type id, or NULL if unresolved (a FILTER
-            on `= NULL` never matches, so the aggregate safely comes out as 0)."""
-            type_id = type_ids[key]
-            return str(type_id) if type_id is not None else 'NULL'
+            return sql_id_literal(type_ids, key)
 
         alloc_cols = ',\n                        '.join(
             "SUM(number_of_days) FILTER (WHERE holiday_status_id = %s) AS %s_a" % (sql_id(key), key)
