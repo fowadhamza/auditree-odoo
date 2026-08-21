@@ -18,6 +18,19 @@ class HrLeavePeriodReport(models.Model):
 
     Period is derived from each allocation/leave request's date_from, same
     as hr_holidays' own hr.leave.employee.type.report.
+
+    Accrual allocations (hr_leave_allocation.allocation_type = 'accrual') are
+    EXCLUDED from Allocated here. An accrual allocation is one row per
+    employee whose number_of_days is incremented in place by a cron job as
+    time passes - date_from is fixed at when the plan started, not when each
+    day was actually earned, and Odoo keeps no ledger of which day was
+    granted when. Bucketing that single row by date_from would dump an
+    entire year's accrual onto whichever month the plan happened to start
+    in and show zero everywhere else - worse than just not reporting it
+    per-period. Only one-time/manual allocations (allocation_type =
+    'regular') appear in Allocated/Balance here. Taken is unaffected: every
+    hr.leave request has a real date regardless of which allocation it
+    draws down, accrual or not.
     """
     _name = 'hr.leave.period.report'
     _description = 'HR Leave Activity by Period'
@@ -40,35 +53,44 @@ class HrLeavePeriodReport(models.Model):
         ('10', 'October'), ('11', 'November'), ('12', 'December'),
     ], string='Month', readonly=True)
 
+    _ALLOC_HELP = ("Excludes accrual-based allocations (only one-time/manual "
+                   "grants appear here) - Odoo has no record of which month "
+                   "each accrual day was earned. See Employee Leave Balances "
+                   "for the accrual-inclusive running total.")
+    _BALANCE_HELP = ("Allocated minus Taken for this period only. For an "
+                      "accrual-based leave type this will usually just be "
+                      "negative Taken, since Allocated excludes accruals "
+                      "(see the Allocated column's tooltip).")
+
     # -- Casual Leave --
-    casual_allocated = fields.Float(string='Casual - Allocated', readonly=True, digits=(16, 1))
+    casual_allocated = fields.Float(string='Casual - Allocated', readonly=True, digits=(16, 1), help=_ALLOC_HELP)
     casual_taken = fields.Float(string='Casual - Taken', readonly=True, digits=(16, 1))
-    casual_balance = fields.Float(string='Casual - Balance', readonly=True, digits=(16, 1))
+    casual_balance = fields.Float(string='Casual - Balance', readonly=True, digits=(16, 1), help=_BALANCE_HELP)
 
     # -- Sick Leave --
-    sick_allocated = fields.Float(string='Sick - Allocated', readonly=True, digits=(16, 1))
+    sick_allocated = fields.Float(string='Sick - Allocated', readonly=True, digits=(16, 1), help=_ALLOC_HELP)
     sick_taken = fields.Float(string='Sick - Taken', readonly=True, digits=(16, 1))
-    sick_balance = fields.Float(string='Sick - Balance', readonly=True, digits=(16, 1))
+    sick_balance = fields.Float(string='Sick - Balance', readonly=True, digits=(16, 1), help=_BALANCE_HELP)
 
     # -- Earned Leave b/f --
-    earned_allocated = fields.Float(string='Earned b/f - Allocated', readonly=True, digits=(16, 1))
+    earned_allocated = fields.Float(string='Earned b/f - Allocated', readonly=True, digits=(16, 1), help=_ALLOC_HELP)
     earned_taken = fields.Float(string='Earned b/f - Taken', readonly=True, digits=(16, 1))
-    earned_balance = fields.Float(string='Earned b/f - Balance', readonly=True, digits=(16, 1))
+    earned_balance = fields.Float(string='Earned b/f - Balance', readonly=True, digits=(16, 1), help=_BALANCE_HELP)
 
     # -- Maternity Leave --
-    maternity_allocated = fields.Float(string='Maternity - Allocated', readonly=True, digits=(16, 1))
+    maternity_allocated = fields.Float(string='Maternity - Allocated', readonly=True, digits=(16, 1), help=_ALLOC_HELP)
     maternity_taken = fields.Float(string='Maternity - Taken', readonly=True, digits=(16, 1))
-    maternity_balance = fields.Float(string='Maternity - Balance', readonly=True, digits=(16, 1))
+    maternity_balance = fields.Float(string='Maternity - Balance', readonly=True, digits=(16, 1), help=_BALANCE_HELP)
 
     # -- Comp-off --
-    compoff_allocated = fields.Float(string='Comp-off - Allocated', readonly=True, digits=(16, 1))
+    compoff_allocated = fields.Float(string='Comp-off - Allocated', readonly=True, digits=(16, 1), help=_ALLOC_HELP)
     compoff_taken = fields.Float(string='Comp-off - Taken', readonly=True, digits=(16, 1))
-    compoff_balance = fields.Float(string='Comp-off - Balance', readonly=True, digits=(16, 1))
+    compoff_balance = fields.Float(string='Comp-off - Balance', readonly=True, digits=(16, 1), help=_BALANCE_HELP)
 
     # -- Total row --
-    total_allocated = fields.Float(string='Total Allocated', readonly=True, digits=(16, 1))
+    total_allocated = fields.Float(string='Total Allocated', readonly=True, digits=(16, 1), help=_ALLOC_HELP)
     total_taken = fields.Float(string='Total Taken', readonly=True, digits=(16, 1))
-    total_balance = fields.Float(string='Total Balance', readonly=True, digits=(16, 1))
+    total_balance = fields.Float(string='Total Balance', readonly=True, digits=(16, 1), help=_BALANCE_HELP)
 
     def init(self):
         """Drop and recreate the SQL view that backs this model."""
@@ -112,6 +134,7 @@ class HrLeavePeriodReport(models.Model):
                         %(alloc_cols)s
                     FROM hr_leave_allocation
                     WHERE state = 'validate' AND date_from IS NOT NULL
+                      AND allocation_type != 'accrual'
                     GROUP BY employee_id, year, month
                 ),
                 taken AS (

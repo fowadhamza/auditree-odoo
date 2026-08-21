@@ -118,6 +118,10 @@
             <p>Shows what was allocated and taken in a given year/month - clear
                the Current Year filter to see all periods. For each employee's
                current running balance, see Employee Leave Balances instead.</p>
+            <p>Allocated only counts one-time/manual allocations. Accrual-based
+               allocations (e.g. monthly accrual plans) are not attributed to
+               any single period here - hover an Allocated column header for
+               details.</p>
         </field>
     </record>
 

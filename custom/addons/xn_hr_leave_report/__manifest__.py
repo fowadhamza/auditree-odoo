@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'HR Leave Balance Report',
-    'version': '17.0.2.0.0',
+    'version': '17.0.2.1.0',
     'summary': 'Consolidated leave balance table for all employees (HR/Admin view)',
     'description': """
         Adds two menus under Leaves > Management:
@@ -11,7 +11,10 @@
           employee have left right now."
         - Leave Activity by Period: one row per employee per year/month,
           Allocated/Taken/Balance scoped to that period. "What happened in
-          this period" - filterable by year and month.
+          this period" - filterable by year and month. Allocated only
+          reflects one-time/manual allocations - accrual-based allocations
+          (Odoo tracks no per-month ledger for these) are intentionally
+          excluded rather than misattributed to a single month.
     """,
     'category': 'Human Resources/Time Off',
     'author': 'Auditree',
