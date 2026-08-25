@@ -21,19 +21,14 @@
                 <field name="year" optional="show"/>
                 <field name="month" optional="show"/>
 
-                <!-- Casual Leave -->
-                <field name="casual_allocated" string="CL Alloc" sum="Total" optional="show"/>
-                <field name="casual_taken"     string="CL Taken" sum="Total" optional="show"/>
-                <field name="casual_balance"   string="CL Balance" sum="Total" optional="show"
-                       decoration-danger="casual_balance &lt; 0"
-                       decoration-success="casual_balance &gt; 0"/>
+                <!-- Casual Leave: accrual-only in this org (see model docstring) -
+                     Allocated/Balance are always 0/-Taken and would misread as "no
+                     balance available", so only Taken (which is genuinely accurate)
+                     is shown. Full balance: see Employee Leave Balances. -->
+                <field name="casual_taken" string="CL Taken" sum="Total" optional="show"/>
 
-                <!-- Sick Leave -->
-                <field name="sick_allocated" string="SL Alloc" sum="Total" optional="show"/>
-                <field name="sick_taken"     string="SL Taken" sum="Total" optional="show"/>
-                <field name="sick_balance"   string="SL Balance" sum="Total" optional="show"
-                       decoration-danger="sick_balance &lt; 0"
-                       decoration-success="sick_balance &gt; 0"/>
+                <!-- Sick Leave: same reasoning as Casual Leave above -->
+                <field name="sick_taken" string="SL Taken" sum="Total" optional="show"/>
 
                 <!-- Earned Leave b/f -->
                 <field name="earned_allocated" string="EL Alloc" sum="Total" optional="show"/>
@@ -118,10 +113,13 @@
             <p>Shows what was allocated and taken in a given year/month - clear
                the Current Year filter to see all periods. For each employee's
                current running balance, see Employee Leave Balances instead.</p>
-            <p>Allocated only counts one-time/manual allocations. Accrual-based
-               allocations (e.g. monthly accrual plans) are not attributed to
-               any single period here - hover an Allocated column header for
-               details.</p>
+            <p>Allocated/Balance only apply to one-time/manual allocations.
+               Casual and Sick Leave are accrual-based in this org, so only
+               their Taken column is shown here - Odoo keeps no record of
+               which month each accrued day was earned, so an Allocated or
+               Balance number for them would misleadingly read as "days
+               available" when it isn't. See Employee Leave Balances for
+               their real current balance.</p>
         </field>
     </record>
 
