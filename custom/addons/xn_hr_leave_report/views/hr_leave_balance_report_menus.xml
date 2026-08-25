@@ -16,4 +16,11 @@
               sequence="21"
               groups="hr.group_hr_user"/>
 
+    <menuitem id="menu_hr_leave_balance_snapshot"
+              name="Leave Balance Snapshot"
+              parent="hr_holidays.menu_hr_holidays_management"
+              action="action_hr_leave_balance_snapshot"
+              sequence="22"
+              groups="hr.group_hr_user"/>
+
 </odoo>

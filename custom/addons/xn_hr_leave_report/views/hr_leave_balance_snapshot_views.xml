@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===================================================================
+         Wide List View - one row per employee per year/month, projected
+         running balance for all five leave types. See the model docstring
+         for exactly what "projected" means for Casual/Sick.
+         =================================================================== -->
+    <record id="view_hr_leave_balance_snapshot_list" model="ir.ui.view">
+        <field name="name">hr.leave.balance.snapshot.list</field>
+        <field name="model">hr.leave.balance.snapshot</field>
+        <field name="arch" type="xml">
+            <tree string="Leave Balance Snapshot"
+                  create="false" edit="false" delete="false"
+                  default_order="year desc, month desc, employee_name">
+
+                <field name="employee_name" string="Employee" optional="show"/>
+                <field name="department_id" string="Department" optional="show"/>
+                <field name="company_id" string="Company" groups="base.group_multi_company" optional="hide"/>
+                <field name="year" optional="show"/>
+                <field name="month" optional="show"/>
+
+                <field name="casual_balance" string="Casual Balance" optional="show"
+                       decoration-danger="casual_balance &lt; 0"
+                       decoration-success="casual_balance &gt; 0"/>
+                <field name="sick_balance" string="Sick Balance" optional="show"
+                       decoration-danger="sick_balance &lt; 0"
+                       decoration-success="sick_balance &gt; 0"/>
+                <field name="earned_balance" string="Earned b/f Balance" optional="show"
+                       decoration-danger="earned_balance &lt; 0"
+                       decoration-success="earned_balance &gt; 0"/>
+                <field name="maternity_balance" string="Maternity Balance" optional="show"
+                       decoration-danger="maternity_balance &lt; 0"
+                       decoration-success="maternity_balance &gt; 0"/>
+                <field name="compoff_balance" string="Comp-off Balance" optional="show"
+                       decoration-danger="compoff_balance &lt; 0"
+                       decoration-success="compoff_balance &gt; 0"/>
+                <field name="total_balance" string="Total Balance" optional="show"
+                       decoration-danger="total_balance &lt; 0"
+                       decoration-success="total_balance &gt; 0"/>
+
+                <field name="employee_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ===================================================================
+         Search View
+         =================================================================== -->
+    <record id="view_hr_leave_balance_snapshot_search" model="ir.ui.view">
+        <field name="name">hr.leave.balance.snapshot.search</field>
+        <field name="model">hr.leave.balance.snapshot</field>
+        <field name="arch" type="xml">
+            <search string="Search Leave Balance Snapshot">
+                <field name="employee_id" string="Employee"/>
+                <field name="department_id" string="Department"/>
+                <field name="year"/>
+                <field name="month"/>
+
+                <filter name="current_month"
+                        string="Current Month"
+                        domain="[('year', '=', context_today().year), ('month', '=', str(context_today().month))]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_by_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_by_year" string="Year" context="{'group_by': 'year'}"/>
+                    <filter name="group_by_month" string="Month" context="{'group_by': 'month'}"/>
+                    <filter name="group_by_department" string="Department" context="{'group_by': 'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================================================================
+         Window Action
+         =================================================================== -->
+    <record id="action_hr_leave_balance_snapshot" model="ir.actions.act_window">
+        <field name="name">Leave Balance Snapshot</field>
+        <field name="res_model">hr.leave.balance.snapshot</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_hr_leave_balance_snapshot_search"/>
+        <field name="context">{'search_default_current_month': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No snapshot data found for this period.
+            </p>
+            <p>Shows each employee's running balance as of the end of a given
+               month, for every leave type. Casual and Sick Leave are
+               CALCULATED PROJECTIONS (monthly accrual rate x months elapsed,
+               capped, plus carry-over) since Odoo keeps no record of which
+               month each accrued day was earned - Earned Leave b/f,
+               Maternity, and Comp-off are exact, since those are real dated
+               allocations.</p>
+        </field>
+    </record>
+
+</odoo>
