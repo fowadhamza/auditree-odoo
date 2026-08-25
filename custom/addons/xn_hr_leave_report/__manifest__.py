@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'HR Leave Balance Report',
-    'version': '17.0.2.2.0',
+    'version': '17.0.3.0.0',
     'summary': 'Consolidated leave balance table for all employees (HR/Admin view)',
     'description': """
         Adds two menus under Leaves > Management:
@@ -25,6 +25,7 @@
         'security/ir.model.access.csv',
         'views/hr_leave_balance_report_views.xml',
         'views/hr_leave_period_report_views.xml',
+        'views/hr_leave_balance_snapshot_views.xml',
         'views/hr_leave_balance_report_menus.xml',
     ],
     'installable': True,
