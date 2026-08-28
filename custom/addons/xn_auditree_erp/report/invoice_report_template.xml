@@ -23,36 +23,36 @@
 
                 </div>
                 <div class="col-6 text-end">
-                    <table class="table table-borderless" name="details">
+                    <table class="table table-borderless table-sm" name="details">
                         <tr>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <strong>Invoice Number</strong>
                             </td>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <span t-field="o.name"/>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <strong>Invoice Date</strong>
                             </td>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <span t-field="o.invoice_date"/>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <strong>Due Date</strong>
                             </td>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <span t-field="o.invoice_date_due"/>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <strong>Conversion Rate</strong>
                             </td>
-                            <td>
+                            <td style="padding:1px 8px;">
                                 <span t-field="o.invoice_currency_rate"/>
                             </td>
                         </tr>
@@ -213,8 +213,7 @@
                                                 Balance Due
                                             </td>
                                             <td style="font-weight:bold;" class="text-end">
-                                                <span t-field="o.due_amount"
-                                                      t-options='{"widget": "monetary", "display_currency": o.company_currency_id}'/>
+                                                <span t-field="o.amount_residual"/>
                                             </td>
                                         </tr>
                                     </table>
@@ -287,23 +286,18 @@
                 <div class="col-6">
                 </div>
             </div>
-            <div class="text-muted mb-3" t-attf-style="#{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
+            <div class="text-muted mb-3" t-attf-style="page-break-inside:avoid;#{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
                 <span>Note</span><br/>
                 <span t-field="o.narration"/>
             </div>
 
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-
-            <t t-if="o.company_id.invoice_signatory_signature">
-                <img t-att-src="image_data_uri(o.company_id.invoice_signatory_signature)" style="max-height:80px;"/>
-                <br/>
-            </t>
-            <span>Authorised Signatory</span>
+            <div style="margin-top:15px;page-break-inside:avoid;">
+                <t t-if="o.company_id.invoice_signatory_signature">
+                    <img t-att-src="image_data_uri(o.company_id.invoice_signatory_signature)" style="max-height:80px;"/>
+                    <br/>
+                </t>
+                <span>Authorised Signatory</span>
+            </div>
 
         </t>
     </template>
@@ -341,7 +335,12 @@
 
 
     <template id="auditree_external_layout_custom">
-        <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style">
+        <div t-attf-class="header o_company_#{company.id}_layout" t-att-style="report_header_style"/>
+
+        <div t-attf-class="article o_report_layout_standard o_company_#{company.id}_layout {{  'o_report_layout_background' if company.layout_background in ['Geometric', 'Custom']  else  '' }}"
+             t-attf-style="background-image: url({{ 'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else '/base/static/img/bg_background_template.jpg' if company.layout_background == 'Geometric' else ''}});"
+             t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
+             t-att-data-oe-lang="o and o.env.context.get('lang')">
             <div class="row">
                 <div class="col-3 mb4">
                     <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height: 65px;"
@@ -386,27 +385,12 @@
                     </strong>
                     <br/>
                     <strong>
-                        <span t-field="o.due_amount"
-                              t-options='{"widget": "monetary", "display_currency": o.company_currency_id}'></span>
+                        <span t-field="o.amount_residual"></span>
                     </strong>
 
 
                 </div>
             </div>
-            <div t-if="company.logo or company.report_header" class="row zero_min_height">
-                <div class="col-12"></div>
-            </div>
-            <div class="row">
-                <div class="col-6" name="company_address">
-
-                </div>
-            </div>
-        </div>
-
-        <div t-attf-class="article o_report_layout_standard o_company_#{company.id}_layout {{  'o_report_layout_background' if company.layout_background in ['Geometric', 'Custom']  else  '' }}"
-             t-attf-style="background-image: url({{ 'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else '/base/static/img/bg_background_template.jpg' if company.layout_background == 'Geometric' else ''}});"
-             t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id"
-             t-att-data-oe-lang="o and o.env.context.get('lang')">
             <div class="pt-5">
                 <!-- This div ensures that the address is not cropped by the header. -->
                 <t t-call="web.address_layout"/>
