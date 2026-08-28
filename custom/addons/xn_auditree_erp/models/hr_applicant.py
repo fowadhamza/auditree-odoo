@@ -21,21 +21,26 @@ class HRApplicant(models.Model):
     @api.depends('stage_id')
     def _compute_hide_revert_back(self):
         for rec in self:
-            if rec.stage_id.sequence==0:
-                rec.is_hide_revert_back=True
-            else:
-                rec.is_hide_revert_back=False
-            template = self.env.ref('xn_auditree_erp.email_template_job_appli_approve', raise_if_not_found=False)
-            if rec.stage_id:
-                approver_line=rec.department_id.stage_approval_lines.filtered(lambda l: l.stage_id.id==rec.stage_id.id)
-                ctx = {
-                        'recipient_ids': approver_line.approve_user_ids.partner_id.ids,
-                }
-                email_to = approver_line.approve_user_ids.partner_id.ids
-                template.send_mail(rec.id, force_send=True,email_values={'recipient_ids': email_to, })
+            rec.is_hide_revert_back = rec.stage_id.sequence == 0
 
+    def write(self, vals):
+        res = super().write(vals)
+        if 'stage_id' in vals:
+            for rec in self:
+                rec._send_stage_approval_email()
+        return res
 
-
+    def _send_stage_approval_email(self):
+        self.ensure_one()
+        if not self.stage_id:
+            return
+        template = self.env.ref('xn_auditree_erp.email_template_job_appli_approve', raise_if_not_found=False)
+        if not template:
+            return
+        approver_line = self.department_id.stage_approval_lines.filtered(lambda l: l.stage_id.id == self.stage_id.id)
+        email_to = approver_line.approve_user_ids.partner_id.ids
+        if email_to:
+            template.send_mail(self.id, force_send=True, email_values={'recipient_ids': email_to})
 
 
 

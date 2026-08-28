@@ -14,16 +14,6 @@ class HrApplicant(models.Model):
     application_checklist_ids = fields.One2many(comodel_name='application.recruitment.checklist', string='Check list',
                                                 inverse_name='applicant_id', )
 
-    # @api.onchange('checklist_ids')
-    # def _onchange_checklist(self):
-    #     for rec in self:
-    #         line_ids = self.env['recruitment.checklist'].search([]).ids
-    #         lines = len(rec.mapped('checklist_ids'))
-    #         if line_ids:
-    #             rec.progress = round((lines / len(line_ids)) * 100)
-    #         else:
-    #             rec.progress = 0
-
     @api.onchange('application_checklist_ids')
     def _onchange_is_done(self):
         for rec in self:
@@ -57,6 +47,6 @@ class HrApplicantRecruitChecklist(models.Model):
     checklist_id = fields.Many2one('recruitment.checklist', string="name")
     date = fields.Date(string="Date")
     note = fields.Text(string="Note")
-    is_done = fields.Boolean(striung="Done")
+    is_done = fields.Boolean(string="Done")
 
 
