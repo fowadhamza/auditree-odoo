@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Microsoft 365 / Entra ID provider.
+
+            Shipped disabled and without a client_id: those two values are the
+            only per-deployment part. After installing, open Settings > Users
+            and Companies > OAuth Providers > Microsoft 365 and
+
+              1. paste the Application (client) ID into Client ID,
+              2. replace YOUR_TENANT_ID in the Authorization URL with the
+                 Directory (tenant) ID,
+              3. tick Allowed.
+
+            Everything else - endpoints, scope, button - is the same on every
+            server, so a fresh database is two paste operations rather than
+            six remembered fields.
+        -->
+        <record id="provider_microsoft365" model="auth.oauth.provider">
+            <field name="name">Microsoft 365</field>
+            <field name="auth_endpoint">https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize</field>
+            <field name="scope">openid profile email</field>
+            <field name="validation_endpoint">https://graph.microsoft.com/oidc/userinfo</field>
+            <field name="css_class">fa fa-fw fa-windows</field>
+            <field name="body">Log in with Microsoft 365</field>
+            <field name="sequence">5</field>
+            <field name="enabled" eval="False"/>
+        </record>
+
+        <!--
+            Required for Microsoft Graph. Without it, auth_oauth sends the
+            token as ?access_token=... (see auth_oauth/models/res_users.py,
+            _auth_oauth_rpc) and Graph answers 401. Applies to every provider
+            on this database, which is why the Odoo.com one is disabled below.
+        -->
+        <record id="param_auth_oauth_authorization_header" model="ir.config_parameter">
+            <field name="key">auth_oauth.authorization_header</field>
+            <field name="value">True</field>
+        </record>
+
+        <!--
+            auth_oauth ships "Log in with Odoo.com" enabled by default. Its
+            tokeninfo endpoint expects the token as a query parameter, so the
+            setting above breaks it - and a self-hosted CE deployment has no
+            reason to offer it. Drop this record if you actually use it.
+        -->
+        <record id="auth_oauth.provider_openerp" model="auth.oauth.provider">
+            <field name="enabled" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
