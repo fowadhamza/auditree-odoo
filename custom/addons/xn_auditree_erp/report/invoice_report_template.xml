@@ -9,7 +9,7 @@
             <br/>
             <div class="row">
                 <div class="col-6">
-                    <span>Billing and Shipping Address</span>
+                    <strong>Billing and Shipping Address</strong>
                     <br/>
 
                         <span class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
@@ -24,6 +24,14 @@
                 </div>
                 <div class="col-6 text-end">
                     <table class="table table-borderless" name="details">
+                        <tr>
+                            <td>
+                                <strong>Invoice Number</strong>
+                            </td>
+                            <td>
+                                <span t-field="o.name"/>
+                            </td>
+                        </tr>
                         <tr>
                             <td>
                                 <strong>Invoice Date</strong>
@@ -42,10 +50,10 @@
                         </tr>
                         <tr>
                             <td>
-                                <strong>Conversion Rate:</strong>
+                                <strong>Conversion Rate</strong>
                             </td>
                             <td>
-                                <span/>
+                                <span t-field="o.invoice_currency_rate"/>
                             </td>
                         </tr>
                     </table>
@@ -57,34 +65,37 @@
                     <div class="oe_structure"></div>
                     <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
                     <div class="oe_structure"></div>
-                    <table class="table table-borderless" name="invoice_line_table">
+                    <table class="table table-borderless" name="invoice_line_table" style="table-layout:fixed;width:100%;">
                         <thead>
                             <tr style="background:#000000;color:#FFFFFF;">
-                                <th name="th_description" class="text-start">
+                                <th name="th_description" class="text-start" style="padding:6px 8px;width:4%;">
                                     <span>#</span>
                                 </th>
-                                <th name="th_description" class="text-start">
+                                <th name="th_description" class="text-start" style="padding:6px 8px;width:34%;">
                                     <span>Description</span>
                                 </th>
-                                <th name="th_quantity" class="text-end">
+                                <th name="th_quantity" class="text-end" style="padding:6px 8px;width:12%;white-space:nowrap;">
                                     <span>HSN/SAC</span>
                                 </th>
-                                <th name="th_quantity" class="text-end">
+                                <th name="th_quantity" class="text-end" style="padding:6px 8px;width:10%;white-space:nowrap;">
                                     <span>Hour</span>
                                 </th>
                                 <th name="th_priceunit"
-                                    t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                    t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"
+                                    style="padding:6px 8px;width:12%;white-space:nowrap;">
                                     <span>Rate</span>
                                 </th>
                                 <th name="th_discount" t-if="display_discount"
-                                    t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                    t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"
+                                    style="padding:6px 8px;width:8%;white-space:nowrap;">
                                     <span>Disc.%</span>
                                 </th>
                                 <th name="th_taxes"
-                                    t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                    t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"
+                                    style="padding:6px 8px;width:14%;white-space:nowrap;">
                                     <span>IGST</span>
                                 </th>
-                                <th name="th_subtotal" class="text-end">
+                                <th name="th_subtotal" class="text-end" style="padding:6px 8px;width:14%;white-space:nowrap;">
                                     <span>Amount</span>
                                 </th>
                             </tr>
@@ -101,34 +112,37 @@
 
                                 <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''" style="border:bottom:1px solid black;">
                                     <t t-if="line.display_type == 'product'" name="account_invoice_line_accountable">
-                                        <td name="account_invoice_line_name" style="border:bottom:1px solid black;">
+                                        <td name="account_invoice_line_name" style="border:bottom:1px solid black;padding:6px 8px;">
                                             <span t-esc="line_index+1" t-options="{'widget': 'text'}"></span>
                                         </td>
-                                        <td name="account_invoice_line_name">
+                                        <td name="account_invoice_line_name" style="padding:6px 8px;">
                                             <span t-field="line.name" t-options="{'widget': 'text'}">Bacon Burger</span>
                                         </td>
-                                        <td name="td_quantity" class="text-end">
+                                        <td name="td_quantity" class="text-end" style="padding:6px 8px;white-space:nowrap;">
                                             <span t-field="line.product_id.l10n_in_hsn_code"></span>
                                         </td>
-                                        <td name="td_quantity" class="text-end">
+                                        <td name="td_quantity" class="text-end" style="padding:6px 8px;white-space:nowrap;">
                                             <span t-field="line.quantity">3.00</span>
                                             <span t-field="line.product_uom_id" groups="uom.group_uom">units</span>
                                         </td>
                                         <td name="td_price_unit"
-                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"
+                                            style="padding:6px 8px;white-space:nowrap;">
                                             <span class="text-nowrap" t-field="line.price_unit">9.00</span>
                                         </td>
                                         <td name="td_discount" t-if="display_discount"
-                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                            t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"
+                                            style="padding:6px 8px;white-space:nowrap;">
                                             <span class="text-nowrap" t-field="line.discount">0</span>
                                         </td>
                                         <td name="td_taxes"
-                                            t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                            t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"
+                                            style="padding:6px 8px;white-space:nowrap;">
                                             <span t-out="', '.join(map(lambda x: (x.invoice_label or x.name), line.tax_ids))"
                                                   id="line_tax_ids">Tax 15%
                                             </span>
                                         </td>
-                                        <td name="td_subtotal" class="text-end o_price_total">
+                                        <td name="td_subtotal" class="text-end o_price_total" style="padding:6px 8px;white-space:nowrap;">
                                             <span class="text-nowrap" t-field="line.price_subtotal">27.00</span>
                                         </td>
                                     </t>
@@ -222,39 +236,47 @@
             </div>
             <div class="row">
                 <div class="col-6">
-                    <table class="table table-borderless" width="100%" style="font-size:13px;page-break-inside: avoid">
+                    <table class="table table-borderless table-sm" width="100%" style="font-size:13px;page-break-inside: avoid">
                     <t t-if="o.bank_partner_id">
                         <t t-foreach="o.bank_partner_id.bank_ids" t-as="bank">
                             <tr>
-                                <td style="text-align:center;" width="50%">
-                                    <span>Bank Name</span>
+                                <td style="text-align:left;padding:2px 8px;" width="35%">
+                                    <strong>Bank Name</strong>
                                 </td>
-                                <td style="text-align:center;" width="50%">
-                                    <span t-field="bank.bank_id"/>
+                                <td style="text-align:left;padding:2px 8px;">
+                                    <span t-field="bank.bank_name"/>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="text-align:center;" width="50%">
-                                    <span>Account Name</span>
+                                <td style="text-align:left;padding:2px 8px;" width="35%">
+                                    <strong>Name of Account</strong>
                                 </td>
-                                <td style="text-align:center;" width="50%">
+                                <td style="text-align:left;padding:2px 8px;">
                                     <span t-field="bank.acc_holder_name"/>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="text-align:center;" width="50%">
-                                    <span>Account Number</span>
+                                <td style="text-align:left;padding:2px 8px;" width="35%">
+                                    <strong>A/c No</strong>
                                 </td>
-                                <td style="text-align:center;" width="50%">
+                                <td style="text-align:left;padding:2px 8px;">
                                     <span t-field="bank.acc_number"/>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="text-align:center;" width="50%">
-                                    <span>IBAN Number</span>
+                                <td style="text-align:left;padding:2px 8px;" width="35%">
+                                    <strong>IFSC</strong>
                                 </td>
-                                <td style="text-align:center;" width="50%">
-                                    <span t-field="bank.iban"/>
+                                <td style="text-align:left;padding:2px 8px;">
+                                    <span t-field="bank.ifsc"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:left;padding:2px 8px;" width="35%">
+                                    <strong>SWIFT Code</strong>
+                                </td>
+                                <td style="text-align:left;padding:2px 8px;">
+                                    <span t-field="bank.swift_code"/>
                                 </td>
                             </tr>
                         </t>
@@ -277,6 +299,10 @@
             <br/>
             <br/>
 
+            <t t-if="o.company_id.invoice_signatory_signature">
+                <img t-att-src="image_data_uri(o.company_id.invoice_signatory_signature)" style="max-height:80px;"/>
+                <br/>
+            </t>
             <span>Authorised Signatory</span>
 
         </t>

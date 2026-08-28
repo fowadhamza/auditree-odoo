@@ -6,5 +6,10 @@
         <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
     </record>
 
+    <record id="group_invoice_signatory" model="res.groups">
+        <field name="name">Invoice Signatory</field>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
 
 </odoo>
