@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_bank_form_inherit_xn_auditree" model="ir.ui.view">
+        <field name="name">res.partner.bank.form.inherit.xn.auditree</field>
+        <field name="model">res.partner.bank</field>
+        <field name="inherit_id" ref="base.view_partner_bank_form"/>
+        <field name="arch" type="xml">
+            <field name="branch" position="after">
+                <field name="ifsc"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

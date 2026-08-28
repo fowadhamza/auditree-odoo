@@ -25,11 +25,19 @@
         'views/hr_recruitment_view.xml',
         'views/project_view.xml',
         'views/hr_attendance_view.xml',
+        'views/account_move_views.xml',
+        'views/res_company_views.xml',
+        'views/res_partner_bank_views.xml',
         'report/report.xml',
         'report/invoice_report_template.xml',
         'report/report_payslip.xml',
         #'views/res_users_view.xml',
         ],
+    "assets": {
+        "web.assets_backend": [
+            "xn_auditree_erp/static/src/scss/loading_indicator.scss",
+        ],
+    },
 
     "auto_install": False,
     "application": True,
