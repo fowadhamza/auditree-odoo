@@ -1,10 +1,10 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from odoo import fields, models
 
 
 class HrLeaveBalanceReport(models.Model):
     """
-    Wide-format leave balance report ? one row per active employee.
+    Wide-format leave balance report - one row per active employee.
     Each leave type has its own Allocated / Taken / Balance columns so HR
     can compare every employee side-by-side in a single scrollable table.
 
@@ -24,42 +24,42 @@ class HrLeaveBalanceReport(models.Model):
     _rec_name    = 'employee_id'
     _order       = 'employee_name'
 
-    # ?? Identity ?????????????????????????????????????????????????????????????
+    # --- Identity
     employee_id   = fields.Many2one('hr.employee',  string='Employee',   readonly=True)
     employee_name = fields.Char(string='Employee',  readonly=True)
     department_id = fields.Many2one('hr.department', string='Department', readonly=True)
 
-    # ?? Casual Leave (id=7) ???????????????????????????????????????????????????
-    casual_allocated = fields.Float(string='Casual ? Allocated', readonly=True, digits=(16, 1))
-    casual_taken     = fields.Float(string='Casual ? Taken',     readonly=True, digits=(16, 1))
-    casual_balance   = fields.Float(string='Casual ? Balance',   readonly=True, digits=(16, 1))
+    # --- Casual Leave (id=7)
+    casual_allocated = fields.Float(string='Casual - Allocated', readonly=True, digits=(16, 1))
+    casual_taken     = fields.Float(string='Casual - Taken',     readonly=True, digits=(16, 1))
+    casual_balance   = fields.Float(string='Casual - Balance',   readonly=True, digits=(16, 1))
 
-    # ?? Sick Leave (id=8) ?????????????????????????????????????????????????????
-    sick_allocated = fields.Float(string='Sick ? Allocated', readonly=True, digits=(16, 1))
-    sick_taken     = fields.Float(string='Sick ? Taken',     readonly=True, digits=(16, 1))
-    sick_balance   = fields.Float(string='Sick ? Balance',   readonly=True, digits=(16, 1))
+    # --- Sick Leave (id=8)
+    sick_allocated = fields.Float(string='Sick - Allocated', readonly=True, digits=(16, 1))
+    sick_taken     = fields.Float(string='Sick - Taken',     readonly=True, digits=(16, 1))
+    sick_balance   = fields.Float(string='Sick - Balance',   readonly=True, digits=(16, 1))
 
-    # ?? Earned Leave b/f (id=9) ???????????????????????????????????????????????
-    earned_allocated = fields.Float(string='Earned b/f ? Allocated', readonly=True, digits=(16, 1))
-    earned_taken     = fields.Float(string='Earned b/f ? Taken',     readonly=True, digits=(16, 1))
-    earned_balance   = fields.Float(string='Earned b/f ? Balance',   readonly=True, digits=(16, 1))
+    # --- Earned Leave b/f (id=9)
+    earned_allocated = fields.Float(string='Earned b/f - Allocated', readonly=True, digits=(16, 1))
+    earned_taken     = fields.Float(string='Earned b/f - Taken',     readonly=True, digits=(16, 1))
+    earned_balance   = fields.Float(string='Earned b/f - Balance',   readonly=True, digits=(16, 1))
 
-    # ?? Maternity Leave (id=12) ???????????????????????????????????????????????
-    maternity_allocated = fields.Float(string='Maternity ? Allocated', readonly=True, digits=(16, 1))
-    maternity_taken     = fields.Float(string='Maternity ? Taken',     readonly=True, digits=(16, 1))
-    maternity_balance   = fields.Float(string='Maternity ? Balance',   readonly=True, digits=(16, 1))
+    # --- Maternity Leave (id=12)
+    maternity_allocated = fields.Float(string='Maternity - Allocated', readonly=True, digits=(16, 1))
+    maternity_taken     = fields.Float(string='Maternity - Taken',     readonly=True, digits=(16, 1))
+    maternity_balance   = fields.Float(string='Maternity - Balance',   readonly=True, digits=(16, 1))
 
-    # ?? Comp-off (id=13) ??????????????????????????????????????????????????????
-    compoff_allocated = fields.Float(string='Comp-off ? Allocated', readonly=True, digits=(16, 1))
-    compoff_taken     = fields.Float(string='Comp-off ? Taken',     readonly=True, digits=(16, 1))
-    compoff_balance   = fields.Float(string='Comp-off ? Balance',   readonly=True, digits=(16, 1))
+    # --- Comp-off (id=13)
+    compoff_allocated = fields.Float(string='Comp-off - Allocated', readonly=True, digits=(16, 1))
+    compoff_taken     = fields.Float(string='Comp-off - Taken',     readonly=True, digits=(16, 1))
+    compoff_balance   = fields.Float(string='Comp-off - Balance',   readonly=True, digits=(16, 1))
 
-    # ?? Total row ?????????????????????????????????????????????????????????????
+    # --- Total row
     total_allocated = fields.Float(string='Total Allocated', readonly=True, digits=(16, 1))
     total_taken     = fields.Float(string='Total Taken',     readonly=True, digits=(16, 1))
     total_balance   = fields.Float(string='Total Balance',   readonly=True, digits=(16, 1))
 
-    # ?????????????????????????????????????????????????????????????????????????
+    # ---
     def init(self):
         """Drop and recreate the SQL view that backs this model."""
         self.env.cr.execute("DROP VIEW IF EXISTS hr_leave_balance_report CASCADE")
