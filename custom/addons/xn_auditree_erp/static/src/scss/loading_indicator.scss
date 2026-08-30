@@ -1,0 +1,37 @@
+/* Makes the built-in Odoo "Loading" indicator (web.LoadingIndicator) more
+   visible: bigger, adds a spinner icon, drop shadow. The template itself
+   (web/static/src/webclient/loading_indicator) is vendor code and is not
+   patched here -- this only restyles the existing .o_loading_indicator
+   element via CSS. */
+.o_loading_indicator {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    top: 54px !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    padding: 10px 18px !important;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+
+    &::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        border: 3px solid rgba(255, 255, 255, 0.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: xn_loading_spin 0.7s linear infinite;
+    }
+}
+
+@keyframes xn_loading_spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
