@@ -69,6 +69,10 @@
                 <table class="table table-sm table-borderless"
                        style="padding-top:20px;width:100%">
                     <tr>
+                        <th class='text-center'
+                            t-attf-style=" background-color:#{o.theme_id.base_color};color:#{company.document_layout_id.heading_text_color};">
+                            Invoice Number
+                        </th>
                         <th t-if="o.invoice_date"
                             class='text-center'
                             t-attf-style=" background-color:#{o.theme_id.base_color};color:#{company.document_layout_id.heading_text_color};">
@@ -83,6 +87,11 @@
                             class='text-center'
                             t-attf-style=" background-color:#{o.theme_id.base_color};color:#{company.document_layout_id.heading_text_color};">
                             Payment Term
+                        </th>
+                        <th t-if="o.invoice_currency_rate"
+                            class='text-center'
+                            t-attf-style=" background-color:#{o.theme_id.base_color};color:#{company.document_layout_id.heading_text_color};">
+                            Conversion Rate
                         </th>
                         <th t-if="(o.theme_id.sales_person) and (o.user_id)"
                             class='text-center'
@@ -102,6 +111,11 @@
                     </tr>
                     <!--Details value-->
                     <tr>
+                        <td>
+                            <font t-attf-style="color:#{o.theme_id.text_color};">
+                                <p class="text-center" t-field="o.name"/>
+                            </font>
+                        </td>
                         <td t-if="o.invoice_date">
                             <font t-attf-style="color:#{o.theme_id.text_color};">
                                 <p class="text-center"
@@ -118,6 +132,11 @@
                             <font t-attf-style="color:#{o.theme_id.text_color};">
                                 <p class="text-center"
                                    t-field="o.invoice_payment_term_id"/>
+                            </font>
+                        </td>
+                        <td t-if="o.invoice_currency_rate">
+                            <font t-attf-style="color:#{o.theme_id.text_color};">
+                                <p class="text-center" t-field="o.invoice_currency_rate"/>
                             </font>
                         </td>
                         <td t-if="(o.theme_id.sales_person) and (o.user_id)">
