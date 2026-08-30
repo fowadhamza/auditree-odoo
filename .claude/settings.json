@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(///wsl.localhost/Ubuntu-24.04/home/fowadhamza/Projects/**)",
+      "Read(//tmp/pristine_check/auditreelive-server/addons/hr_holidays/report/**)",
+      "Bash(cp /tmp/pristine_check/auditreelive-server/addons/hr_holidays/report/hr_leave_employee_type_report.py auditreelive-server/addons/hr_holidays/report/hr_leave_employee_type_report.py)",
+      "Bash(rm -rf /tmp/pristine_check)",
+      "Bash(cd \"//wsl.localhost/Ubuntu-24.04/home/fowadhamza/Projects/Auditree\" && find auditreelive-server/addons/hr_holidays/report/__pycache__ -iname \"*hr_leave_employee_type_report*\" 2>/dev/null)",
+      "Bash(rm -f auditreelive-server/addons/hr_holidays/report/__pycache__/hr_leave_employee_type_report.cpython-312.pyc auditreelive-server/addons/hr_holidays/report/__pycache__/hr_leave_employee_type_report.cpython-310.pyc)"
+    ]
+  }
+}

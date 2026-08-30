@@ -26,3 +26,19 @@
 # Editor/OS cruft
 .DS_Store
 Thumbs.db
+
+# Local dev config holding real credentials (db_password, admin_passwd).
+# Previously NOT ignored - a broad git add would have published it.
+/local-dev.conf
+
+# Runtime artifacts
+/odoo-local.pid
+
+# Claude Code local overrides (settings.json is shared, .local.json is not)
+/.claude/settings.local.json
+
+# Editor settings
+/.vscode/
+
+# Stray capture file (an accidental less-help dump)
+/tick
