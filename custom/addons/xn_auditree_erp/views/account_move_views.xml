@@ -19,6 +19,8 @@
             </xpath>
 
             <field name="invoice_date" position="after">
+                <label for="name" string="Invoice Number"/>
+                <field name="name" nolabel="1" readonly="state != 'draft'"/>
                 <field name="invoice_currency_rate"/>
             </field>
 
