@@ -11,15 +11,36 @@ class HrPayslip(models.Model):
     # silently dropped.
     NON_EARNING_CATEGORIES = ('DED', 'GROSS', 'NET')
 
+    def _group_indian(self, amount):
+        """Group digits the Indian way: 12,34,567.00 rather than 1,234,567.00.
+
+        Applied here rather than through the res.lang grouping so the change
+        stays confined to the payslip and does not restyle every number in
+        the system.
+        """
+        whole, _, fraction = '{:.2f}'.format(abs(amount)).partition('.')
+        if len(whole) > 3:
+            head, tail = whole[:-3], whole[-3:]
+            groups = []
+            while len(head) > 2:
+                groups.insert(0, head[-2:])
+                head = head[:-2]
+            if head:
+                groups.insert(0, head)
+            groups.append(tail)
+            whole = ','.join(groups)
+        return '%s.%s' % (whole, fraction)
+
     def _format_payslip_amount(self, amount):
         """Render an amount the way the printed payslip expects.
 
         Zero prints as a dash, matching the deduction column on the Auditree
-        payslip format.
+        payslip format. Everything else uses Indian digit grouping so the
+        figures agree with the lakh/crore wording on the Amount In Words row.
         """
         if not amount:
             return '-'
-        return '{:,.2f}'.format(abs(amount))
+        return self._group_indian(amount)
 
     def get_total_working_days(self):
         """Total working days covered by the payslip period."""
