@@ -100,10 +100,10 @@ class HrPayslip(models.Model):
             })
         return report_data
 
-    # Number system used to spell out the net amount. 'en' gives
-    # thousand/million, matching the en_US [3,0] digit grouping this database
-    # formats figures with. Switch to 'en_IN' for lakh/crore wording.
-    AMOUNT_WORDS_LANG = 'en'
+    # Number system used to spell out the net amount. 'en_IN' gives Indian
+    # lakh/crore wording, which is what the Auditree payslip format uses.
+    # Switch to 'en' for thousand/million wording.
+    AMOUNT_WORDS_LANG = 'en_IN'
 
     def _number_to_words(self, number):
         """Spell a whole number in title case, without hyphens or commas."""
@@ -117,6 +117,7 @@ class HrPayslip(models.Model):
         """Spell the net amount the way the Auditree payslip format does.
 
         93000.0    -> 'Ninety Three Thousand Only'
+        1500000.0  -> 'Fifteen Lakh Only'
         93500.5    -> 'Ninety Three Thousand Five Hundred and Fifty Paise Only'
         """
         net = net or 0.0
