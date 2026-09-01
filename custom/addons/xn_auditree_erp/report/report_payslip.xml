@@ -10,51 +10,51 @@
 
                     <table style="width: 100%;font-family: Calibri;font-size: 15px;" width="100%">
                         <tr>
-                            <td style="padding: 5px;width:20%;">Name</td>
+                            <td style="padding: 5px;width:20%;font-weight: bold;">Name</td>
                             <td style="padding: 5px;width:30%;">
                                 <span t-field="o.employee_id.name"/>
                             </td>
-                            <td style="padding: 5px;width:25%;">Month</td>
+                            <td style="padding: 5px;width:25%;font-weight: bold;">Month</td>
                             <td style="padding: 5px;width:25%;">
                                 <span t-esc="o.date_from.strftime('%B %Y')"/>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px;">Employee ID</td>
+                            <td style="padding: 5px;font-weight: bold;">Employee ID</td>
                             <td style="padding: 5px;">
                                 <span t-field="o.employee_id.identification_id"/>
                             </td>
-                            <td style="padding: 5px;">Total working days</td>
+                            <td style="padding: 5px;font-weight: bold;">Total working days</td>
                             <td style="padding: 5px;">
                                 <span t-esc="o.get_total_working_days()"/>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px;">Designation</td>
+                            <td style="padding: 5px;font-weight: bold;">Designation</td>
                             <td style="padding: 5px;">
                                 <span t-field="o.employee_id.job_id"/>
                             </td>
-                            <td style="padding: 5px;">No. of Days worked</td>
+                            <td style="padding: 5px;font-weight: bold;">No. of Days worked</td>
                             <td style="padding: 5px;">
                                 <span t-esc="o.get_days_worked()"/>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px;">Bank</td>
+                            <td style="padding: 5px;font-weight: bold;">Bank</td>
                             <td style="padding: 5px;">
                                 <span t-field="o.employee_id.bank_account_id.bank_id"/>
                             </td>
-                            <td style="padding: 5px;">LOP</td>
+                            <td style="padding: 5px;font-weight: bold;">LOP</td>
                             <td style="padding: 5px;">
                                 <span t-esc="o._format_payslip_amount(o.get_lop_days())"/>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px;">A/C No</td>
+                            <td style="padding: 5px;font-weight: bold;">A/C No</td>
                             <td style="padding: 5px;">
                                 <span t-field="o.employee_id.bank_account_id.acc_number"/>
                             </td>
-                            <td style="padding: 5px;">DOJ</td>
+                            <td style="padding: 5px;font-weight: bold;">DOJ</td>
                             <td style="padding: 5px;">
                                 <span t-field="o.employee_id.joining_date"/>
                             </td>
