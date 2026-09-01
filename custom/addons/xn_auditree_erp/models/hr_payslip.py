@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from num2words import num2words
 
 
 class HrPayslip(models.Model):
@@ -99,5 +100,31 @@ class HrPayslip(models.Model):
             })
         return report_data
 
+    # Number system used to spell out the net amount. 'en' gives
+    # thousand/million, matching the en_US [3,0] digit grouping this database
+    # formats figures with. Switch to 'en_IN' for lakh/crore wording.
+    AMOUNT_WORDS_LANG = 'en'
+
+    def _number_to_words(self, number):
+        """Spell a whole number in title case, without hyphens or commas."""
+        text = num2words(int(abs(number)), lang=self.AMOUNT_WORDS_LANG)
+        text = text.replace('-', ' ').replace(',', ' ')
+        # num2words inserts "and" before the tens; the payslip format omits it.
+        words = [w for w in text.split() if w != 'and']
+        return ' '.join(words).title()
+
     def amount_to_words(self, net):
-        return self.company_id.currency_id.amount_to_text(net)
+        """Spell the net amount the way the Auditree payslip format does.
+
+        93000.0    -> 'Ninety Three Thousand Only'
+        93500.5    -> 'Ninety Three Thousand Five Hundred and Fifty Paise Only'
+        """
+        net = net or 0.0
+        whole = int(abs(net))
+        paise = int(round((abs(net) - whole) * 100))
+        words = self._number_to_words(whole)
+        if paise:
+            words = '%s and %s Paise' % (words, self._number_to_words(paise))
+        if net < 0:
+            words = 'Minus %s' % words
+        return '%s Only' % words
