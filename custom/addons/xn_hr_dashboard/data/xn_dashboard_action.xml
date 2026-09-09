@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-      Point the existing Dashboard client action at this module's component.
-
-      One field on one record. The menu item, its name, its icon and its
-      groups are the vendor's and stay untouched, so nothing about where the
-      dashboard lives or who can see it changes. Reverting is this file
-      deleted and the module upgraded, which restores the tag "hr_dashboard".
-
-      This module depends on hrms_dashboard, so its data loads first and this
-      override lands after the record it changes.
+      This module owns its action and its menu outright. It used to repoint the
+      tag on hrms_dashboard's hr_action_dashboard record, which was neat where
+      that module was installed and impossible where it was not - which is the
+      case on the production server.
     -->
-    <record id="hrms_dashboard.hr_action_dashboard" model="ir.actions.client">
+    <record id="action_xn_dashboard" model="ir.actions.client">
+        <field name="name">Dashboard</field>
         <field name="tag">xn_hr_dashboard</field>
     </record>
+
+    <!--
+      Sequence -100 puts it first in the apps menu, which is where a dashboard
+      belongs. base.group_user: every internal user sees the personal and team
+      panels; the organisation section is gated server side per endpoint and
+      the client does not request it for anyone else.
+    -->
+    <menuitem id="menu_xn_dashboard_root"
+              name="Dashboard"
+              action="action_xn_dashboard"
+              groups="base.group_user"
+              sequence="-100"/>
 </odoo>

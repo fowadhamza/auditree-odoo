@@ -1,13 +1,16 @@
 # xn_hr_dashboard
 
-**This module now renders the Dashboard.** It supplies a replacement client
-action and its own OWL component, and reuses `hrms_dashboard` for its Python
-endpoints only. No vendor file is edited, and none of the vendor's templates or
-its stylesheet are rendered any more.
+**A self-contained HR dashboard.** Its own client action, its own OWL
+component, its own endpoints, its own menu. It depends on `hr`, `hr_holidays`,
+`hr_attendance`, `hr_recruitment` and `hr_timesheet` and nothing else.
 
-The switch is one field: `data/xn_dashboard_action.xml` sets the tag on the
-vendor's `hr_action_dashboard` record to `xn_hr_dashboard`. The menu item, its
-name, its icon and its groups are untouched.
+In particular it does **not** depend on `hrms_dashboard`. It used to: an
+earlier version repointed the tag on that module's `hr_action_dashboard`
+record, which was neat where the vendor module was installed and impossible
+where it was not. The production server turned out to be the second case, and
+installing the vendor there meant ten extra modules, the Events app, and a
+`import pandas` that died on a numpy 2 / pandas 1.5 ABI mismatch. Only two of
+its Python methods were ever called; both are reimplemented here.
 
 ## Why replace rather than keep patching
 
@@ -60,7 +63,27 @@ unloads the stylesheet.
 | `static/src/js/xn_dashboard_app.js` | The OWL component, registered as action tag `xn_hr_dashboard`. Loads the endpoints and shapes every figure. |
 | `static/src/xml/xn_dashboard_app.xml` | The whole page. Inherits nothing. |
 | `static/src/scss/xn_dashboard_app.scss` | Tokens and layout, all scoped under `.xn_dash`. |
-| `data/xn_dashboard_action.xml` | Points the existing action at the new tag. |
+| `data/xn_dashboard_action.xml` | Our own `ir.actions.client` and the Dashboard menu item. |
+| `__init__.py` | `post_init_hook` / `uninstall_hook`, which hide and restore the vendor's Dashboard menu where `hrms_dashboard` is also installed, so no database shows two of them. Both no-op where it is absent. |
+
+**Two endpoints replace the vendor's.** `xn_user_details` returns the person
+strip's figures directly instead of a full `search_read` of every field plus an
+`ir.ui.view` recordset, and computes the Bradford factor inline rather than
+through a SQL view that `hrms_dashboard` owns. `xn_leave_trend` buckets months
+with `generate_series` instead of loading every leave row into a DataFrame.
+Both were checked against the vendor's output on this database and return
+identical figures: 18,432 broad factor, and 2/3/2/1/0/0 days over the last six
+months.
+
+**That removes pandas from the codebase entirely.** It was imported in exactly
+one place, `hrms_dashboard/models/hr_employee.py`, and it is what took the
+production install down.
+
+**Optional panels degrade rather than fail.** Announcements need
+`hr_reward_warning`, Events needs `event`, work anniversaries need
+`joining_date` from `xn_auditree_erp`. None is a dependency: each endpoint
+checks whether the model or field is present, and the panel explains itself
+when it is not.
 
 **No Chart.js.** Every chart is drawn from numbers computed in the component:
 CSS boxes for bars and columns, one hand-built SVG path for the leave line.
@@ -84,12 +107,16 @@ to Google Fonts.
 
 ## Rolling back
 
-Set the tag in `data/xn_dashboard_action.xml` back to `hr_dashboard` and upgrade
-the module. The vendor dashboard returns, complete with the `t-inherit` fixes in
-`xn_dashboard_templates.xml` and `xn_dashboard.js`, which are still in the
-bundle for exactly this reason. Those two files are dead code while the new
-dashboard is active; delete them once the replacement has been in use long
-enough to trust.
+Uninstall the module. Its menu and action go with it, `uninstall_hook` puts the
+vendor's Dashboard menu back if that module is installed, and nothing else in
+the database was touched.
+
+The earlier vendor-patch files (`xn_dashboard.js`, `xn_dashboard.scss`,
+`xn_dashboard_templates.xml`) were deleted when the dependency went. They had
+to be: they `t-inherit` templates defined in `hrms_dashboard`, and a
+`t-inherit` whose parent does not exist fails the whole asset bundle. Their
+fixes live on in this module's own endpoints, which is where the corrected
+queries were anyway.
 
 ## The rules this module follows
 

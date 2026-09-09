@@ -121,10 +121,10 @@ export class XnHrDashboard extends Component {
         this.state.isManager = await this.user.hasGroup("hr.group_hr_manager");
 
         const [details, upcoming, anniversaries, leaveTrend] = await Promise.all([
-            this.call("get_user_employee_details"),
-            this.call("get_upcoming"),
+            this.call("xn_user_details"),
+            this.call("xn_upcoming"),
             this.call("xn_work_anniversaries"),
-            this.call("employee_leave_trend"),
+            this.call("xn_leave_trend", [6]),
         ]);
 
         this.state.employee = this.shapeEmployee(details);
@@ -145,7 +145,7 @@ export class XnHrDashboard extends Component {
                     this.call("xn_timesheet_utilisation", [6]),
                     this.call("xn_attendance_trend", [6]),
                     this.call("xn_turnover", [12]),
-                    this.call("get_dept_employee"),
+                    this.call("xn_headcount_by_department"),
                 ]);
             this.state.org = this.shapeOrg({
                 tiles,
@@ -165,13 +165,10 @@ export class XnHrDashboard extends Component {
     // Shaping. Everything the template renders is computed here.
     // ------------------------------------------------------------------
 
-    shapeEmployee(details) {
-        const row = Array.isArray(details) ? details[0] : details;
+    shapeEmployee(row) {
         if (!row) {
             return null;
         }
-        const job = row.job_title || (row.job_id && row.job_id[1]) || "";
-        const department = (row.department_id && row.department_id[1]) || "";
         // Figures are grouped in thousands here rather than in the template,
         // so 18432 reads as 18,432 without the template doing any formatting.
         const figure = (value) => Number(value || 0).toLocaleString();
@@ -179,16 +176,14 @@ export class XnHrDashboard extends Component {
         return {
             id: row.id,
             name: row.name || "",
-            job,
-            department,
-            experience: row.experience || "",
-            age: row.age || false,
-            checkedIn: row.attendance_state === "checked_in",
+            job: row.job || "",
+            department: row.department || "",
+            checkedIn: Boolean(row.checked_in),
             figures: [
-                { key: "payslips", label: "Payslips", value: figure(row.payslip_count) },
-                { key: "timesheets", label: "Timesheets", value: figure(row.emp_timesheets) },
-                { key: "contracts", label: "Contracts", value: figure(row.contracts_count) },
-                { key: "broad", label: "Broad factor", value: figure(round(row.broad_factor)) },
+                { key: "payslips", label: "Payslips", value: figure(row.payslips) },
+                { key: "timesheets", label: "Timesheets", value: figure(row.timesheets) },
+                { key: "contracts", label: "Contracts", value: figure(row.contracts) },
+                { key: "broad", label: "Broad factor", value: figure(row.broad_factor) },
             ],
         };
     }
@@ -196,6 +191,10 @@ export class XnHrDashboard extends Component {
     shapeTeam(upcoming) {
         const data = upcoming || {};
         return {
+            // Absent modules are reported as such, so an empty Events panel
+            // can say "not installed" rather than "nothing scheduled".
+            eventsTracked: data.events_tracked !== false,
+            announcementsTracked: data.announcements_tracked !== false,
             birthdays: (data.birthday || []).map((row) => ({
                 id: row[0],
                 name: row[1],
@@ -225,8 +224,8 @@ export class XnHrDashboard extends Component {
         if (!rows || !rows.length) {
             return null;
         }
-        const values = rows.map((row) => Number(row.leave) || 0);
-        const labels = rows.map((row) => String(row.l_month || "").split(" ")[0]);
+        const values = rows.map((row) => Number(row.days) || 0);
+        const labels = rows.map((row) => String(row.label || "").split(" ")[0]);
         const max = Math.max(1, ...values);
         const span = CHART.yBottom - CHART.yTop;
         const step = rows.length > 1 ? (CHART.x1 - CHART.x0) / (rows.length - 1) : 0;
@@ -304,13 +303,25 @@ export class XnHrDashboard extends Component {
             gaps: [],
         };
 
-        const deptRows = departments || [];
-        const deptMax = Math.max(1, ...deptRows.map((row) => row.value || 0));
-        org.departments = deptRows.map((row) => ({
+        // xn_headcount_by_department keeps the unassigned separate rather than
+        // dropping them; they are shown as a final, visually distinct row.
+        const deptData = departments || { rows: [], unassigned: 0 };
+        const deptRows = (deptData.rows || []).map((row) => ({
             label: row.label,
             value: row.value,
+            unassigned: false,
+        }));
+        if (deptData.unassigned) {
+            deptRows.push({
+                label: "No department",
+                value: deptData.unassigned,
+                unassigned: true,
+            });
+        }
+        const deptMax = Math.max(1, ...deptRows.map((row) => row.value || 0));
+        org.departments = deptRows.map((row) => ({
+            ...row,
             width: round(percent(row.value, deptMax), 1),
-            unassigned: /^no department$/i.test(row.label || ""),
         }));
 
         if (utilisation && utilisation.tracked) {
