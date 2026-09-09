@@ -887,8 +887,16 @@ class HrEmployee(models.Model):
         from taking the whole module down - which is exactly what it did on
         production. generate_series does the same job in the database.
 
-        A leave spanning a month boundary is attributed to the month each of
-        its days falls in, which is what the vendor's row expansion was for.
+        Leave is counted in working days, not calendar days, and hr_leave
+        already stores that figure in number_of_days. Counting calendar days
+        here instead overstated it badly: a six month leave on this database
+        reported 30 and 31 days in months whose real figures were 22 and 21.
+
+        A leave spanning a month boundary has its number_of_days apportioned
+        across the months by the share of its calendar span falling in each,
+        which is what the vendor's row expansion plus a resource-calendar
+        lookup was doing. A leave inside one month keeps its exact figure,
+        because its share is 1.
         """
         employee = self.sudo().search([("user_id", "=", self.env.uid)], limit=1)
         if not employee:
@@ -897,29 +905,32 @@ class HrEmployee(models.Model):
         self.env.cr.execute(
             """
             WITH months AS (
-                SELECT generate_series(
+                SELECT gs::date AS month_start,
+                       (gs + INTERVAL '1 month - 1 day')::date AS month_end
+                  FROM generate_series(
                            date_trunc('month', now()) - (%(months)s - 1) * INTERVAL '1 month',
                            date_trunc('month', now()),
                            INTERVAL '1 month'
-                       )::date AS month_start
+                       ) AS gs
             )
             SELECT to_char(m.month_start, 'Mon YYYY') AS label,
                    COALESCE(sum(
                        CASE WHEN h.id IS NULL THEN 0
-                            ELSE GREATEST(
-                                0,
-                                LEAST(h.date_to::date,
-                                      (m.month_start + INTERVAL '1 month - 1 day')::date)
-                                - GREATEST(h.date_from::date, m.month_start) + 1
-                            )
+                            ELSE h.number_of_days
+                                 * GREATEST(0,
+                                     LEAST(h.date_to::date, m.month_end)
+                                     - GREATEST(h.date_from::date, m.month_start) + 1
+                                   )::numeric
+                                 / GREATEST(1,
+                                     h.date_to::date - h.date_from::date + 1
+                                   )
                        END
                    ), 0) AS days
               FROM months m
               LEFT JOIN hr_leave h
                      ON h.employee_id = %(employee)s
                     AND h.state = 'validate'
-                    AND h.date_from::date
-                        <= (m.month_start + INTERVAL '1 month - 1 day')::date
+                    AND h.date_from::date <= m.month_end
                     AND h.date_to::date >= m.month_start
           GROUP BY m.month_start
           ORDER BY m.month_start
@@ -927,6 +938,6 @@ class HrEmployee(models.Model):
             {"months": months, "employee": employee.id},
         )
         return [
-            {"label": row[0], "days": float(row[1] or 0)}
+            {"label": row[0], "days": round(float(row[1] or 0), 1)}
             for row in self.env.cr.fetchall()
         ]
