@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+      The Auditree dashboard. No vendor template is inherited here; this is the
+      whole page. Nothing in this file does arithmetic: every width, height and
+      percentage is computed in xn_dashboard_app.js so the drawing and the
+      figures cannot disagree.
+    -->
+    <t t-name="xn_hr_dashboard.Dashboard">
+        <div class="xn_dash">
+
+            <div class="xn_dash_inner">
+
+                <t t-if="state.loading">
+                    <p class="xn_muted">Loading your dashboard...</p>
+                </t>
+
+                <t t-elif="!state.employee">
+                    <div class="xn_notice xn_warn">
+                        <span class="xn_badge">No employee record</span>
+                        <p>
+                            Your user account is not linked to an employee, so there is
+                            nothing personal to show. An HR manager can link it on the
+                            employee's form.
+                        </p>
+                    </div>
+                </t>
+
+                <t t-else="">
+
+                    <!-- Person strip. In normal flow, so no fixed slab and no
+                         spacer columns are needed anywhere on the page. -->
+                    <section class="xn_person">
+                        <img class="xn_avatar_img" alt=""
+                             t-att-src="avatarUrl(state.employee.id)"/>
+
+                        <div class="xn_person_id">
+                            <b><t t-esc="state.employee.name"/></b>
+                            <span>
+                                <t t-esc="state.employee.job"/>
+                                <t t-if="state.employee.job and state.employee.department"> &#183; </t>
+                                <t t-esc="state.employee.department"/>
+                            </span>
+                        </div>
+
+                        <div class="xn_figs">
+                            <t t-foreach="state.employee.figures" t-as="fig" t-key="fig.key">
+                                <button class="xn_fig" type="button"
+                                        t-on-click="() => this.openFigure(fig.key)">
+                                    <b><t t-esc="fig.value"/></b>
+                                    <span><t t-esc="fig.label"/></span>
+                                </button>
+                            </t>
+                        </div>
+
+                        <button class="xn_btn" type="button" t-on-click="toggleAttendance">
+                            <t t-if="state.employee.checkedIn">Check out</t>
+                            <t t-else="">Check in</t>
+                        </button>
+                    </section>
+
+                    <!-- Your team -->
+                    <section class="xn_block">
+                        <h3 class="xn_row_label">Your team</h3>
+                        <div class="xn_panels">
+
+                            <div class="xn_panel">
+                                <h4>Birthdays</h4>
+                                <ul t-if="state.team.birthdays.length">
+                                    <t t-foreach="state.team.birthdays" t-as="person" t-key="person.id">
+                                        <li>
+                                            <img class="xn_dot_img" alt=""
+                                                 t-att-src="avatarUrl(person.id)"/>
+                                            <span class="xn_li_main">
+                                                <b><t t-esc="person.name"/></b>
+                                                <span t-esc="person.job"/>
+                                            </span>
+                                            <span class="xn_when">
+                                                <t t-esc="person.date"/>
+                                                <em t-esc="person.away"/>
+                                            </span>
+                                        </li>
+                                    </t>
+                                </ul>
+                                <p class="xn_empty" t-else="">
+                                    No birthdays in the next 15 days.
+                                </p>
+                            </div>
+
+                            <div class="xn_panel">
+                                <h4>Work anniversaries</h4>
+                                <ul t-if="state.anniversaries.rows.length">
+                                    <t t-foreach="state.anniversaries.rows" t-as="person" t-key="person.id">
+                                        <li>
+                                            <img class="xn_dot_img" alt=""
+                                                 t-att-src="avatarUrl(person.id)"/>
+                                            <span class="xn_li_main">
+                                                <b><t t-esc="person.name"/></b>
+                                                <span>
+                                                    <t t-esc="person.job"/>
+                                                    <t t-if="person.job"> &#183; </t>
+                                                    <t t-esc="person.years"/>
+                                                    <t t-if="person.years == 1"> year</t>
+                                                    <t t-else=""> years</t>
+                                                </span>
+                                            </span>
+                                            <span class="xn_when">
+                                                <t t-esc="person.date"/>
+                                                <em t-esc="person.days_away == 0 ? 'today' : 'in ' + person.days_away + ' days'"/>
+                                            </span>
+                                        </li>
+                                    </t>
+                                </ul>
+                                <p class="xn_empty" t-elif="!state.anniversaries.tracked">
+                                    Joining dates are not recorded on this database, so
+                                    anniversaries cannot be worked out.
+                                </p>
+                                <p class="xn_empty" t-else="">
+                                    No work anniversaries in the next
+                                    <t t-esc="state.anniversaries.window"/> days.
+                                </p>
+                            </div>
+
+                            <div class="xn_panel">
+                                <h4>Announcements</h4>
+                                <t t-if="state.team.announcements.length">
+                                    <t t-foreach="state.team.announcements" t-as="ann" t-key="ann_index">
+                                        <div class="xn_ann">
+                                            <b><t t-esc="ann.title"/></b>
+                                            <span class="xn_code"><t t-esc="ann.meta"/></span>
+                                        </div>
+                                    </t>
+                                </t>
+                                <p class="xn_empty" t-else="">
+                                    No announcements are currently running.
+                                </p>
+                            </div>
+
+                            <div class="xn_panel">
+                                <h4>Events</h4>
+                                <ul t-if="state.team.events.length">
+                                    <t t-foreach="state.team.events" t-as="event" t-key="event_index">
+                                        <li>
+                                            <span class="xn_li_main">
+                                                <b><t t-esc="event.name"/></b>
+                                                <span t-esc="event.venue"/>
+                                            </span>
+                                            <span class="xn_when"><t t-esc="event.from"/></span>
+                                        </li>
+                                    </t>
+                                </ul>
+                                <p class="xn_empty" t-else="">
+                                    Nothing scheduled. Events created in the Events app
+                                    appear here.
+                                </p>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- Your leave -->
+                    <section class="xn_block" t-if="state.leave">
+                        <h3 class="xn_row_label">Your leave</h3>
+                        <div class="xn_card xn_card_narrow">
+                            <h4>Days taken</h4>
+                            <p class="xn_sub">
+                                Last six months
+                                <t t-if="!state.leave.empty">
+                                    &#183; <t t-esc="state.leave.total"/> days in total
+                                </t>
+                            </p>
+                            <t t-if="state.leave.empty">
+                                <p class="xn_empty">
+                                    No approved leave in the last six months.
+                                </p>
+                            </t>
+                            <t t-else="">
+                                <svg class="xn_leave" viewBox="0 0 320 118"
+                                     preserveAspectRatio="xMidYMid meet" role="img"
+                                     aria-label="Leave days taken over the last six months">
+                                    <t t-foreach="state.leave.ticks" t-as="tick" t-key="tick.value">
+                                        <line class="xn_grid" x1="26" x2="314"
+                                              t-att-y1="tick.y" t-att-y2="tick.y"/>
+                                        <text class="xn_axis" x="20" text-anchor="end"
+                                              t-att-y="tick.y + 3" t-esc="tick.value"/>
+                                    </t>
+                                    <path class="xn_area" t-att-d="state.leave.area"/>
+                                    <path class="xn_line" t-att-d="state.leave.line"/>
+                                    <t t-foreach="state.leave.points" t-as="point" t-key="point.label">
+                                        <circle t-att-class="point.last ? 'xn_pt xn_pt_end' : 'xn_pt'"
+                                                t-att-cx="point.x" t-att-cy="point.y" r="3"/>
+                                        <text class="xn_axis" y="110" text-anchor="middle"
+                                              t-att-x="point.x" t-esc="point.label"/>
+                                    </t>
+                                </svg>
+                            </t>
+                        </div>
+                    </section>
+
+                    <!-- ============ HR manager only ============ -->
+                    <t t-if="state.isManager and state.org">
+
+                        <section class="xn_block">
+                            <h3 class="xn_row_label">Needs a decision</h3>
+                            <div class="xn_decisions">
+                                <t t-foreach="state.org.decisions" t-as="dec" t-key="dec.key">
+                                    <button class="xn_dec" type="button"
+                                            t-on-click="() => this.openTile(dec.key)">
+                                        <b><t t-esc="dec.value"/></b>
+                                        <span><t t-esc="dec.label"/></span>
+                                        <small><t t-esc="dec.hint"/></small>
+                                    </button>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="xn_block">
+                            <h3 class="xn_row_label">Today</h3>
+
+                            <div class="xn_tiles" t-if="state.org.attendanceCurrent">
+                                <t t-foreach="state.org.today" t-as="tile" t-key="tile.key">
+                                    <button class="xn_tile" type="button"
+                                            t-on-click="() => this.openTile(tile.key)">
+                                        <b><t t-esc="tile.value"/></b>
+                                        <span><t t-esc="tile.label"/></span>
+                                    </button>
+                                </t>
+                                <div class="xn_tile xn_tile_flat">
+                                    <b><t t-esc="state.org.monthHours"/></b>
+                                    <span>Hours recorded this month</span>
+                                </div>
+                            </div>
+
+                            <div class="xn_notice xn_warn" t-elif="state.org.attendanceEver">
+                                <span class="xn_badge">Stale</span>
+                                <p>
+                                    Attendance was last recorded on
+                                    <b><t t-esc="state.org.attendanceLast"/></b>,
+                                    <t t-esc="state.org.attendanceStaleDays"/> days ago.
+                                    Today's figures are withheld rather than shown as zeros,
+                                    which would read as nobody having come in.
+                                </p>
+                            </div>
+
+                            <div class="xn_notice xn_warn" t-else="">
+                                <span class="xn_badge">Not tracked</span>
+                                <p>No attendance has ever been recorded on this database.</p>
+                            </div>
+                        </section>
+
+                        <section class="xn_block">
+                            <h3 class="xn_row_label">
+                                Across the organisation
+                                <span class="xn_row_note">
+                                    <t t-esc="state.org.headcount"/> active staff
+                                </span>
+                            </h3>
+
+                            <div class="xn_grid_cards">
+
+                                <div class="xn_card" t-if="state.org.departments.length">
+                                    <h4>People by department</h4>
+                                    <p class="xn_sub"><t t-esc="state.org.headcount"/> active staff</p>
+                                    <div class="xn_bars">
+                                        <t t-foreach="state.org.departments" t-as="dept" t-key="dept.label">
+                                            <div class="xn_bar_row">
+                                                <span t-att-class="dept.unassigned ? 'xn_name xn_name_muted' : 'xn_name'"
+                                                      t-esc="dept.label"/>
+                                                <span class="xn_track">
+                                                    <i t-att-class="dept.unassigned ? 'xn_soft' : ''"
+                                                       t-att-style="'width: ' + dept.width + '%'"/>
+                                                </span>
+                                                <span class="xn_val" t-esc="dept.value"/>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+
+                                <div class="xn_card" t-if="state.org.utilisation">
+                                    <h4>Hours logged against capacity</h4>
+                                    <p class="xn_sub">All staff, last six months</p>
+                                    <div class="xn_cols">
+                                        <t t-foreach="state.org.utilisation.columns" t-as="col" t-key="col.label">
+                                            <div class="xn_col">
+                                                <span class="xn_stack">
+                                                    <i t-att-style="'height: ' + col.height + '%'"/>
+                                                </span>
+                                                <span class="xn_cap"><t t-esc="col.share"/>%</span>
+                                                <span class="xn_mon"><t t-esc="col.label"/></span>
+                                            </div>
+                                        </t>
+                                    </div>
+                                    <div class="xn_legend">
+                                        <span><i class="xn_key xn_key_fill"/> Hours logged</span>
+                                        <span><i class="xn_key xn_key_track"/> Capacity estimate</span>
+                                    </div>
+                                </div>
+
+                                <div class="xn_card" t-if="state.org.attendance">
+                                    <h4>Attendance recorded</h4>
+                                    <p class="xn_sub">Hours per month, and how many people</p>
+                                    <div class="xn_cols">
+                                        <t t-foreach="state.org.attendance.columns" t-as="col" t-key="col.label">
+                                            <div class="xn_col">
+                                                <span class="xn_stack">
+                                                    <i t-att-style="'height: ' + col.height + '%'"/>
+                                                </span>
+                                                <span class="xn_cap"><t t-esc="col.people"/></span>
+                                                <span class="xn_mon"><t t-esc="col.label"/></span>
+                                            </div>
+                                        </t>
+                                    </div>
+                                    <div class="xn_legend">
+                                        <span><i class="xn_key xn_key_fill"/> Hours</span>
+                                        <span>Figure under each bar is people clocking in</span>
+                                    </div>
+                                </div>
+
+                                <div class="xn_card" t-if="state.org.pipeline">
+                                    <h4>Hiring pipeline</h4>
+                                    <p class="xn_sub">
+                                        <t t-esc="state.org.pipeline.total"/> live applications
+                                    </p>
+                                    <div class="xn_seg">
+                                        <t t-foreach="state.org.pipeline.rows" t-as="stage" t-key="stage.label">
+                                            <i t-att-class="stage.tone"
+                                               t-att-style="'width: ' + stage.width + '%'"/>
+                                        </t>
+                                    </div>
+                                    <div class="xn_seg_legend">
+                                        <t t-foreach="state.org.pipeline.rows" t-as="stage" t-key="stage.label">
+                                            <span>
+                                                <i t-att-class="'xn_key ' + stage.tone"/>
+                                                <t t-esc="stage.label"/>
+                                                <b><t t-esc="stage.value"/></b>
+                                            </span>
+                                        </t>
+                                    </div>
+                                </div>
+
+                                <div class="xn_card" t-if="state.org.turnover">
+                                    <h4>Joiners and leavers</h4>
+                                    <p class="xn_sub">Last twelve months</p>
+                                    <div class="xn_stat_line">
+                                        <span class="xn_stat">
+                                            <b><t t-esc="state.org.turnover.totalJoins"/></b>
+                                            <span>Joined</span>
+                                        </span>
+                                        <span class="xn_stat">
+                                            <b><t t-esc="state.org.turnover.totalExits"/></b>
+                                            <span>Left</span>
+                                        </span>
+                                        <span class="xn_stat">
+                                            <b><t t-esc="state.org.turnover.attrition"/>%</b>
+                                            <span>Attrition</span>
+                                        </span>
+                                    </div>
+                                    <div class="xn_pairs">
+                                        <t t-foreach="state.org.turnover.months" t-as="month" t-key="month_index">
+                                            <span class="xn_pair">
+                                                <i class="xn_join"
+                                                   t-att-style="'height: ' + month.joinHeight + '%'"/>
+                                                <i class="xn_exit"
+                                                   t-att-style="'height: ' + month.exitHeight + '%'"/>
+                                            </span>
+                                        </t>
+                                    </div>
+                                    <div class="xn_pair_labels">
+                                        <t t-foreach="state.org.turnover.months" t-as="month" t-key="month_index">
+                                            <span t-esc="month.label"/>
+                                        </t>
+                                    </div>
+                                    <div class="xn_legend">
+                                        <span><i class="xn_key xn_key_fill"/> Joined</span>
+                                        <span><i class="xn_key xn_key_brass"/> Left</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </section>
+
+                        <section class="xn_block" t-if="state.org.gaps.length">
+                            <h3 class="xn_row_label">Gaps affecting these figures</h3>
+                            <div class="xn_card">
+                                <div class="xn_bars">
+                                    <t t-foreach="state.org.gaps" t-as="gap" t-key="gap.what">
+                                        <div class="xn_gap_row">
+                                            <span class="xn_what" t-esc="gap.what"/>
+                                            <span class="xn_track">
+                                                <i class="xn_brass"
+                                                   t-att-style="'width: ' + gap.width + '%'"/>
+                                            </span>
+                                            <span class="xn_val">
+                                                <t t-esc="gap.count"/> / <t t-esc="gap.active"/>
+                                            </span>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </section>
+
+                    </t>
+
+                </t>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

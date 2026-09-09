@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Point the existing Dashboard client action at this module's component.
+
+      One field on one record. The menu item, its name, its icon and its
+      groups are the vendor's and stay untouched, so nothing about where the
+      dashboard lives or who can see it changes. Reverting is this file
+      deleted and the module upgraded, which restores the tag "hr_dashboard".
+
+      This module depends on hrms_dashboard, so its data loads first and this
+      override lands after the record it changes.
+    -->
+    <record id="hrms_dashboard.hr_action_dashboard" model="ir.actions.client">
+        <field name="tag">xn_hr_dashboard</field>
+    </record>
+</odoo>

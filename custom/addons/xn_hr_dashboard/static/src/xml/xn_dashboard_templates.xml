@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+      Anchors are scoped by class, never by position. "//div[1]" matches every
+      div that is the first div child of its parent, so a second xpath in the
+      same block would target the node the first one just inserted.
+    -->
+
+    <!-- 1. Name the personal block, so it is not read as organisation-wide. -->
+    <t t-inherit="hrms_dashboard.LoginEmployeeDetails" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('main-section')]" position="before">
+            <div class="row main-section">
+                <div class="col-md-2 col-sm-2 dummy"/>
+                <div class="col-md-10 col-sm-10">
+                    <div class="xn_section_head">
+                        <h2>Your details</h2>
+                        <p>Your own payslips, timesheets, leave and attendance - not the organisation's.</p>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+
+    <!-- 2. Everything organisation-wide hangs off the manager block. -->
+    <t t-inherit="hrms_dashboard.ManagerDashboard" t-inherit-mode="extension">
+
+        <!--
+          .employee-prof is position:fixed with no offsets, so it is out of
+          flow and reserves no space. The vendor clears it with an empty
+          col-md-2 "dummy" spacer in every one of its own rows; anything added
+          here has to do the same or the card lands on top of it.
+        -->
+        <xpath expr="//div[hasclass('employee_dashboard_main')]" position="before">
+            <div class="row main-section">
+                <div class="col-md-2 col-sm-2 dummy"/>
+                <div class="col-md-10 col-sm-10">
+                    <div class="xn_section_head">
+                        <h2>Across the organisation</h2>
+                        <p>
+                            Every figure below covers all staff.
+                            <t t-if="xn.tiles.headcount">
+                                <t t-esc="xn.tiles.headcount"/> active employees.
+                            </t>
+                        </p>
+                    </div>
+                    <!-- Summary before detail: the tiles lead, the vendor's
+                         remaining charts follow, then ours. -->
+                    <t t-call="xn_hr_dashboard.OrgTiles"/>
+                </div>
+            </div>
+        </xpath>
+
+        <xpath expr="//div[hasclass('employee_dashboard_main')]" position="after">
+            <div class="row main-section">
+                <div class="col-md-2 col-sm-2 dummy"/>
+                <div class="col-md-10 col-sm-10">
+                    <t t-call="xn_hr_dashboard.OrgCharts"/>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- The three approval tiles the "Needs a decision" row supersedes. -->
+        <xpath expr="//div[hasclass('hr_leave_request_approve')]" position="replace"/>
+        <xpath expr="//div[hasclass('hr_leave_allocations_approve')]" position="replace"/>
+        <xpath expr="//div[hasclass('hr_job_application_approve')]" position="replace"/>
+
+        <!-- Both read resign_date, which is unpopulated, so both always
+             showed zero. Replaced by the joiners/leavers panel below. -->
+        <xpath expr="//div[hasclass('monthly_join_resign_trend')]" position="replace"/>
+        <xpath expr="//div[hasclass('monthly_attrition_rate')]" position="replace"/>
+    </t>
+
+    <!--
+      3. "Your team". The queries behind these three panels are corrected in
+      get_upcoming(); the only markup changes needed are an empty state each
+      and the birthday avatar, which was passing the whole row to the image
+      URL helper instead of the employee id.
+    -->
+    <t t-inherit="hrms_dashboard.EmployeeDashboard" t-inherit-mode="extension">
+
+        <xpath expr="//img[hasclass('rounded-circle')]" position="attributes">
+            <attribute name="t-att-src">this.get_emp_image_url(employee[0])</attribute>
+        </xpath>
+
+        <xpath expr="//t[@t-foreach='this.state.employee_birthday']" position="after">
+            <div class="xn_panel_empty" t-if="!this.state.employee_birthday.length">
+                No birthdays in the next 15 days.
+            </div>
+        </xpath>
+
+        <xpath expr="//t[@t-foreach='this.state.upcoming_events']" position="after">
+            <div class="xn_panel_empty" t-if="!this.state.upcoming_events.length">
+                No events scheduled. Events created in the Events app appear here.
+            </div>
+        </xpath>
+
+        <xpath expr="//t[@t-foreach='this.state.announcements']" position="after">
+            <div class="xn_panel_empty" t-if="!this.state.announcements.length">
+                No announcements are currently running.
+            </div>
+        </xpath>
+
+        <!--
+          Work anniversaries, stacked under the birthdays card in the same
+          column. The anchor is the one hr_notification div that does not also
+          carry col-xs-12: the birthday card. The other two panels carry both
+          classes, so this matches exactly one node without counting position.
+        -->
+        <xpath expr="//div[hasclass('hr_notification') and not(hasclass('col-xs-12'))]"
+               position="after">
+            <div class="hr_notification xn_anniversary_panel">
+                <div class="hr_notification_head">
+                    Work Anniversaries
+                </div>
+                <div class="col-xs-12 text-align">
+                    <t t-foreach="xn.anniversaries.rows" t-as="person" t-key="person.id">
+                        <div class="col-sm-12 col-lg-12" style="padding:0;">
+                            <div class="text-color">
+                                <div class="media">
+                                    <a href="#"
+                                       style="float: left;padding-right: 6%; pointer-events: none; cursor: default;">
+                                        <img class="align-self-center rounded-circle mr-3"
+                                             alt=""
+                                             t-att-src="this.get_emp_image_url(person.id)"/>
+                                    </a>
+                                    <div class="media-body">
+                                        <h2 class="text-color display-6" style="font-size: 15px;">
+                                            <t t-esc="person.name"/>
+                                        </h2>
+                                        <p><t t-esc="person.job"/></p>
+                                        <p class="text-light">
+                                            <t t-esc="person.years"/>
+                                            <t t-if="person.years == 1"> year</t>
+                                            <t t-else=""> years</t>
+                                            on <t t-esc="person.date"/>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <div class="xn_panel_empty" t-if="!xn.anniversaries.tracked">
+                        Joining dates are not recorded on this database, so
+                        anniversaries cannot be worked out.
+                    </div>
+                    <div class="xn_panel_empty" t-elif="!xn.anniversaries.rows.length">
+                        No work anniversaries in the next
+                        <t t-esc="xn.anniversaries.window"/> days.
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+
+    <!-- ============================================================== -->
+
+    <t t-name="xn_hr_dashboard.OrgTiles">
+        <div class="xn_org" t-if="xn.loaded and xn.permitted">
+
+            <!-- Today -->
+            <h3 class="xn_row_head">Today</h3>
+
+            <div class="xn_tiles" t-if="xn.tiles.attendance_current">
+                <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('present_now')">
+                    <span class="xn_value"><t t-esc="xn.tiles.present_now"/></span>
+                    <span class="xn_label">Currently checked in</span>
+                </div>
+                <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('on_leave_today')">
+                    <span class="xn_value"><t t-esc="xn.tiles.on_leave_today"/></span>
+                    <span class="xn_label">On leave</span>
+                </div>
+                <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('late_today')">
+                    <span class="xn_value"><t t-esc="xn.tiles.late_today"/></span>
+                    <span class="xn_label">Arrived after schedule</span>
+                </div>
+                <div class="xn_tile xn_tile_flat">
+                    <span class="xn_value"><t t-esc="xn.tiles.month_hours"/></span>
+                    <span class="xn_label">Hours recorded this month</span>
+                </div>
+            </div>
+
+            <t t-else="">
+                <!--
+                  Attendance has stopped, or never started. Showing 0 / 0 / 0 / 0
+                  here would read as "nobody came in today", which is believed
+                  and is wrong. Blank the figures and say what is the matter.
+                -->
+                <div class="xn_tiles">
+                    <div class="xn_tile xn_tile_blank">
+                        <span class="xn_value">-</span>
+                        <span class="xn_label">Currently checked in</span>
+                        <span class="xn_sub">no data</span>
+                    </div>
+                    <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('on_leave_today')">
+                        <span class="xn_value"><t t-esc="xn.tiles.on_leave_today"/></span>
+                        <span class="xn_label">On leave</span>
+                        <span class="xn_sub">approved absences</span>
+                    </div>
+                    <div class="xn_tile xn_tile_blank">
+                        <span class="xn_value">-</span>
+                        <span class="xn_label">Arrived after schedule</span>
+                        <span class="xn_sub">no data</span>
+                    </div>
+                    <div class="xn_tile xn_tile_blank">
+                        <span class="xn_value">-</span>
+                        <span class="xn_label">Hours recorded this month</span>
+                        <span class="xn_sub">no data</span>
+                    </div>
+                </div>
+                <div class="xn_notice">
+                    <span>!</span>
+                    <span t-if="xn.tiles.attendance_ever">
+                        <strong>
+                            Attendance was last recorded on
+                            <t t-esc="xn.tiles.attendance_last"/>,
+                            <t t-esc="xn.tiles.attendance_stale_days"/> days ago.
+                        </strong>
+                        These tiles are blank rather than zero. Check whether kiosk mode or
+                        employee check-in is still switched on.
+                    </span>
+                    <span t-else="">
+                        <strong>No attendance has ever been recorded.</strong>
+                        Turn on check-in for employees to fill this row.
+                    </span>
+                </div>
+            </t>
+
+            <!-- Approvals -->
+            <h3 class="xn_row_head">Needs a decision</h3>
+            <div class="xn_tiles">
+                <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('leave_to_approve')">
+                    <span class="xn_value"><t t-esc="xn.tiles.leave_to_approve"/></span>
+                    <span class="xn_label">Leave requests</span>
+                    <span class="xn_sub">awaiting approval</span>
+                </div>
+                <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('allocation_to_approve')">
+                    <span class="xn_value"><t t-esc="xn.tiles.allocation_to_approve"/></span>
+                    <span class="xn_label">Leave allocations</span>
+                    <span class="xn_sub">awaiting approval</span>
+                </div>
+                <div class="xn_tile" tabindex="0" t-on-click="() => this.xnOpenTile('applicants_open')">
+                    <span class="xn_value"><t t-esc="xn.tiles.applicants_open"/></span>
+                    <span class="xn_label">Live applications</span>
+                    <span class="xn_sub">not yet hired or refused</span>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="xn_hr_dashboard.OrgCharts">
+        <div class="xn_org" t-if="xn.loaded and xn.permitted">
+
+            <!-- Charts -->
+            <div class="xn_empty" t-if="!xn.chartsAvailable" style="margin-top:22px">
+                Charts could not be drawn because the charting library did not load.
+                Reload the page; if it persists, check the browser console.
+            </div>
+
+            <div class="xn_charts" t-if="xn.chartsAvailable">
+
+                <div class="xn_card">
+                    <h4>Hiring pipeline</h4>
+                    <p class="xn_card_cap">Live applications by stage.</p>
+                    <div class="xn_canvas" t-if="xn.pipeline.total">
+                        <canvas id="xn_pipeline_chart"/>
+                    </div>
+                    <div class="xn_empty" t-else="">
+                        No live applications. New ones appear here grouped by stage.
+                    </div>
+                </div>
+
+                <div class="xn_card">
+                    <h4>Project hours logged</h4>
+                    <p class="xn_card_cap">Monthly totals on projects, last six months.</p>
+                    <div class="xn_canvas" t-if="xn.utilisation.tracked">
+                        <canvas id="xn_utilisation_chart"/>
+                    </div>
+                    <div class="xn_empty" t-else="">
+                        No project time logged in the last six months.
+                    </div>
+                    <p class="xn_note" t-if="xn.utilisation.tracked and !xn.utilisation.capacity_known">
+                        Capacity needs a working schedule on the company before it can be drawn.
+                    </p>
+                </div>
+
+                <div class="xn_card">
+                    <h4>Attendance hours</h4>
+                    <p class="xn_card_cap">Recorded hours per month.</p>
+                    <div class="xn_canvas_short" t-if="xn.attendance.tracked">
+                        <canvas id="xn_attendance_hours_chart"/>
+                    </div>
+                    <div class="xn_empty" t-else="">
+                        Nothing recorded in this window.
+                    </div>
+                </div>
+
+                <div class="xn_card">
+                    <h4>People clocking in</h4>
+                    <p class="xn_card_cap">Distinct employees per month. Charted separately from
+                        hours because they are different units.</p>
+                    <div class="xn_canvas_short" t-if="xn.attendance.tracked">
+                        <canvas id="xn_attendance_people_chart"/>
+                    </div>
+                    <div class="xn_empty" t-else="">
+                        Nothing recorded in this window.
+                    </div>
+                </div>
+
+                <div class="xn_card">
+                    <h4>Joiners and leavers</h4>
+                    <p class="xn_card_cap">Twelve months. Read from the departure date recorded by
+                        Register Departure.</p>
+                    <t t-if="xn.turnover.exits_tracked">
+                        <div class="xn_figs">
+                            <div class="xn_fig">
+                                <div class="n joined"><t t-esc="xn.turnover.total_joins"/></div>
+                                <div class="k">joined</div>
+                            </div>
+                            <div class="xn_fig">
+                                <div class="n left"><t t-esc="xn.turnover.total_exits"/></div>
+                                <div class="k">left</div>
+                            </div>
+                            <div class="xn_fig">
+                                <div class="n"><t t-esc="xn.turnover.attrition"/>%</div>
+                                <div class="k">attrition over the period</div>
+                            </div>
+                        </div>
+                        <div class="xn_canvas_short">
+                            <canvas id="xn_turnover_chart"/>
+                        </div>
+                    </t>
+                    <div class="xn_empty" t-else="">
+                        Attrition cannot be calculated yet: no employee has a departure date.
+                        Record departures with Register Departure, or set the date on the
+                        <t t-esc="xn.health.archived_without_exit_date"/> archived employees
+                        that are missing one.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data health -->
+            <div class="xn_card xn_health">
+                <h4>Gaps affecting this dashboard</h4>
+                <ul>
+                    <li t-if="xn.health.no_birthday">
+                        <t t-esc="xn.health.no_birthday"/> employees have no date of birth,
+                        so birthdays and ages are incomplete.
+                    </li>
+                    <li t-if="xn.health.no_department">
+                        <t t-esc="xn.health.no_department"/> employees have no department,
+                        so they sit in the "No department" slice rather than a real one.
+                    </li>
+                    <li t-if="xn.health.no_job">
+                        <t t-esc="xn.health.no_job"/> employees have no job position.
+                    </li>
+                    <li t-if="xn.health.no_hire_date">
+                        <t t-esc="xn.health.no_hire_date"/> employees have no joining date, so
+                        their start month falls back to when the record was created.
+                    </li>
+                    <li t-if="xn.health.archived_without_exit_date">
+                        <t t-esc="xn.health.archived_without_exit_date"/> archived employees have
+                        no departure date, which is what turnover and attrition count.
+                    </li>
+                    <li class="xn_health_ok" t-if="!xn.health.archived_without_exit_date">
+                        Every archived employee has a departure date.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </t>
+
+</templates>
