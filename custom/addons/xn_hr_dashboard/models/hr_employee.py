@@ -326,22 +326,6 @@ class HrEmployee(models.Model):
         }
 
     @api.model
-    def get_dept_employee(self):
-        """Override: the vendor donut counted archived staff.
-
-        The vendor query has no ``active`` filter and inner-joins
-        hr_department, so on this database it reports 52 people against 28
-        active, and the 7 with no department vanish rather than showing as a
-        slice. Return shape is kept identical so the vendor's d3 pie keeps
-        working untouched.
-        """
-        data = self.xn_headcount_by_department()
-        result = [{"label": r["label"], "value": r["value"]} for r in data["rows"]]
-        if data["unassigned"]:
-            result.append({"label": "No department", "value": data["unassigned"]})
-        return result
-
-    @api.model
     def xn_recruitment_pipeline(self):
         """Live applications by stage, in stage order, instead of one total."""
         self._xn_check_manager()
@@ -566,24 +550,28 @@ class HrEmployee(models.Model):
         return health
 
     # ------------------------------------------------------------------
-    # "Your team" - full replacement of the vendor's get_upcoming
+    # "Your team"
     # ------------------------------------------------------------------
 
     @api.model
-    def get_upcoming(self):
+    def xn_upcoming(self):
         """Birthdays, upcoming events and announcements.
 
-        Replaces hrms_dashboard's version rather than extending it, because
-        all three of its queries are wrong. The tuple shapes are kept exactly
-        so the vendor's OWL templates keep rendering; what changes is:
+        Events and announcements come from optional modules. Rather than
+        depending on `event` and `hr_reward_warning` and forcing both onto
+        every database that installs this dashboard, each is queried only when
+        its model is present, and the panel says so when it is not. Birthdays
+        need nothing beyond `hr`.
 
-        * birthdays exclude archived employees, and no longer require a job
+        Notes on the queries themselves, which is where the vendor's
+        equivalents went wrong:
+
+        * birthdays exclude archived employees, and do not require a job
           position (an inner join on hr_job hid 6 active employees here);
         * announcements lead with announcement_reason, which the model labels
-          "Title", instead of name, which is the sequence code;
+          "Title", rather than name, which is only the sequence code;
         * events left-join their venue instead of requiring one;
-        * the announcement query is parameterised rather than interpolated;
-        * announcements are scoped to the allowed companies.
+        * every query is parameterised and scoped to the allowed companies.
         """
         cr = self.env.cr
         lang = self.env.context.get("lang") or "en_US"
@@ -621,63 +609,74 @@ class HrEmployee(models.Model):
         )
         birthday = cr.fetchall()
 
-        cr.execute(
-            """
-            SELECT COALESCE(e.name ->> %(lang)s, e.name ->> 'en_US') AS name,
-                   e.date_begin,
-                   e.date_end,
-                   rp.name AS location
-              FROM event_event e
-              LEFT JOIN res_partner rp ON rp.id = e.address_id
-             WHERE e.date_begin >= now()
-               AND (e.company_id IS NULL OR e.company_id IN %(companies)s)
-          ORDER BY e.date_begin
-             LIMIT 10
-            """,
-            {"lang": lang, "companies": tuple(self.env.companies.ids) or (0,)},
-        )
-        event = cr.fetchall()
+        # The Events app is optional. Without it the table does not exist, so
+        # the panel reports that instead of the query raising.
+        events_tracked = "event.event" in self.env
+        event = []
+        if events_tracked:
+            cr.execute(
+                """
+                SELECT COALESCE(e.name ->> %(lang)s, e.name ->> 'en_US') AS name,
+                       e.date_begin,
+                       e.date_end,
+                       rp.name AS location
+                  FROM event_event e
+                  LEFT JOIN res_partner rp ON rp.id = e.address_id
+                 WHERE e.date_begin >= now()
+                   AND (e.company_id IS NULL OR e.company_id IN %(companies)s)
+              ORDER BY e.date_begin
+                 LIMIT 10
+                """,
+                {"lang": lang, "companies": tuple(self.env.companies.ids) or (0,)},
+            )
+            event = cr.fetchall()
 
-        # One parameterised statement covers all four visibility cases. A null
+        # Announcements come from hr_reward_warning, also optional. One
+        # parameterised statement covers all four visibility cases; a null
         # department or job simply makes that branch never match.
-        cr.execute(
-            """
-            SELECT ha.announcement_reason, ha.name, ha.date_start, ha.date_end
-              FROM hr_announcement ha
-              LEFT JOIN hr_employee_announcements hea ON hea.announcement = ha.id
-              LEFT JOIN hr_department_announcements hda ON hda.announcement = ha.id
-              LEFT JOIN hr_job_position_announcements hpa ON hpa.announcement = ha.id
-             WHERE ha.state = 'approved'
-               AND ha.date_start <= now()::date
-               AND ha.date_end >= now()::date
-               AND (ha.company_id IS NULL OR ha.company_id IN %(companies)s)
-               AND (ha.is_announcement = TRUE
-                    OR (ha.announcement_type = 'employee'
-                        AND hea.employee = %(employee)s)
-                    OR (ha.announcement_type = 'department'
-                        AND hda.department = %(department)s)
-                    OR (ha.announcement_type = 'job_position'
-                        AND hpa.job_position = %(job)s))
-          GROUP BY ha.id
-          ORDER BY ha.date_start DESC
-             LIMIT 20
-            """,
-            {
-                "companies": tuple(self.env.companies.ids) or (0,),
-                "employee": employee.id or 0,
-                "department": employee.department_id.id or 0,
-                "job": employee.job_id.id or 0,
-            },
-        )
-        announcement = [
-            (row[0], self._xn_announcement_meta(row[1], row[2], row[3]))
-            for row in cr.fetchall()
-        ]
+        announcements_tracked = "hr.announcement" in self.env
+        announcement = []
+        if announcements_tracked:
+            cr.execute(
+                """
+                SELECT ha.announcement_reason, ha.name, ha.date_start, ha.date_end
+                  FROM hr_announcement ha
+                  LEFT JOIN hr_employee_announcements hea ON hea.announcement = ha.id
+                  LEFT JOIN hr_department_announcements hda ON hda.announcement = ha.id
+                  LEFT JOIN hr_job_position_announcements hpa ON hpa.announcement = ha.id
+                 WHERE ha.state = 'approved'
+                   AND ha.date_start <= now()::date
+                   AND ha.date_end >= now()::date
+                   AND (ha.company_id IS NULL OR ha.company_id IN %(companies)s)
+                   AND (ha.is_announcement = TRUE
+                        OR (ha.announcement_type = 'employee'
+                            AND hea.employee = %(employee)s)
+                        OR (ha.announcement_type = 'department'
+                            AND hda.department = %(department)s)
+                        OR (ha.announcement_type = 'job_position'
+                            AND hpa.job_position = %(job)s))
+              GROUP BY ha.id
+              ORDER BY ha.date_start DESC
+                 LIMIT 20
+                """,
+                {
+                    "companies": tuple(self.env.companies.ids) or (0,),
+                    "employee": employee.id or 0,
+                    "department": employee.department_id.id or 0,
+                    "job": employee.job_id.id or 0,
+                },
+            )
+            announcement = [
+                (row[0], self._xn_announcement_meta(row[1], row[2], row[3]))
+                for row in cr.fetchall()
+            ]
 
         return {
             "birthday": birthday,
             "event": event,
+            "events_tracked": events_tracked,
             "announcement": announcement,
+            "announcements_tracked": announcements_tracked,
         }
 
     @api.model
@@ -815,3 +814,119 @@ class HrEmployee(models.Model):
             "ok": True,
             "checked_in": employee.attendance_state == "checked_in",
         }
+
+    # ------------------------------------------------------------------
+    # Personal panel
+    # ------------------------------------------------------------------
+
+    @api.model
+    def xn_user_details(self):
+        """The caller's own employee record, with the four header figures.
+
+        Replaces hrms_dashboard's get_user_employee_details, which returns a
+        full search_read of every field on hr.employee plus an ir.ui.view
+        recordset, builds two date filters by string interpolation, and counts
+        organisation-wide leave that the personal panel never displays.
+
+        Broad factor is the Bradford Factor, occurrences squared times days
+        absent. The vendor computes it in a SQL view that hrms_dashboard owns;
+        it is four lines inline, so it is computed here and that dependency
+        goes away with it.
+        """
+        employee = self.sudo().search([("user_id", "=", self.env.uid)], limit=1)
+        if not employee:
+            return False
+
+        self.env.cr.execute(
+            """
+            SELECT count(*) * count(*) * COALESCE(sum(number_of_days), 0)
+              FROM hr_leave
+             WHERE employee_id = %s
+               AND state = 'validate'
+               AND date_to <= now()
+            """,
+            (employee.id,),
+        )
+        broad_factor = self.env.cr.fetchone()[0] or 0
+
+        # Each count is a field this module can rely on only when the module
+        # that defines it is installed, so each is guarded rather than assumed.
+        payslips = 0
+        if "hr.payslip" in self.env:
+            payslips = self.env["hr.payslip"].sudo().search_count(
+                [("employee_id", "=", employee.id)]
+            )
+        contracts = 0
+        if "hr.contract" in self.env:
+            contracts = self.env["hr.contract"].sudo().search_count(
+                [("employee_id", "=", employee.id)]
+            )
+        timesheets = self.env["account.analytic.line"].sudo().search_count(
+            [("project_id", "!=", False), ("user_id", "=", self.env.uid)]
+        )
+
+        return {
+            "id": employee.id,
+            "name": employee.name,
+            "job": employee.job_title or employee.job_id.name or "",
+            "department": employee.department_id.name or "",
+            "checked_in": employee.attendance_state == "checked_in",
+            "payslips": payslips,
+            "timesheets": timesheets,
+            "contracts": contracts,
+            "broad_factor": int(broad_factor),
+        }
+
+    @api.model
+    def xn_leave_trend(self, months=6):
+        """Approved leave days per month for the caller, last `months` months.
+
+        Replaces hrms_dashboard's employee_leave_trend, which pulls every leave
+        row into pandas to group by month. That import is the only use of
+        pandas anywhere in this codebase, and it is a numpy ABI mismatch away
+        from taking the whole module down - which is exactly what it did on
+        production. generate_series does the same job in the database.
+
+        A leave spanning a month boundary is attributed to the month each of
+        its days falls in, which is what the vendor's row expansion was for.
+        """
+        employee = self.sudo().search([("user_id", "=", self.env.uid)], limit=1)
+        if not employee:
+            return []
+
+        self.env.cr.execute(
+            """
+            WITH months AS (
+                SELECT generate_series(
+                           date_trunc('month', now()) - (%(months)s - 1) * INTERVAL '1 month',
+                           date_trunc('month', now()),
+                           INTERVAL '1 month'
+                       )::date AS month_start
+            )
+            SELECT to_char(m.month_start, 'Mon YYYY') AS label,
+                   COALESCE(sum(
+                       CASE WHEN h.id IS NULL THEN 0
+                            ELSE GREATEST(
+                                0,
+                                LEAST(h.date_to::date,
+                                      (m.month_start + INTERVAL '1 month - 1 day')::date)
+                                - GREATEST(h.date_from::date, m.month_start) + 1
+                            )
+                       END
+                   ), 0) AS days
+              FROM months m
+              LEFT JOIN hr_leave h
+                     ON h.employee_id = %(employee)s
+                    AND h.state = 'validate'
+                    AND h.date_from::date
+                        <= (m.month_start + INTERVAL '1 month - 1 day')::date
+                    AND h.date_to::date >= m.month_start
+          GROUP BY m.month_start
+          ORDER BY m.month_start
+            """,
+            {"months": months, "employee": employee.id},
+        )
+        return [
+            {"label": row[0], "days": float(row[1] or 0)}
+            for row in self.env.cr.fetchall()
+        ]

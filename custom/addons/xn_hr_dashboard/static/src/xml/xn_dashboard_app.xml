@@ -132,6 +132,10 @@
                                         </div>
                                     </t>
                                 </t>
+                                <p class="xn_empty" t-elif="!state.team.announcementsTracked">
+                                    The Official Announcements module is not
+                                    installed, so there are no announcements to show.
+                                </p>
                                 <p class="xn_empty" t-else="">
                                     No announcements are currently running.
                                 </p>
@@ -150,6 +154,10 @@
                                         </li>
                                     </t>
                                 </ul>
+                                <p class="xn_empty" t-elif="!state.team.eventsTracked">
+                                    The Events app is not installed, so there are
+                                    no events to show.
+                                </p>
                                 <p class="xn_empty" t-else="">
                                     Nothing scheduled. Events created in the Events app
                                     appear here.
