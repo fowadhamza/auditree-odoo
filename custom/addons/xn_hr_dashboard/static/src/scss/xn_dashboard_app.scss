@@ -34,8 +34,17 @@
 
     background: var(--xn-paper);
     color: var(--xn-ink);
-    min-height: 100%;
-    overflow: auto;
+
+    // height, not min-height. A client action is placed inside an action
+    // container that clips its overflow, so a root that grows past it is cut
+    // off with no way to scroll. Bounding the height to the container is what
+    // makes overflow: auto produce a scrollbar rather than a clipped page.
+    // With min-height this looked fine wherever the content happened to fit,
+    // and failed under the MuK theme, whose app sidebar sizes the action area
+    // differently.
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
 
     // Full width, like every other Odoo view. A max-width here left a wide
     // dead margin on the right on a 1900px screen, because the cards are
