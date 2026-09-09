@@ -2,7 +2,7 @@
 # Part of BrowseInfo. See LICENSE file for full copyright and licensing details.
 {
     "name": "Auditree ERP",
-    "version": "17.0.0.0",
+    "version": "17.0.0.1",
     "category": "HRMS",
     "summary": "Auditree ERP",
     "description": """Auditree ERP""",

@@ -1,3 +1,5 @@
+from datetime import datetime, time
+
 from odoo import models, fields, api
 from num2words import num2words
 
@@ -42,30 +44,55 @@ class HrPayslip(models.Model):
             return '-'
         return self._group_indian(amount)
 
-    def get_total_working_days(self):
-        """Total working days covered by the payslip period."""
-        self.ensure_one()
-        return sum(self.worked_days_line_ids.mapped('number_of_days'))
+    def get_employee_code(self):
+        """Employee code as printed on the payslip.
 
-    def get_days_worked(self):
-        """Days actually worked, i.e. the normal paid working-time line."""
-        self.ensure_one()
-        return sum(
-            line.number_of_days
-            for line in self.worked_days_line_ids
-            if line.code == 'WORK100'
-        )
-
-    def get_lop_days(self):
-        """Loss of pay days.
-
-        Every worked-days line that is not normal working time is treated as
-        unpaid. That holds while WORK100 is the only paid worked-days code in
-        use -- if paid leave ever gets its own worked-days line it would be
-        counted here too, and this needs a code-based rule instead.
+        The code is kept in the employee's Badge ID (`barcode`, e.g. AT-0025).
+        `identification_id` is unused in this database -- it is empty on every
+        employee -- so it only serves as a fallback here.
         """
         self.ensure_one()
-        return self.get_total_working_days() - self.get_days_worked()
+        employee = self.employee_id
+        return employee.barcode or employee.identification_id or ''
+
+    def get_total_working_days(self):
+        """Days in the payslip period, counted as calendar days.
+
+        The Auditree payslip treats a month as its full length -- March prints
+        31, not the 21 working days the resource calendar holds -- and pays for
+        that many days less any loss of pay.
+        """
+        self.ensure_one()
+        return (self.date_to - self.date_from).days + 1
+
+    def get_lop_days(self):
+        """Loss of pay: approved unpaid leave falling inside the period.
+
+        Read from the leave records rather than the worked-days lines. Those
+        lines cannot be used: no leave type in this database sets a code, so
+        `get_worked_day_lines` labels every leave line 'GLOBAL' regardless of
+        whether the leave was paid. Subtracting worked days from the period
+        length would be worse still, counting weekends and paid leave as loss
+        of pay.
+
+        A leave straddling a month boundary contributes all of its days to
+        both slips. No unpaid leave type is currently active, so this has not
+        come up; it needs clamping to the period if one is enabled.
+        """
+        self.ensure_one()
+        leaves = self.env['hr.leave'].sudo().search([
+            ('employee_id', '=', self.employee_id.id),
+            ('state', '=', 'validate'),
+            ('holiday_status_id.unpaid', '=', True),
+            ('date_from', '<=', datetime.combine(self.date_to, time.max)),
+            ('date_to', '>=', datetime.combine(self.date_from, time.min)),
+        ])
+        return sum(leaves.mapped('number_of_days'))
+
+    def get_days_worked(self):
+        """Days paid for: the period length less any loss of pay."""
+        self.ensure_one()
+        return self.get_total_working_days() - self.get_lop_days()
 
     def get_gross_total(self):
         """Gross pay, as computed by the GROSS salary rule."""
