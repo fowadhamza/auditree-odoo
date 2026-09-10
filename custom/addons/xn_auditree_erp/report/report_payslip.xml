@@ -69,10 +69,10 @@
 
                     <table style="width: 100%;font-family: 'Times New Roman', Times, serif;border: 1px solid black;font-size: 11pt;">
                         <tr>
-                            <td colspan="2" style="width:50%;text-align:center;border:1px solid black;color:#0000FF;">
+                            <td colspan="2" style="width:50%;text-align:center;padding: 8px 5px;font-weight: bold;border:1px solid black;color:#0000FF;">
                                 EARNINGS
                             </td>
-                            <td colspan="2" style="width:50%;text-align:center;border:1px solid black;color:#0000FF;">
+                            <td colspan="2" style="width:50%;text-align:center;padding: 8px 5px;font-weight: bold;border:1px solid black;color:#0000FF;">
                                 DEDUCTIONS
                             </td>
                         </tr>
