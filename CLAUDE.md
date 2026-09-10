@@ -41,7 +41,7 @@ Some of it is gitignored; some of it is not (see §3.2 — this matters).
 | Database | PostgreSQL, DB name `AUDITREE_LIVE_NEW` |
 | Local URL | http://localhost:8069 |
 | Production | GCP VM `auditreelive-prod` (`us-central1-a`, project `auditree-prod`), systemd unit `odoo`, port 8001 behind Nginx. A legacy DigitalOcean server also exists. |
-| Modules loaded | 182 at last successful boot |
+| Modules loaded | 186 at last successful boot (2026-09-05) |
 
 ---
 
@@ -49,7 +49,7 @@ Some of it is gitignored; some of it is not (see §3.2 — this matters).
 
 ```
 Auditree/
-├── custom/addons/          ← THE TRACKED CODE. 53 modules. All real work happens here.
+├── custom/addons/          ← THE TRACKED CODE. 57 modules. All real work happens here.
 ├── auditreelive-server/    ← Odoo 17 core source (~2 GB). GITIGNORED. Do not edit.
 ├── venv/                   ← Python 3.10 virtualenv. GITIGNORED.
 ├── deploy/                 ← GCP provisioning scripts + deploy/secrets/prod.env + 680 MB
@@ -69,7 +69,7 @@ Auditree/
 
 ### The addons layer: three tiers
 
-`custom/addons/` holds 53 modules. Treat them differently depending on tier:
+`custom/addons/` holds 57 modules. Treat them differently depending on tier:
 
 **Tier 1 — In-house (`xn_*`), owned by this project. Edit freely.**
 
@@ -78,6 +78,7 @@ Auditree/
 | `xn_auditree_erp` | Main custom module: HR employee/applicant/department/payslip/project extensions, probation crons, custom reports |
 | `xn_user_custom` | Adds `is_freelancer` to `res.users`. `xn_auditree_erp` depends on it. (SUGGESTIONS #15 proposes merging the two.) |
 | `xn_hr_leave_report` | Leave balance reporting — the wide-format SQL view and the year/month extension. **Active development area** (current branch: `feature/leave-report-period-filters`). |
+| `xn_hr_dashboard` | Organisation panels for the HR dashboard, plus overrides that fix the vendor's department donut, birthday, event and announcement queries. Extends `hrms_dashboard` (Tier 2) without editing it — see its own README.md. |
 
 **Tier 2 — Vendor modules with local patches. Edit with care; never re-download over them.**
 
@@ -174,11 +175,19 @@ via `\\wsl.localhost\Ubuntu-24.04\...`. Consequences:
 - Some files carry CRLF line endings (e.g. `xn_hr_leave_report/models/__init__.py`).
   Match the file you're editing; don't reflow line endings across a whole file.
 
-### 3.5 No git remote
+### 3.5 Git remote: SSH, and only reachable from inside WSL
 
-`git remote -v` is empty. All history is local-only. This is SUGGESTIONS #11 and the
-single largest operational risk in the repo. Do not assume `git push` exists, and do not
-add a remote without being asked.
+`origin` is `git@github.com:fowadhamza/auditree-odoo.git` (this resolves SUGGESTIONS #11 --
+history is no longer local-only). The SSH key lives in the WSL home directory, so a `git
+push` run from the Windows side fails with `Permission denied (publickey)`. Push through
+WSL instead:
+
+```bash
+wsl.exe -d Ubuntu-24.04 -- bash -lc "cd /home/fowadhamza/Projects/Auditree && git push origin <branch>"
+```
+
+Reads, commits and staging work fine from either side; only the network operations need WSL.
+Still push only when asked.
 
 ### 3.6 Large binaries at the repo root
 
@@ -322,6 +331,28 @@ Never interpolate user or record data into SQL strings. `get_attrition_rate` in
 `hrms_dashboard` was already fixed once for this (commit `71884f3`). Use parameterized
 queries: `self.env.cr.execute(query, (param,))`.
 
+A second instance of the same pattern still exists in `get_upcoming` in the same file
+(the announcement `WHERE` clause). `xn_hr_dashboard` overrides that method with a
+parameterized version rather than patching the vendor.
+
+### Client-side assets: two traps
+
+**Chart.js is not loaded in the backend.** Odoo 17 ships it only in the
+`web.chartjs_lib` bundle, which no backend bundle includes — the graph view pulls it in
+on demand. A `new Chart(...)` in your own OWL code silently does nothing unless you
+`await loadBundle("web.chartjs_lib")` first (`@web/core/assets`). There is no error; the
+canvas just stays blank. `xn_hr_dashboard/static/src/js/xn_dashboard.js` shows the pattern.
+
+**XML comments cannot contain `--`.** `<!-- Today ------- -->` is not well-formed XML and
+kills the whole asset bundle. This bites because `# ----` separators are fine in the
+Python files right next to them.
+
+**Anchor template xpaths by class, never by position.** `//div[1]` matches every div that
+is the first div child of its parent, so a second `<xpath>` in the same `t-inherit` block
+will target the node the first one just inserted. Use `//div[hasclass('the-class')]`.
+`position="replace"` with an empty body deletes a node, which is the only way to remove
+vendor markup — `t-inherit` in extension mode otherwise only adds.
+
 ### Python style in `xn_*` modules
 
 ```python
@@ -417,6 +448,36 @@ Deployment is a set of manual, numbered shell scripts in `deploy/` (`04b_deploy_
 
 Production still lacks `list_db = False`, `log_level = warn`, and automated backups
 (SUGGESTIONS #21, #22, #24).
+
+### What `04b_deploy_code_fresh.sh` actually does
+
+Know these before anyone runs it:
+
+- It tars **the live working checkout**, not a git commit. Uncommitted and untracked files
+  ship; committed work on a branch you haven't checked out does not. `git status` is the
+  real manifest.
+- On the VM it does `sudo rm -rf` of `auditreelive-server`, `custom` **and `venv`**, then
+  untars and rebuilds the venv from `requirements.txt`.
+- **It never restarts Odoo.** Between the script finishing and a manual restart, the running
+  process is serving from deleted inodes -- up, but executing code that no longer exists on
+  disk. A restart is required to finish the deploy, not optional.
+- A QWeb/view/field change also needs `-u <module>` against `AUDITREE_LIVE_NEW` on the VM;
+  copying files alone changes nothing the users see.
+- The venv rebuild had an unpinned `pip install pandas` that resolved numpy to 2.x, which is
+  binary-incompatible with pandas 1.5.3 and broke the venv (`ValueError: numpy.dtype size
+  changed`). Pinned 2026-09-10. If a deploy ever leaves Odoo unable to boot, check
+  `venv/bin/python -c "import pandas"` before anything else.
+
+Sequence that works: run the script, verify `import pandas` on the VM, `systemctl stop odoo`,
+run `-u <module> --stop-after-init`, `systemctl start odoo`, confirm `is-active`.
+
+### SSH access to the VM
+
+`allow-ssh-restricted` allowlists a handful of `/32`s plus `35.235.240.0/20` (IAP);
+`default-allow-ssh` is disabled. A rotated home IP shows up as `Connection timed out` on
+port 22 -- not an auth error. Either add the current IP to the rule's `--source-ranges`
+(which *replaces* the list, so repeat every existing entry) or add `--tunnel-through-iap`
+to the `scp`/`ssh` calls in the deploy script, which works from any network.
 
 ---
 
