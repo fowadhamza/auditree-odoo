@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_forecast_export_wizard_form" model="ir.ui.view">
+        <field name="name">forecast.export.wizard.form</field>
+        <field name="model">forecast.export.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <p>Generate an Excel export of the current forecast (P&amp;L detail + Cash Flow summary).</p>
+                    <field name="file_name" invisible="1"/>
+                    <field name="file_data" filename="file_name" readonly="1" invisible="not file_data"/>
+                </sheet>
+                <footer>
+                    <button name="action_generate" type="object" string="Generate" class="btn-primary"
+                            invisible="file_data"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_forecast_export_wizard" model="ir.actions.act_window">
+        <field name="name">Export Forecast to Excel</field>
+        <field name="res_model">forecast.export.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

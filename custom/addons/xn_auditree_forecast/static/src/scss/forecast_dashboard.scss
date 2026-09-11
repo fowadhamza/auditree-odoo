@@ -1,0 +1,414 @@
+// Auditree Forecast dashboard.
+//
+// Scoped entirely under .o_xn_forecast_dashboard so nothing here can leak into
+// another Odoo view. Colours are literal rather than Bootstrap variables: this
+// dashboard mirrors the source web app's slate palette, which does not map onto
+// the Odoo theme.
+
+.o_xn_forecast_dashboard {
+    $ink: #0f172a;
+    $muted: #64748b;
+    $line: #e2e8f0;
+    $surface: #ffffff;
+    $ground: #f8fafc;
+    $bad: #dc2626;
+    $warn: #b45309;
+
+    height: 100%;
+    overflow: auto;
+    padding: 16px;
+    background: $ground;
+    color: $ink;
+    font-size: 13px;
+
+    .xnf_placeholder {
+        padding: 32px;
+        color: $muted;
+        text-align: center;
+    }
+
+    .xnf_error {
+        color: $bad;
+    }
+
+    .xnf_sub {
+        color: $muted;
+        font-size: 12px;
+    }
+
+    .xnf_header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+
+        h1 {
+            margin: 0 0 2px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+    }
+
+    // Alerts
+
+    .xnf_alerts {
+        margin-bottom: 16px;
+    }
+
+    .xnf_alert {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border: 1px solid #fcd34d;
+        border-radius: 6px;
+        background: #fffbeb;
+        color: #92400e;
+
+        a {
+            color: inherit;
+            text-decoration: underline;
+        }
+    }
+
+    .xnf_alert_mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        border-radius: 50%;
+        background: #f59e0b;
+        color: #fff;
+        font-weight: 700;
+        font-size: 12px;
+    }
+
+    // KPI tiles
+
+    .xnf_tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+
+        @media (max-width: 1100px) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    .xnf_tile {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 12px 14px;
+        border: 1px solid $line;
+        border-radius: 8px;
+        background: $surface;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.12s ease;
+
+        &:hover {
+            background: #f1f5f9;
+        }
+
+        &.xnf_tile_bad {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+
+        &.xnf_tile_warn {
+            border-color: #fde68a;
+            background: #fffbeb;
+        }
+    }
+
+    .xnf_tile_label {
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: $muted;
+    }
+
+    .xnf_tile_value {
+        font-size: 19px;
+        font-weight: 600;
+
+        &.xnf_bad { color: $bad; }
+        &.xnf_warn { color: $warn; }
+    }
+
+    .xnf_tile_note {
+        font-size: 11px;
+        color: $muted;
+    }
+
+    // Cards and layout
+
+    .xnf_card {
+        padding: 14px;
+        margin-bottom: 16px;
+        border: 1px solid $line;
+        border-radius: 8px;
+        background: $surface;
+    }
+
+    .xnf_card_head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .xnf_card_title {
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .xnf_grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @media (max-width: 1100px) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .xnf_card {
+            margin-bottom: 0;
+        }
+    }
+
+    .xnf_card_wide {
+        grid-column: 1 / -1;
+    }
+
+    .xnf_empty {
+        padding: 28px 8px;
+        color: $muted;
+        text-align: center;
+    }
+
+    // Window progress
+
+    .xnf_progress_card .xnf_card_title {
+        margin-bottom: 0;
+    }
+
+    .xnf_progress_row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .xnf_progress_track {
+        position: relative;
+        flex: 1;
+        height: 8px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+
+    .xnf_progress_fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        border-radius: 999px;
+        background: #1e293b;
+    }
+
+    // SVG charts
+
+    .xnf_chart {
+        display: block;
+        width: 100%;
+        height: 200px;
+    }
+
+    .xnf_gridline {
+        stroke: $line;
+        stroke-width: 1;
+        stroke-dasharray: 3 3;
+    }
+
+    .xnf_zeroline {
+        stroke: #94a3b8;
+        stroke-width: 1;
+    }
+
+    .xnf_ytick {
+        fill: $muted;
+        font-size: 9px;
+        text-anchor: end;
+    }
+
+    .xnf_xtick {
+        fill: $muted;
+        font-size: 9px;
+        text-anchor: middle;
+    }
+
+    .xnf_legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: center;
+        margin-top: 6px;
+        font-size: 11px;
+        color: $muted;
+
+        i {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            border-radius: 2px;
+            vertical-align: -1px;
+        }
+    }
+
+    // Revenue by client
+
+    .xnf_hbars {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+
+    .xnf_hbar_row {
+        display: grid;
+        grid-template-columns: 110px minmax(0, 1fr) 92px;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .xnf_hbar_name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+
+    .xnf_hbar_track {
+        display: block;
+        height: 14px;
+        border-radius: 3px;
+        background: #f1f5f9;
+    }
+
+    .xnf_hbar_fill {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+    }
+
+    .xnf_hbar_value {
+        font-size: 12px;
+        text-align: right;
+        color: #334155;
+    }
+
+    // Expense donut
+
+    .xnf_donut_wrap {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .xnf_donut {
+        width: 200px;
+        height: 200px;
+        flex: 0 0 200px;
+    }
+
+    .xnf_donut_total {
+        fill: $ink;
+        font-size: 11px;
+        font-weight: 600;
+        text-anchor: middle;
+    }
+
+    .xnf_donut_caption {
+        fill: $muted;
+        font-size: 7px;
+        text-anchor: middle;
+    }
+
+    .xnf_donut_legend {
+        flex: 1;
+        min-width: 260px;
+    }
+
+    .xnf_donut_legend_row {
+        display: grid;
+        grid-template-columns: 12px minmax(0, 1fr) 54px 110px;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
+        border-bottom: 1px solid #f1f5f9;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+
+        i {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+    }
+
+    .xnf_donut_legend_name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .xnf_donut_legend_pct,
+    .xnf_donut_legend_amount {
+        text-align: right;
+        color: $muted;
+        font-size: 12px;
+    }
+
+    // Leavers
+
+    .xnf_chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .xnf_chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: 1px solid $line;
+        border-radius: 6px;
+        background: $ground;
+        cursor: pointer;
+
+        &:hover {
+            background: #f1f5f9;
+        }
+    }
+
+    .xnf_chip_name {
+        font-weight: 500;
+    }
+}
