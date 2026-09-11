@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_forecast_financial_adjustment_list" model="ir.ui.view">
+        <field name="name">forecast.financial.adjustment.list</field>
+        <field name="model">forecast.financial.adjustment</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="month"/>
+                <field name="adjustment_type"/>
+                <field name="amount"/>
+                <field name="notes"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_forecast_financial_adjustment_form" model="ir.ui.view">
+        <field name="name">forecast.financial.adjustment.form</field>
+        <field name="model">forecast.financial.adjustment</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="month"/>
+                        <field name="adjustment_type"/>
+                        <field name="amount"/>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_forecast_financial_adjustment" model="ir.actions.act_window">
+        <field name="name">Financial Adjustments</field>
+        <field name="res_model">forecast.financial.adjustment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nobutton">
+                Manual entries for the P&amp;L lines below Net Profit: Income Tax, Zakat,
+                Partner Drawings, Reserve Transfers. These do not affect the Cash Flow report.
+            </p>
+        </field>
+    </record>
+</odoo>

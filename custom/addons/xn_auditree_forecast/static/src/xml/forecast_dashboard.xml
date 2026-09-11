@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+<t t-name="xn_auditree_forecast.Dashboard">
+    <div class="o_xn_forecast_dashboard">
+
+        <div t-if="state.loading" class="xnf_placeholder">Loading the forecast...</div>
+
+        <div t-elif="state.error" class="xnf_placeholder xnf_error">
+            <t t-out="state.message"/>
+        </div>
+
+        <div t-elif="!state.hasData" class="xnf_placeholder">
+            <p><t t-out="state.message"/></p>
+            <button class="btn btn-primary btn-sm" t-on-click="() => this.openSettings()">
+                Open Forecast Settings
+            </button>
+        </div>
+
+        <div t-else="">
+            <!-- Header -->
+            <div class="xnf_header">
+                <div>
+                    <h1>Forecast Dashboard</h1>
+                    <div class="xnf_sub">
+                        Forecast window:
+                        <strong><t t-out="state.raw.window.start"/></strong>
+                        to
+                        <strong><t t-out="state.raw.window.end"/></strong>
+                        <span t-if="state.raw.window.last_recomputed">
+                            &#183; last recalculated <t t-out="state.raw.window.last_recomputed"/>
+                        </span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" t-on-click="() => this.load()">
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Alerts -->
+            <div t-if="state.charts.alerts.length" class="xnf_alerts">
+                <div t-foreach="state.charts.alerts" t-as="alert" t-key="alert.id" class="xnf_alert">
+                    <span class="xnf_alert_mark">!</span>
+                    <span><t t-out="alert.text"/></span>
+                    <a href="#" t-if="alert.id === 'low_cash'"
+                       t-on-click.prevent="() => this.openCashFlow()">View Cash Flow</a>
+                    <a href="#" t-if="alert.id === 'loss'"
+                       t-on-click.prevent="() => this.openPnl()">View P&amp;L</a>
+                </div>
+            </div>
+
+            <!-- KPI tiles -->
+            <div class="xnf_tiles">
+                <button class="xnf_tile" t-on-click="() => this.openPnl()">
+                    <span class="xnf_tile_label">Total Revenue</span>
+                    <span class="xnf_tile_value"><t t-out="formatInr(state.raw.kpi.total_revenue)"/></span>
+                </button>
+                <button class="xnf_tile" t-on-click="() => this.openPnl()">
+                    <span class="xnf_tile_label">Total Expenses</span>
+                    <span class="xnf_tile_value"><t t-out="formatInr(state.raw.kpi.total_expenses)"/></span>
+                </button>
+                <button class="xnf_tile" t-on-click="() => this.openPnl()"
+                        t-att-class="{ xnf_tile_bad: state.raw.kpi.net_profit &lt; 0 }">
+                    <span class="xnf_tile_label">Net Profit Before Tax</span>
+                    <span class="xnf_tile_value"><t t-out="formatInr(state.raw.kpi.net_profit)"/></span>
+                </button>
+                <button class="xnf_tile" t-on-click="() => this.openCashFlow()">
+                    <span class="xnf_tile_label">Closing Cash (end of window)</span>
+                    <span class="xnf_tile_value"><t t-out="formatInr(state.raw.kpi.closing_cash)"/></span>
+                </button>
+
+                <button class="xnf_tile" t-on-click="() => this.openPnl()">
+                    <span class="xnf_tile_label">Profit Margin</span>
+                    <span class="xnf_tile_value"
+                          t-att-class="{ xnf_bad: state.raw.kpi.margin_pct &lt; 0,
+                                         xnf_warn: state.raw.kpi.margin_pct >= 0 and state.raw.kpi.margin_pct &lt; 10 }">
+                        <t t-out="formatPct(state.raw.kpi.margin_pct)"/>
+                    </span>
+                </button>
+                <button class="xnf_tile" t-on-click="() => this.openPnl()">
+                    <span class="xnf_tile_label">Salary to Revenue</span>
+                    <span class="xnf_tile_value"
+                          t-att-class="{ xnf_bad: state.raw.kpi.salary_to_revenue_pct > 85,
+                                         xnf_warn: state.raw.kpi.salary_to_revenue_pct > 70 and state.raw.kpi.salary_to_revenue_pct &lt;= 85 }">
+                        <t t-out="formatPct(state.raw.kpi.salary_to_revenue_pct)"/>
+                    </span>
+                </button>
+                <button class="xnf_tile" t-on-click="() => this.openEmployees()">
+                    <span class="xnf_tile_label">Headcount</span>
+                    <span class="xnf_tile_value"><t t-out="state.raw.kpi.billable_count"/> billable</span>
+                    <span class="xnf_tile_note"><t t-out="state.raw.kpi.internal_count"/> internal</span>
+                </button>
+                <button class="xnf_tile" t-on-click="() => this.openCashFlow()"
+                        t-att-class="{ xnf_tile_warn: state.raw.kpi.min_closing_balance &lt; state.raw.kpi.low_cash_threshold }">
+                    <span class="xnf_tile_label">Lowest Cash Month</span>
+                    <span class="xnf_tile_value"><t t-out="formatInr(state.raw.kpi.min_closing_balance)"/></span>
+                    <span class="xnf_tile_note"><t t-out="state.raw.kpi.min_closing_month"/></span>
+                </button>
+            </div>
+
+            <!-- Window progress -->
+            <div class="xnf_card xnf_progress_card">
+                <div class="xnf_card_head">
+                    <span class="xnf_card_title">Forecast Window Progress</span>
+                    <span class="xnf_sub">
+                        Month <t t-out="state.charts.windowProgress.elapsed"/>
+                        of <t t-out="state.charts.windowProgress.total"/>
+                    </span>
+                </div>
+                <div class="xnf_progress_row">
+                    <span class="xnf_sub"><t t-out="state.raw.window.start"/></span>
+                    <div class="xnf_progress_track">
+                        <div class="xnf_progress_fill"
+                             t-attf-style="width: {{ state.charts.windowProgress.pct }}%"/>
+                    </div>
+                    <span class="xnf_sub"><t t-out="state.raw.window.end"/></span>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="xnf_grid">
+
+                <div class="xnf_card">
+                    <div class="xnf_card_title">Cash Trend</div>
+                    <t t-set="chart" t-value="state.charts.cashTrend"/>
+                    <div t-if="chart.empty" class="xnf_empty">No cash flow months generated.</div>
+                    <svg t-else="" class="xnf_chart" viewBox="0 0 640 200" preserveAspectRatio="none">
+                        <t t-foreach="chart.grid" t-as="g" t-key="g_index">
+                            <line x1="56" x2="592" t-att-y1="g.y" t-att-y2="g.y" class="xnf_gridline"/>
+                            <text x="50" t-att-y="g.y + 3" class="xnf_ytick"><t t-out="g.label"/></text>
+                        </t>
+                        <polygon t-att-points="chart.area" t-att-fill="chart.color" fill-opacity="0.12"/>
+                        <polyline t-att-points="chart.line" fill="none"
+                                  t-att-stroke="chart.color" stroke-width="2"/>
+                        <t t-foreach="chart.points" t-as="p" t-key="p_index">
+                            <circle t-att-cx="p.x" t-att-cy="p.y" r="2.5" t-att-fill="chart.color">
+                                <title><t t-out="p.label"/>: <t t-out="formatInr(p.value)"/></title>
+                            </circle>
+                            <text t-if="p.showLabel" t-att-x="p.x" y="186"
+                                  class="xnf_xtick"><t t-out="p.label"/></text>
+                        </t>
+                    </svg>
+                </div>
+
+                <div class="xnf_card">
+                    <div class="xnf_card_title">Monthly Inflow vs Outflow</div>
+                    <t t-set="chart" t-value="state.charts.inflowOutflow"/>
+                    <div t-if="chart.empty" class="xnf_empty">No cash flow months generated.</div>
+                    <t t-else="">
+                        <svg class="xnf_chart" viewBox="0 0 640 200" preserveAspectRatio="none">
+                            <t t-foreach="chart.grid" t-as="g" t-key="g_index">
+                                <line x1="56" x2="592" t-att-y1="g.y" t-att-y2="g.y" class="xnf_gridline"/>
+                                <text x="50" t-att-y="g.y + 3" class="xnf_ytick"><t t-out="g.label"/></text>
+                            </t>
+                            <rect t-foreach="chart.bars" t-as="bar" t-key="bar.id"
+                                  t-att-x="bar.x" t-att-y="bar.y"
+                                  t-att-width="bar.width" t-att-height="bar.height"
+                                  t-att-fill="bar.color">
+                                <title><t t-out="bar.title"/></title>
+                            </rect>
+                            <line x1="56" x2="592" t-att-y1="chart.zeroY" t-att-y2="chart.zeroY"
+                                  class="xnf_zeroline"/>
+                            <text t-foreach="chart.labels" t-as="l" t-key="l_index"
+                                  t-att-x="l.x" y="186" class="xnf_xtick"><t t-out="l.label"/></text>
+                        </svg>
+                        <div class="xnf_legend">
+                            <span t-foreach="chart.legend" t-as="item" t-key="item.name">
+                                <i t-attf-style="background: {{ item.color }}"/><t t-out="item.name"/>
+                            </span>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="xnf_card">
+                    <div class="xnf_card_title">Monthly Revenue vs Expenses (Accrual)</div>
+                    <t t-set="chart" t-value="state.charts.monthlyProfit"/>
+                    <div t-if="chart.empty" class="xnf_empty">No forecast lines generated.</div>
+                    <t t-else="">
+                        <svg class="xnf_chart" viewBox="0 0 640 200" preserveAspectRatio="none">
+                            <t t-foreach="chart.grid" t-as="g" t-key="g_index">
+                                <line x1="56" x2="592" t-att-y1="g.y" t-att-y2="g.y" class="xnf_gridline"/>
+                                <text x="50" t-att-y="g.y + 3" class="xnf_ytick"><t t-out="g.label"/></text>
+                            </t>
+                            <line x1="56" x2="592" t-att-y1="chart.zeroY" t-att-y2="chart.zeroY"
+                                  class="xnf_zeroline"/>
+                            <polyline t-foreach="chart.lines" t-as="line" t-key="line.name"
+                                      t-att-points="line.path" fill="none"
+                                      t-att-stroke="line.color" stroke-width="2"
+                                      t-att-stroke-dasharray="line.dashed ? '5 3' : ''"/>
+                            <text t-foreach="chart.labels" t-as="l" t-key="l_index"
+                                  t-att-x="l.x" y="186" class="xnf_xtick"><t t-out="l.label"/></text>
+                        </svg>
+                        <div class="xnf_legend">
+                            <span t-foreach="chart.legend" t-as="item" t-key="item.name">
+                                <i t-attf-style="background: {{ item.color }}"/><t t-out="item.name"/>
+                            </span>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="xnf_card">
+                    <div class="xnf_card_title">Revenue by Client</div>
+                    <t t-set="chart" t-value="state.charts.revenueByClient"/>
+                    <div t-if="chart.empty" class="xnf_empty">No revenue assignments in the window.</div>
+                    <div t-else="" class="xnf_hbars">
+                        <div t-foreach="chart.rows" t-as="row" t-key="row.name" class="xnf_hbar_row">
+                            <span class="xnf_hbar_name" t-att-title="row.name"><t t-out="row.name"/></span>
+                            <span class="xnf_hbar_track">
+                                <span class="xnf_hbar_fill"
+                                      t-attf-style="width: {{ row.width }}%; background: {{ row.color }}"/>
+                            </span>
+                            <span class="xnf_hbar_value"><t t-out="row.amount"/></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="xnf_card xnf_card_wide">
+                    <div class="xnf_card_title">Expense Breakdown</div>
+                    <t t-set="chart" t-value="state.charts.expenseBreakdown"/>
+                    <div t-if="chart.empty" class="xnf_empty">No expenses in the window.</div>
+                    <div t-else="" class="xnf_donut_wrap">
+                        <svg class="xnf_donut" viewBox="0 0 160 160">
+                            <g transform="translate(80,80) rotate(-90)">
+                                <circle t-foreach="chart.slices" t-as="slice" t-key="slice.name"
+                                        cx="0" cy="0" t-att-r="chart.radius"
+                                        fill="none" stroke-width="26"
+                                        t-att-stroke="slice.color"
+                                        t-att-stroke-dasharray="slice.dash"
+                                        t-att-stroke-dashoffset="slice.offset">
+                                    <title><t t-out="slice.name"/>: <t t-out="slice.amount"/> (<t t-out="slice.pct"/>)</title>
+                                </circle>
+                            </g>
+                            <text x="80" y="78" class="xnf_donut_total"><t t-out="chart.total"/></text>
+                            <text x="80" y="92" class="xnf_donut_caption">total expenses</text>
+                        </svg>
+                        <div class="xnf_donut_legend">
+                            <div t-foreach="chart.slices" t-as="slice" t-key="slice.name"
+                                 class="xnf_donut_legend_row">
+                                <i t-attf-style="background: {{ slice.color }}"/>
+                                <span class="xnf_donut_legend_name"><t t-out="slice.name"/></span>
+                                <span class="xnf_donut_legend_pct"><t t-out="slice.pct"/></span>
+                                <span class="xnf_donut_legend_amount"><t t-out="slice.amount"/></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leavers -->
+            <div t-if="state.raw.leaving_soon.length" class="xnf_card">
+                <div class="xnf_card_title">
+                    Staff leaving within the forecast window
+                    (<t t-out="state.raw.leaving_soon.length"/>)
+                </div>
+                <div class="xnf_chips">
+                    <button t-foreach="state.raw.leaving_soon" t-as="person" t-key="person_index"
+                            class="xnf_chip" t-on-click="() => this.openEmployees()">
+                        <span class="xnf_chip_name"><t t-out="person.name"/></span>
+                        <span class="xnf_sub"><t t-out="person.month"/></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</t>
+
+</templates>

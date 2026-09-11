@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_forecast_expense_line_list" model="ir.ui.view">
+        <field name="name">forecast.expense.line.list</field>
+        <field name="model">forecast.expense.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="category"/>
+                <field name="annual_total"/>
+                <field name="recurrence"/>
+                <field name="start_month"/>
+                <field name="end_month"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_forecast_expense_line_form" model="ir.ui.view">
+        <field name="name">forecast.expense.line.form</field>
+        <field name="model">forecast.expense.line</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="annual_total"/>
+                            <field name="recurrence"/>
+                        </group>
+                        <group>
+                            <field name="start_month"/>
+                            <field name="end_month"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_forecast_expense_line" model="ir.actions.act_window">
+        <field name="name">Expense Line Items</field>
+        <field name="res_model">forecast.expense.line</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
