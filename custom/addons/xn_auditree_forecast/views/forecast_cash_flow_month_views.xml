@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_forecast_cash_flow_month_list" model="ir.ui.view">
+        <field name="name">forecast.cash.flow.month.list</field>
+        <field name="model">forecast.cash.flow.month</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="month"/>
+                <field name="opening_balance"/>
+                <field name="total_inflow"/>
+                <field name="total_outflow"/>
+                <field name="net_change"/>
+                <field name="closing_balance"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_forecast_cash_flow_month_graph" model="ir.ui.view">
+        <field name="name">forecast.cash.flow.month.graph</field>
+        <field name="model">forecast.cash.flow.month</field>
+        <field name="arch" type="xml">
+            <graph type="line">
+                <field name="month"/>
+                <field name="closing_balance" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_forecast_cash_flow_month" model="ir.actions.act_window">
+        <field name="name">Cash Flow</field>
+        <field name="res_model">forecast.cash.flow.month</field>
+        <field name="view_mode">tree,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nobutton">
+                Generated data. Run "Recalculate" from Forecast &gt; Settings after
+                changing revenue, salary, expense, or cash movement records.
+            </p>
+        </field>
+    </record>
+</odoo>

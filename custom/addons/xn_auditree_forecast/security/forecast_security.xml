@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_forecast" model="ir.module.category">
+        <field name="name">Forecast</field>
+        <field name="description">Auditree Rolling Forecast application</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="group_forecast_user" model="res.groups">
+        <field name="name">Forecast User</field>
+        <field name="category_id" ref="module_category_forecast"/>
+        <field name="comment">Grants access to the Auditree Rolling Forecast app.
+Membership must be limited to firm partners only.</field>
+    </record>
+</odoo>

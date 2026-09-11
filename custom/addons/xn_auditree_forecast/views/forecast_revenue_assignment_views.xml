@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_forecast_revenue_override_list" model="ir.ui.view">
+        <field name="name">forecast.revenue.override.list</field>
+        <field name="model">forecast.revenue.override</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="revenue_assignment_id"/>
+                <field name="month"/>
+                <field name="amount"/>
+                <field name="reason"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_forecast_revenue_override" model="ir.actions.act_window">
+        <field name="name">Revenue Overrides</field>
+        <field name="res_model">forecast.revenue.override</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="view_forecast_revenue_assignment_list" model="ir.ui.view">
+        <field name="name">forecast.revenue.assignment.list</field>
+        <field name="model">forecast.revenue.assignment</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id"/>
+                <field name="client_id"/>
+                <field name="bill_rate"/>
+                <field name="currency_id"/>
+                <field name="exchange_rate"/>
+                <field name="allocation_pct"/>
+                <field name="monthly_amount_inr"/>
+                <field name="start_month"/>
+                <field name="end_month"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_forecast_revenue_assignment_form" model="ir.ui.view">
+        <field name="name">forecast.revenue.assignment.form</field>
+        <field name="model">forecast.revenue.assignment</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="client_id"/>
+                            <field name="bill_rate"/>
+                            <field name="currency_id"/>
+                            <field name="exchange_rate"/>
+                            <field name="allocation_pct"/>
+                            <field name="monthly_amount_inr"/>
+                        </group>
+                        <group>
+                            <field name="start_month"/>
+                            <field name="end_month"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_forecast_revenue_assignment" model="ir.actions.act_window">
+        <field name="name">Revenue Assignments</field>
+        <field name="res_model">forecast.revenue.assignment</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

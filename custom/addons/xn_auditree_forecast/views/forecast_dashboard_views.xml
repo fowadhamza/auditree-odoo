@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      The dashboard is a client action, not a list or form: it renders its own
+      markup from one RPC. The Forecast group gates it the same way it gates
+      every other menu here, and get_dashboard_data reads as the calling user,
+      so a non-member gets an AccessError rather than firm financials.
+    -->
+    <record id="action_forecast_dashboard" model="ir.actions.client">
+        <field name="name">Forecast Dashboard</field>
+        <field name="tag">xn_auditree_forecast_dashboard</field>
+    </record>
+</odoo>

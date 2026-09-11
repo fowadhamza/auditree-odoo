@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_forecast_root" name="Forecast" sequence="85"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+
+    <menuitem id="menu_forecast_dashboard" name="Dashboard" parent="menu_forecast_root"
+              action="action_forecast_dashboard" sequence="5"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+
+    <menuitem id="menu_forecast_reports" name="Reports" parent="menu_forecast_root" sequence="10"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_monthly_line" name="P&amp;L" parent="menu_forecast_reports"
+              action="action_forecast_monthly_line" sequence="10"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_cash_flow_month" name="Cash Flow" parent="menu_forecast_reports"
+              action="action_forecast_cash_flow_month" sequence="20"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_export" name="Export to Excel" parent="menu_forecast_reports"
+              action="action_forecast_export_wizard" sequence="30"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+
+    <menuitem id="menu_forecast_data" name="Data" parent="menu_forecast_root" sequence="20"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_employee" name="Employees" parent="menu_forecast_data"
+              action="action_forecast_employee" sequence="10"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_client" name="Clients" parent="menu_forecast_data"
+              action="action_forecast_client" sequence="20"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_revenue_assignment" name="Revenue Assignments" parent="menu_forecast_data"
+              action="action_forecast_revenue_assignment" sequence="30"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_revenue_override" name="Revenue Overrides" parent="menu_forecast_data"
+              action="action_forecast_revenue_override" sequence="40"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_salary_plan" name="Salary Plans" parent="menu_forecast_data"
+              action="action_forecast_salary_plan" sequence="50"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_expense_line" name="Expense Line Items" parent="menu_forecast_data"
+              action="action_forecast_expense_line" sequence="60"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_cash_movement" name="Other Cash Movements" parent="menu_forecast_data"
+              action="action_forecast_cash_movement" sequence="70"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+    <menuitem id="menu_forecast_financial_adjustment" name="Financial Adjustments" parent="menu_forecast_data"
+              action="action_forecast_financial_adjustment" sequence="80"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+
+    <menuitem id="menu_forecast_settings" name="Settings" parent="menu_forecast_root"
+              action="action_forecast_config" sequence="90"
+              groups="xn_auditree_forecast.group_forecast_user"/>
+</odoo>
