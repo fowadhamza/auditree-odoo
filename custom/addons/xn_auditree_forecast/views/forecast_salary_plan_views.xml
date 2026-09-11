@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==================================================================
+         Salary Plans are managed one record per EMPLOYEE. Each employee row
+         opens a form holding all of that employee's salary cycles, so a raise
+         history is added and edited in one place. The flat cycle views below
+         stay available for cross-employee reporting and search.
+         ================================================================== -->
+
+    <record id="view_forecast_salary_by_employee_tree" model="ir.ui.view">
+        <field name="name">forecast.employee.salary.tree</field>
+        <field name="model">forecast.employee</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="auditree_title" optional="show"/>
+                <field name="employee_type" optional="hide"/>
+                <field name="salary_plan_count" string="Cycles"/>
+                <field name="current_period"/>
+                <field name="current_fixed_ctc"/>
+                <field name="current_variable_ctc" optional="show"/>
+                <field name="current_total_ctc"/>
+                <field name="current_monthly_cost"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_forecast_salary_by_employee_form" model="ir.ui.view">
+        <field name="name">forecast.employee.salary.form</field>
+        <field name="model">forecast.employee</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Employee">
+                            <field name="auditree_title" readonly="1"/>
+                            <field name="employee_type" readonly="1"/>
+                            <field name="start_date" readonly="1"/>
+                            <field name="end_date" readonly="1"/>
+                        </group>
+                        <group string="Current Cycle">
+                            <field name="current_period"/>
+                            <field name="current_fixed_ctc"/>
+                            <field name="current_variable_ctc"/>
+                            <field name="current_total_ctc"/>
+                            <field name="current_monthly_cost"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Salary Cycles" name="salary_cycles">
+                            <p class="text-muted">
+                                Add one cycle per salary period (for example pre- and
+                                post-appraisal). Fixed and Variable CTC are annual totals;
+                                the forecast charges (Fixed + Variable) / 12 for every month
+                                in the cycle's From-To range. Cycles must not overlap - leave
+                                'To' empty on the current cycle and it is closed automatically
+                                when you add the next one.
+                            </p>
+                            <field name="salary_plan_ids" context="{'default_employee_id': id}">
+                                <tree editable="bottom" default_order="effective_date">
+                                    <control>
+                                        <create string="Add a salary cycle"/>
+                                    </control>
+                                    <field name="effective_date"/>
+                                    <field name="end_date"/>
+                                    <field name="fixed_ctc" sum="Total"/>
+                                    <field name="variable_ctc" sum="Total"/>
+                                    <field name="total_ctc" sum="Total"/>
+                                    <field name="monthly_cost" sum="Total"/>
+                                    <field name="hike_pct" optional="show"/>
+                                    <field name="next_review_date" optional="show"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_forecast_salary_by_employee_search" model="ir.ui.view">
+        <field name="name">forecast.employee.salary.search</field>
+        <field name="model">forecast.employee</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="auditree_title"/>
+                <filter name="has_cycles" string="Has Salary Cycles"
+                        domain="[('salary_plan_count', '&gt;', 0)]"/>
+                <filter name="no_cycles" string="Missing Salary Cycles"
+                        domain="[('salary_plan_count', '=', 0)]"/>
+                <separator/>
+                <filter name="active_employees" string="Active" domain="[('active', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_type" string="Employee Type"
+                            context="{'group_by': 'employee_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- The menu action: one row per employee, not a flat list of cycles. -->
+    <record id="action_forecast_salary_plan" model="ir.actions.act_window">
+        <field name="name">Salary Plans</field>
+        <field name="res_model">forecast.employee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_forecast_salary_by_employee_search"/>
+        <field name="context">{'search_default_active_employees': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No employees to plan salaries for yet</p>
+            <p>Create employees under Forecast / Data / Employees first. Each employee
+               then holds all of their salary cycles here.</p>
+        </field>
+    </record>
+
+    <record id="action_forecast_salary_plan_view_tree" model="ir.actions.act_window.view">
+        <field name="sequence">10</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_forecast_salary_by_employee_tree"/>
+        <field name="act_window_id" ref="action_forecast_salary_plan"/>
+    </record>
+
+    <record id="action_forecast_salary_plan_view_form" model="ir.actions.act_window.view">
+        <field name="sequence">20</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_forecast_salary_by_employee_form"/>
+        <field name="act_window_id" ref="action_forecast_salary_plan"/>
+    </record>
+
+    <!-- ==================================================================
+         Flat cycle views - reached from the employee stat button and used for
+         cross-employee search and reporting.
+         ================================================================== -->
+
+    <record id="view_forecast_salary_plan_list" model="ir.ui.view">
+        <field name="name">forecast.salary.plan.list</field>
+        <field name="model">forecast.salary.plan</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" default_order="employee_id, effective_date">
+                <field name="employee_id"/>
+                <field name="effective_date"/>
+                <field name="end_date"/>
+                <field name="fixed_ctc" sum="Total"/>
+                <field name="variable_ctc" sum="Total"/>
+                <field name="total_ctc" sum="Total"/>
+                <field name="monthly_cost" sum="Total"/>
+                <field name="hike_pct" optional="show"/>
+                <field name="next_review_date" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_forecast_salary_plan_form" model="ir.ui.view">
+        <field name="name">forecast.salary.plan.form</field>
+        <field name="model">forecast.salary.plan</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group string="Employee">
+                            <field name="employee_id"/>
+                            <field name="period_label"/>
+                        </group>
+                        <group string="Period">
+                            <field name="effective_date"/>
+                            <field name="end_date"/>
+                            <field name="next_review_date"/>
+                            <field name="hike_pct"/>
+                        </group>
+                    </group>
+                    <group string="Cost">
+                        <group>
+                            <field name="fixed_ctc"/>
+                            <field name="variable_ctc"/>
+                        </group>
+                        <group>
+                            <field name="total_ctc"/>
+                            <field name="monthly_cost"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_forecast_salary_plan_search" model="ir.ui.view">
+        <field name="name">forecast.salary.plan.search</field>
+        <field name="model">forecast.salary.plan</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <filter name="ongoing" string="Ongoing Cycles" domain="[('end_date', '=', False)]"/>
+                <group expand="1" string="Group By">
+                    <filter name="group_by_employee" string="Employee"
+                            context="{'group_by': 'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_forecast_config_form" model="ir.ui.view">
+        <field name="name">forecast.config.form</field>
+        <field name="model">forecast.config</field>
+        <field name="arch" type="xml">
+            <form create="false" delete="false">
+                <header>
+                    <button name="action_recalculate" type="object" string="Recalculate" class="btn-primary"/>
+                    <button name="action_advance_window" type="object" string="Advance Forecast Window"
+                            confirm="This shifts the rolling window forward by one month and recalculates. Continue?"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="window_start"/>
+                        <field name="window_end"/>
+                        <field name="last_recomputed" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_forecast_config" model="ir.actions.server">
+        <field name="name">Forecast Settings</field>
+        <field name="model_id" ref="model_forecast_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = model.get_config()
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'forecast.config',
+    'res_id': config.id,
+    'view_mode': 'form',
+    'target': 'current',
+}
+        </field>
+    </record>
+</odoo>
