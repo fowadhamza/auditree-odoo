@@ -23,6 +23,9 @@ Panels
 ------
 * A person strip: photo, job, department, payslips, timesheets, contracts,
   Bradford factor, and check in / check out.
+* A daily quote, the same for everyone, chosen by the date rather than at
+  random so it changes at midnight and needs no cron. HR owns the list from
+  Employees > Configuration > Dashboard Quotes.
 * Your team: birthdays, work anniversaries, announcements and events, each
   card sized to its own content.
 * Your leave: approved days per month over the last six months.
@@ -38,7 +41,7 @@ Neither is a dependency: each is queried only when its model is present, and
 the panel explains itself when it is not. Work anniversaries behave the same
 way with joining_date, which comes from xn_auditree_erp.
     """,
-    "version": "17.0.2.0.0",
+    "version": "17.0.2.1.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",
@@ -50,7 +53,10 @@ way with joining_date, which comes from xn_auditree_erp.
         "hr_timesheet",
     ],
     "data": [
+        "security/ir.model.access.csv",
+        "views/xn_daily_quote_views.xml",
         "data/xn_dashboard_action.xml",
+        "data/xn_daily_quotes.xml",
     ],
     "assets": {
         "web.assets_backend": [

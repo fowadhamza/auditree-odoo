@@ -200,6 +200,40 @@
         }
     }
 
+    // ---------- the day's quote ----------
+
+    // A byline, not a panel. No border, fill or heading: it is the one thing
+    // on this page that is not a figure someone has to act on, and giving it
+    // card chrome would rank it alongside the ones that are.
+    //
+    // The negative top margin works against .xn_dash_inner's 26px gap. A full
+    // row gap on both sides left it floating between the strip and the team
+    // row, belonging to neither; half the gap above reads as attached to the
+    // person strip, which is what it is.
+    .xn_quote {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: -14px;
+        padding: 0 4px;
+        color: var(--xn-ink-2);
+        font-size: 0.92rem;
+        line-height: 1.5;
+    }
+
+    .xn_quote_text {
+        font-style: italic;
+    }
+
+    // nowrap keeps the attribution from breaking mid-name when the quote
+    // wraps; it is short enough that it never needs the line to itself.
+    .xn_quote_author {
+        font-size: 0.78rem;
+        color: var(--xn-ink-3);
+        white-space: nowrap;
+    }
+
     // ---------- panels that size to their content ----------
 
     .xn_panels {

@@ -875,6 +875,10 @@ class HrEmployee(models.Model):
             "timesheets": timesheets,
             "contracts": contracts,
             "broad_factor": int(broad_factor),
+            # Folded in here rather than given an endpoint of its own: the
+            # client already awaits this call, and one line of text does not
+            # justify a fifth round trip on every dashboard load.
+            "quote": self.env["xn.daily.quote"]._xn_quote_of_the_day(),
         }
 
     @api.model
