@@ -14,9 +14,25 @@
       administrator. Membership is assigned by hand, so it cannot grow as a
       side effect of somebody being given an HR role.
     -->
+    <!--
+      Its own category, not base.module_category_human_resources.
+
+      Odoo labels each block on the user form with the *category* name and
+      lists the groups inside it, so sitting in the HR category made this
+      appear as a row called "Human Resources" among Dashboard and Forecast,
+      with nothing on screen saying "asset" at all. Anyone looking for the
+      asset register could not find it. A dedicated category makes the block
+      say what it is.
+    -->
+    <record id="module_category_asset_register" model="ir.module.category">
+        <field name="name">Asset Register</field>
+        <field name="description">Access to the company asset register.</field>
+        <field name="sequence">55</field>
+    </record>
+
     <record id="group_asset_register_manager" model="res.groups">
         <field name="name">Asset Register Manager</field>
-        <field name="category_id" ref="base.module_category_human_resources"/>
+        <field name="category_id" ref="module_category_asset_register"/>
         <field name="implied_ids"
                eval="[(4, ref('maintenance.group_equipment_manager'))]"/>
         <field name="users" eval="[(4, ref('base.user_admin'))]"/>
