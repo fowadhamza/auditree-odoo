@@ -34,6 +34,7 @@ unloads the stylesheet.
 |                                   [Contracts][Broad factor]   |
 |                                                   [Check in]  |
 +---------------------------------------------------------------+
+   "the day's quote, one italic line"          Author name
 +- Your team ---------------------------------------------------+
 |  Birthdays | Anniversaries | Announcements | Events           |
 |  every card sizes to its own content                          |
@@ -64,6 +65,10 @@ unloads the stylesheet.
 | `static/src/xml/xn_dashboard_app.xml` | The whole page. Inherits nothing. |
 | `static/src/scss/xn_dashboard_app.scss` | Tokens and layout, all scoped under `.xn_dash`. |
 | `data/xn_dashboard_action.xml` | Our own `ir.actions.client` and the Dashboard menu item. |
+| `models/xn_daily_quote.py` | `xn.daily.quote` and the date-driven pick behind the quote line. |
+| `views/xn_daily_quote_views.xml` | The list HR edits, under Employees > Configuration. |
+| `data/xn_daily_quotes.xml` | 65 seed quotes, `noupdate="1"`. |
+| `security/ir.model.access.csv` | HR managers only. Nobody else holds any grant on the model. |
 | `__init__.py` | `post_init_hook` / `uninstall_hook`, which hide and restore the vendor's Dashboard menu where `hrms_dashboard` is also installed, so no database shows two of them. Both no-op where it is absent. |
 
 **Two endpoints replace the vendor's.** `xn_user_details` returns the person
@@ -153,6 +158,55 @@ different units and get one plot each.
 | Announcement query interpolates ids into SQL with `%` | single parameterised statement; also scoped to `env.companies` |
 | Birthday avatar passes the whole result row to the image URL helper | `employee[0]` |
 | `join_resign_trend` and `attrition_rate` read `resign_date`, populated on zero records here, so both always show zero | both removed; replaced by a joiners/leavers panel reading `departure_date` |
+
+## The daily quote
+
+**The date picks the quote, nothing else does.**
+`index = (today - 1970-01-01).days % count`, over `search([])` ordered by
+`sequence, id`. Everyone sees the same quote on the same day, it changes at
+midnight, and no cron writes anything -- there is no scheduled job here to
+fail silently. `fields.Date.context_today` puts the boundary at midnight
+where the reader is rather than midnight UTC.
+
+A random pick was the obvious alternative and is worse in a specific way: it
+differs per user *and* per page refresh, so two people comparing screens read
+the dashboard as broken.
+
+**Adding or archiving a quote re-indexes the rest.** That shifts which quote
+lands on which day and nothing else; there is no stored pointer to migrate.
+With 65 seeded, nothing repeats for a little over two months.
+
+**No quotes means no quote line**, not an empty card. `_xn_quote_of_the_day`
+returns `False` and the template's `t-if` drops the node.
+
+**The seed file is `noupdate="1"`.** Without it every `-u xn_hr_dashboard`
+would overwrite HR's edits and revive whatever they archived.
+
+**Attributions were checked.** Most of what circulates as a famous quotation
+is misattributed, and crediting the wrong person daily is worse than showing
+nothing. The popular lines that do not survive checking -- "Quality is not an
+act, it is a habit" (Durant paraphrasing Aristotle), "Simplicity is the
+ultimate sophistication" (not da Vinci), "Success is not final" (not
+Churchill) -- are deliberately absent, and proverbs are credited as proverbs.
+
+**It rides on `xn_user_details`** rather than getting an endpoint of its own,
+so the quote costs no extra round trip on dashboard load.
+
+**Only HR managers hold a grant on `xn.daily.quote`.** There is no
+`base.group_user` read row, so an ordinary employee cannot reach the list by
+menu, by `#model=xn.daily.quote` in the URL, or over RPC. They still see
+their quote line, because `_xn_quote_of_the_day` reads with `sudo()`.
+
+That is the one `sudo()` in this module not paired with a manager check. It
+is safe here for a reason worth stating rather than assuming: the method
+returns a single line of a public quotation chosen by the calendar, and
+returns the same one to every caller, so there is nothing an employee could
+learn from it that the dashboard was not already showing them.
+
+**The day is computed before the `sudo()`, not after.**
+`fields.Date.context_today` falls back to `env.user.tz`, and under `sudo()`
+that user is the superuser. Elevating first would silently move the midnight
+boundary onto the superuser's timezone.
 
 ## Things worth knowing
 

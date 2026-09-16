@@ -179,6 +179,11 @@ export class XnHrDashboard extends Component {
             job: row.job || "",
             department: row.department || "",
             checkedIn: Boolean(row.checked_in),
+            // False when no quotes are active. The template renders nothing
+            // at all for that rather than an empty line.
+            quote: row.quote
+                ? { text: row.quote.text || "", author: row.quote.author || "" }
+                : null,
             figures: [
                 { key: "payslips", label: "Payslips", value: figure(row.payslips) },
                 { key: "timesheets", label: "Timesheets", value: figure(row.timesheets) },

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+      The quote list is meant to be edited by HR, not by whoever can reach a
+      shell. Editable inline, because the whole record is two fields and
+      opening a form to change a comma is friction for no gain.
+    -->
+    <record id="view_xn_daily_quote_tree" model="ir.ui.view">
+        <field name="name">xn.daily.quote.tree</field>
+        <field name="model">xn.daily.quote</field>
+        <field name="arch" type="xml">
+            <tree string="Dashboard Quotes" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="text"/>
+                <field name="author" placeholder="Leave blank if unverified"/>
+                <field name="active" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_daily_quote_form" model="ir.ui.view">
+        <field name="name">xn.daily.quote.form</field>
+        <field name="model">xn.daily.quote</field>
+        <field name="arch" type="xml">
+            <form string="Dashboard Quote">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <group>
+                        <field name="text" placeholder="Well done is better than well said."/>
+                        <field name="author" placeholder="Benjamin Franklin"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_xn_daily_quote_search" model="ir.ui.view">
+        <field name="name">xn.daily.quote.search</field>
+        <field name="model">xn.daily.quote</field>
+        <field name="arch" type="xml">
+            <search string="Dashboard Quotes">
+                <field name="text"/>
+                <field name="author"/>
+                <filter name="filter_unattributed" string="Unattributed"
+                        domain="[('author', 'in', [False, ''])]"/>
+                <filter name="filter_archived" string="Archived"
+                        domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_author" string="Author"
+                            context="{'group_by': 'author'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_daily_quote" model="ir.actions.act_window">
+        <field name="name">Dashboard Quotes</field>
+        <field name="res_model">xn.daily.quote</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_xn_daily_quote_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a quote for the dashboard
+            </p>
+            <p>
+                One quote appears on every employee's dashboard each day, the
+                same for everyone, changing at midnight. The list is walked in
+                order and starts again at the top, so with 65 quotes nothing
+                repeats for a little over two months.
+            </p>
+            <p>
+                With no active quotes the dashboard simply shows no quote line
+                at all.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_xn_daily_quote"
+              name="Dashboard Quotes"
+              parent="hr.menu_human_resources_configuration"
+              action="action_xn_daily_quote"
+              groups="hr.group_hr_manager"
+              sequence="90"/>
+
+</odoo>
