@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Seed quotes for the dashboard.
+
+  noupdate="1" is the important attribute here. Without it every
+  `-u xn_hr_dashboard` would overwrite whatever HR has edited and revive
+  anything they archived. With it, this file seeds a database once and then
+  leaves the list alone; it is HR's list from that point on.
+
+  ASCII only - see CLAUDE.md section 3.3. No curly apostrophes, no em
+  dashes. Contractions are spelled out ("cannot", "do not") so nothing here
+  needs an apostrophe at all.
+
+  On attribution: most of what circulates as a famous quotation is
+  misattributed, and a dashboard that credits the wrong person every day is
+  worse than one with no quote. Everything below traces to a real source, and
+  the popular lines that do not - "Quality is not an act, it is a habit"
+  (Will Durant paraphrasing Aristotle, not Aristotle), "Simplicity is the
+  ultimate sophistication" (not da Vinci), "Success is not final, failure is
+  not fatal" (not Churchill), "The secret of getting ahead is getting
+  started" (not Twain) - are deliberately absent. Proverbs are credited as
+  proverbs rather than given a borrowed name.
+-->
+<odoo noupdate="1">
+
+    <record id="quote_001" model="xn.daily.quote">
+        <field name="sequence">1</field>
+        <field name="text">The best way out is always through.</field>
+        <field name="author">Robert Frost</field>
+    </record>
+
+    <record id="quote_002" model="xn.daily.quote">
+        <field name="sequence">2</field>
+        <field name="text">Well done is better than well said.</field>
+        <field name="author">Benjamin Franklin</field>
+    </record>
+
+    <record id="quote_003" model="xn.daily.quote">
+        <field name="sequence">3</field>
+        <field name="text">Lost time is never found again.</field>
+        <field name="author">Benjamin Franklin</field>
+    </record>
+
+    <record id="quote_004" model="xn.daily.quote">
+        <field name="sequence">4</field>
+        <field name="text">Energy and persistence conquer all things.</field>
+        <field name="author">Benjamin Franklin</field>
+    </record>
+
+    <record id="quote_005" model="xn.daily.quote">
+        <field name="sequence">5</field>
+        <field name="text">Nothing in life is to be feared, it is only to be understood.</field>
+        <field name="author">Marie Curie</field>
+    </record>
+
+    <record id="quote_006" model="xn.daily.quote">
+        <field name="sequence">6</field>
+        <field name="text">I was taught that the way of progress was neither swift nor easy.</field>
+        <field name="author">Marie Curie</field>
+    </record>
+
+    <record id="quote_007" model="xn.daily.quote">
+        <field name="sequence">7</field>
+        <field name="text">The reward of a thing well done is having done it.</field>
+        <field name="author">Ralph Waldo Emerson</field>
+    </record>
+
+    <record id="quote_008" model="xn.daily.quote">
+        <field name="sequence">8</field>
+        <field name="text">Do the thing and you will have the power.</field>
+        <field name="author">Ralph Waldo Emerson</field>
+    </record>
+
+    <record id="quote_009" model="xn.daily.quote">
+        <field name="sequence">9</field>
+        <field name="text">We are what we repeatedly do. Excellence, then, is not an act but a habit.</field>
+        <field name="author">Will Durant</field>
+    </record>
+
+    <record id="quote_010" model="xn.daily.quote">
+        <field name="sequence">10</field>
+        <field name="text">Order and simplification are the first steps toward the mastery of a subject.</field>
+        <field name="author">Thomas Mann</field>
+    </record>
+
+    <record id="quote_011" model="xn.daily.quote">
+        <field name="sequence">11</field>
+        <field name="text">It always seems impossible until it is done.</field>
+        <field name="author">Nelson Mandela</field>
+    </record>
+
+    <record id="quote_012" model="xn.daily.quote">
+        <field name="sequence">12</field>
+        <field name="text">A winner is a dreamer who never gives up.</field>
+        <field name="author">Nelson Mandela</field>
+    </record>
+
+    <record id="quote_013" model="xn.daily.quote">
+        <field name="sequence">13</field>
+        <field name="text">Genius is one percent inspiration and ninety-nine percent perspiration.</field>
+        <field name="author">Thomas Edison</field>
+    </record>
+
+    <record id="quote_014" model="xn.daily.quote">
+        <field name="sequence">14</field>
+        <field name="text">I have not failed. I have just found ten thousand ways that will not work.</field>
+        <field name="author">Thomas Edison</field>
+    </record>
+
+    <record id="quote_015" model="xn.daily.quote">
+        <field name="sequence">15</field>
+        <field name="text">Perfection is finally attained not when there is no longer anything to add, but when there is no longer anything to take away.</field>
+        <field name="author">Antoine de Saint-Exupery</field>
+    </record>
+
+    <record id="quote_016" model="xn.daily.quote">
+        <field name="sequence">16</field>
+        <field name="text">A journey of a thousand miles begins with a single step.</field>
+        <field name="author">Laozi</field>
+    </record>
+
+    <record id="quote_017" model="xn.daily.quote">
+        <field name="sequence">17</field>
+        <field name="text">Fall seven times, stand up eight.</field>
+        <field name="author">Japanese proverb</field>
+    </record>
+
+    <record id="quote_018" model="xn.daily.quote">
+        <field name="sequence">18</field>
+        <field name="text">Knowing is not enough; we must apply. Willing is not enough; we must do.</field>
+        <field name="author">Johann Wolfgang von Goethe</field>
+    </record>
+
+    <record id="quote_019" model="xn.daily.quote">
+        <field name="sequence">19</field>
+        <field name="text">The important thing is not to stop questioning.</field>
+        <field name="author">Albert Einstein</field>
+    </record>
+
+    <record id="quote_020" model="xn.daily.quote">
+        <field name="sequence">20</field>
+        <field name="text">Try not to become a person of success, but rather a person of value.</field>
+        <field name="author">Albert Einstein</field>
+    </record>
+
+    <record id="quote_021" model="xn.daily.quote">
+        <field name="sequence">21</field>
+        <field name="text">Whether you think you can or you think you cannot, you are right.</field>
+        <field name="author">Henry Ford</field>
+    </record>
+
+    <record id="quote_022" model="xn.daily.quote">
+        <field name="sequence">22</field>
+        <field name="text">Coming together is a beginning; keeping together is progress; working together is success.</field>
+        <field name="author">Henry Ford</field>
+    </record>
+
+    <record id="quote_023" model="xn.daily.quote">
+        <field name="sequence">23</field>
+        <field name="text">Quality means doing it right when no one is looking.</field>
+        <field name="author">Henry Ford</field>
+    </record>
+
+    <record id="quote_024" model="xn.daily.quote">
+        <field name="sequence">24</field>
+        <field name="text">Not everything that is faced can be changed, but nothing can be changed until it is faced.</field>
+        <field name="author">James Baldwin</field>
+    </record>
+
+    <record id="quote_025" model="xn.daily.quote">
+        <field name="sequence">25</field>
+        <field name="text">The only way to do great work is to love what you do.</field>
+        <field name="author">Steve Jobs</field>
+    </record>
+
+    <record id="quote_026" model="xn.daily.quote">
+        <field name="sequence">26</field>
+        <field name="text">Simple can be harder than complex.</field>
+        <field name="author">Steve Jobs</field>
+    </record>
+
+    <record id="quote_027" model="xn.daily.quote">
+        <field name="sequence">27</field>
+        <field name="text">Done is better than perfect.</field>
+        <field name="author">Sheryl Sandberg</field>
+    </record>
+
+    <record id="quote_028" model="xn.daily.quote">
+        <field name="sequence">28</field>
+        <field name="text">What we hope ever to do with ease, we must first learn to do with diligence.</field>
+        <field name="author">Samuel Johnson</field>
+    </record>
+
+    <record id="quote_029" model="xn.daily.quote">
+        <field name="sequence">29</field>
+        <field name="text">Great works are performed not by strength but by perseverance.</field>
+        <field name="author">Samuel Johnson</field>
+    </record>
+
+    <record id="quote_030" model="xn.daily.quote">
+        <field name="sequence">30</field>
+        <field name="text">Efficiency is doing things right; effectiveness is doing the right things.</field>
+        <field name="author">Peter Drucker</field>
+    </record>
+
+    <record id="quote_031" model="xn.daily.quote">
+        <field name="sequence">31</field>
+        <field name="text">What gets measured gets managed.</field>
+        <field name="author">Peter Drucker</field>
+    </record>
+
+    <record id="quote_032" model="xn.daily.quote">
+        <field name="sequence">32</field>
+        <field name="text">The best way to predict the future is to invent it.</field>
+        <field name="author">Alan Kay</field>
+    </record>
+
+    <record id="quote_033" model="xn.daily.quote">
+        <field name="sequence">33</field>
+        <field name="text">Plans are nothing; planning is everything.</field>
+        <field name="author">Dwight D. Eisenhower</field>
+    </record>
+
+    <record id="quote_034" model="xn.daily.quote">
+        <field name="sequence">34</field>
+        <field name="text">Whatever you are, be a good one.</field>
+        <field name="author">Abraham Lincoln</field>
+    </record>
+
+    <record id="quote_035" model="xn.daily.quote">
+        <field name="sequence">35</field>
+        <field name="text">The way to get started is to quit talking and begin doing.</field>
+        <field name="author">Walt Disney</field>
+    </record>
+
+    <record id="quote_036" model="xn.daily.quote">
+        <field name="sequence">36</field>
+        <field name="text">You miss one hundred percent of the shots you do not take.</field>
+        <field name="author">Wayne Gretzky</field>
+    </record>
+
+    <record id="quote_037" model="xn.daily.quote">
+        <field name="sequence">37</field>
+        <field name="text">It is not the load that breaks you down, it is the way you carry it.</field>
+        <field name="author">Lena Horne</field>
+    </record>
+
+    <record id="quote_038" model="xn.daily.quote">
+        <field name="sequence">38</field>
+        <field name="text">Courage is grace under pressure.</field>
+        <field name="author">Ernest Hemingway</field>
+    </record>
+
+    <record id="quote_039" model="xn.daily.quote">
+        <field name="sequence">39</field>
+        <field name="text">Little by little, one travels far.</field>
+        <field name="author">Spanish proverb</field>
+    </record>
+
+    <record id="quote_040" model="xn.daily.quote">
+        <field name="sequence">40</field>
+        <field name="text">If you want to go fast, go alone. If you want to go far, go together.</field>
+        <field name="author">African proverb</field>
+    </record>
+
+    <record id="quote_041" model="xn.daily.quote">
+        <field name="sequence">41</field>
+        <field name="text">Measure twice, cut once.</field>
+        <field name="author">Proverb</field>
+    </record>
+
+    <record id="quote_042" model="xn.daily.quote">
+        <field name="sequence">42</field>
+        <field name="text">The impediment to action advances action. What stands in the way becomes the way.</field>
+        <field name="author">Marcus Aurelius</field>
+    </record>
+
+    <record id="quote_043" model="xn.daily.quote">
+        <field name="sequence">43</field>
+        <field name="text">You have power over your mind, not outside events. Realize this, and you will find strength.</field>
+        <field name="author">Marcus Aurelius</field>
+    </record>
+
+    <record id="quote_044" model="xn.daily.quote">
+        <field name="sequence">44</field>
+        <field name="text">Waste no more time arguing about what a good person should be. Be one.</field>
+        <field name="author">Marcus Aurelius</field>
+    </record>
+
+    <record id="quote_045" model="xn.daily.quote">
+        <field name="sequence">45</field>
+        <field name="text">We suffer more often in imagination than in reality.</field>
+        <field name="author">Seneca</field>
+    </record>
+
+    <record id="quote_046" model="xn.daily.quote">
+        <field name="sequence">46</field>
+        <field name="text">It is not that we have a short time to live, but that we waste a lot of it.</field>
+        <field name="author">Seneca</field>
+    </record>
+
+    <record id="quote_047" model="xn.daily.quote">
+        <field name="sequence">47</field>
+        <field name="text">Difficulties strengthen the mind, as labour does the body.</field>
+        <field name="author">Seneca</field>
+    </record>
+
+    <record id="quote_048" model="xn.daily.quote">
+        <field name="sequence">48</field>
+        <field name="text">First say to yourself what you would be; and then do what you have to do.</field>
+        <field name="author">Epictetus</field>
+    </record>
+
+    <record id="quote_049" model="xn.daily.quote">
+        <field name="sequence">49</field>
+        <field name="text">Work expands so as to fill the time available for its completion.</field>
+        <field name="author">C. Northcote Parkinson</field>
+    </record>
+
+    <record id="quote_050" model="xn.daily.quote">
+        <field name="sequence">50</field>
+        <field name="text">Discipline is the bridge between goals and accomplishment.</field>
+        <field name="author">Jim Rohn</field>
+    </record>
+
+    <record id="quote_051" model="xn.daily.quote">
+        <field name="sequence">51</field>
+        <field name="text">Success is the sum of small efforts repeated day in and day out.</field>
+        <field name="author">Robert Collier</field>
+    </record>
+
+    <record id="quote_052" model="xn.daily.quote">
+        <field name="sequence">52</field>
+        <field name="text">Great things are done by a series of small things brought together.</field>
+        <field name="author">Vincent van Gogh</field>
+    </record>
+
+    <record id="quote_053" model="xn.daily.quote">
+        <field name="sequence">53</field>
+        <field name="text">Far and away the best prize that life offers is the chance to work hard at work worth doing.</field>
+        <field name="author">Theodore Roosevelt</field>
+    </record>
+
+    <record id="quote_054" model="xn.daily.quote">
+        <field name="sequence">54</field>
+        <field name="text">Do what you can, with what you have, where you are.</field>
+        <field name="author">Theodore Roosevelt</field>
+    </record>
+
+    <record id="quote_055" model="xn.daily.quote">
+        <field name="sequence">55</field>
+        <field name="text">An ounce of practice is worth more than tons of preaching.</field>
+        <field name="author">Mahatma Gandhi</field>
+    </record>
+
+    <record id="quote_056" model="xn.daily.quote">
+        <field name="sequence">56</field>
+        <field name="text">The future depends on what you do today.</field>
+        <field name="author">Mahatma Gandhi</field>
+    </record>
+
+    <record id="quote_057" model="xn.daily.quote">
+        <field name="sequence">57</field>
+        <field name="text">Learning never exhausts the mind.</field>
+        <field name="author">Leonardo da Vinci</field>
+    </record>
+
+    <record id="quote_058" model="xn.daily.quote">
+        <field name="sequence">58</field>
+        <field name="text">It is not enough to be busy; the question is: what are we busy about?</field>
+        <field name="author">Henry David Thoreau</field>
+    </record>
+
+    <record id="quote_059" model="xn.daily.quote">
+        <field name="sequence">59</field>
+        <field name="text">How wonderful it is that nobody need wait a single moment before starting to improve the world.</field>
+        <field name="author">Anne Frank</field>
+    </record>
+
+    <record id="quote_060" model="xn.daily.quote">
+        <field name="sequence">60</field>
+        <field name="text">Arise, awake, and stop not till the goal is reached.</field>
+        <field name="author">Swami Vivekananda</field>
+    </record>
+
+    <record id="quote_061" model="xn.daily.quote">
+        <field name="sequence">61</field>
+        <field name="text">Take up one idea. Make that one idea your life.</field>
+        <field name="author">Swami Vivekananda</field>
+    </record>
+
+    <record id="quote_062" model="xn.daily.quote">
+        <field name="sequence">62</field>
+        <field name="text">Dream, dream, dream. Dreams transform into thoughts and thoughts result in action.</field>
+        <field name="author">A. P. J. Abdul Kalam</field>
+    </record>
+
+    <record id="quote_063" model="xn.daily.quote">
+        <field name="sequence">63</field>
+        <field name="text">Excellence is a continuous process and not an accident.</field>
+        <field name="author">A. P. J. Abdul Kalam</field>
+    </record>
+
+    <record id="quote_064" model="xn.daily.quote">
+        <field name="sequence">64</field>
+        <field name="text">You cannot cross the sea merely by standing and staring at the water.</field>
+        <field name="author">Rabindranath Tagore</field>
+    </record>
+
+    <record id="quote_065" model="xn.daily.quote">
+        <field name="sequence">65</field>
+        <field name="text">You cannot shake hands with a clenched fist.</field>
+        <field name="author">Indira Gandhi</field>
+    </record>
+
+</odoo>
