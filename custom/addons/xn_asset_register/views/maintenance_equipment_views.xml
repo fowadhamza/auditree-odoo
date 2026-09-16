@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+      Every xpath below anchors on a field name, never on a position. That
+      matters here because hr_maintenance already replaces owner_user_id with
+      employee_id in the form, tree and kanban, so a positional anchor would
+      land somewhere different depending on load order.
+    -->
+
+    <record id="view_maintenance_equipment_form_xn_asset" model="ir.ui.view">
+        <field name="name">maintenance.equipment.form.xn.asset</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
+        <field name="arch" type="xml">
+
+            <field name="location" position="after">
+                <field name="xn_condition"/>
+            </field>
+
+            <!--
+              Core hides both dates behind developer mode. For a custody
+              register the handover date is the whole point, and the scrap
+              date is how a written off item stops counting as held.
+            -->
+            <field name="assign_date" position="attributes">
+                <attribute name="groups"></attribute>
+                <attribute name="string">Assigned On</attribute>
+            </field>
+            <field name="scrap_date" position="attributes">
+                <attribute name="groups"></attribute>
+            </field>
+
+            <field name="serial_no" position="before">
+                <field name="xn_asset_code" placeholder="e.g. AT-LT-002"/>
+            </field>
+
+        </field>
+    </record>
+
+    <record id="view_maintenance_equipment_tree_xn_asset" model="ir.ui.view">
+        <field name="name">maintenance.equipment.tree.xn.asset</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="serial_no" position="before">
+                <field name="xn_asset_code"/>
+            </field>
+            <field name="serial_no" position="after">
+                <field name="xn_condition" optional="show"/>
+                <field name="effective_date" string="Purchased" optional="hide"/>
+                <field name="cost" optional="hide" groups="maintenance.group_equipment_manager"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_maintenance_equipment_search_xn_asset" model="ir.ui.view">
+        <field name="name">maintenance.equipment.search.xn.asset</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_view_search"/>
+        <field name="arch" type="xml">
+
+            <!--
+              Typing an asset tag into the search box is how anyone will look
+              an item up, so it belongs in the default search rather than as a
+              separate field nobody finds.
+            -->
+            <field name="name" position="attributes">
+                <attribute name="filter_domain">[
+                    '|', '|', '|', '|',
+                    ('name', 'ilike', self), ('model', 'ilike', self),
+                    ('serial_no', 'ilike', self), ('partner_ref', 'ilike', self),
+                    ('xn_asset_code', 'ilike', self)]</attribute>
+            </field>
+
+            <field name="category_id" position="after">
+                <field name="xn_asset_code"/>
+            </field>
+
+            <filter name="under_maintenance" position="before">
+                <filter string="Needs Attention" name="xn_needs_attention"
+                        domain="[('xn_condition', 'in', ['bad', 'not_working'])]"/>
+                <filter string="Condition Not Recorded" name="xn_no_condition"
+                        domain="[('xn_condition', '=', False)]"/>
+                <separator/>
+            </filter>
+
+            <group position="inside">
+                <filter string="Condition" name="xn_condition_group" domain="[]"
+                        context="{'group_by': 'xn_condition'}"/>
+            </group>
+
+        </field>
+    </record>
+
+</odoo>
