@@ -60,6 +60,18 @@
                         </button>
                     </section>
 
+                    <!-- The day's quote. A byline, not a panel: no border, no
+                         fill, no heading, so it carries no weight it has not
+                         earned. Absent entirely when no quotes are active -
+                         an empty card here would teach people to stop looking
+                         at this part of the screen. -->
+                    <div class="xn_quote" t-if="state.employee.quote">
+                        <span class="xn_quote_text">"<t t-esc="state.employee.quote.text"/>"</span>
+                        <span class="xn_quote_author"
+                              t-if="state.employee.quote.author"
+                              t-esc="state.employee.quote.author"/>
+                    </div>
+
                     <!-- Your team -->
                     <section class="xn_block">
                         <h3 class="xn_row_label">Your team</h3>
