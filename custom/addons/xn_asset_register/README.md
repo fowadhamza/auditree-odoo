@@ -63,6 +63,36 @@ Two search filters come with it: **Needs Attention** (bad or not working) and
 custody register, and the scrap date is how a written-off item stops counting
 as held, so both are unhidden here.
 
+## Who can see it
+
+Installing core `maintenance` puts a Maintenance app in front of **every**
+internal user. Two separate causes:
+
+* its root menu carries no `groups` at all, and
+* every child menu lists `base.group_user` alongside `group_equipment_manager`,
+  and menu visibility is a union, so Internal User wins.
+
+On top of that, `hr_maintenance` grants `maintenance.group_equipment_manager`
+to `hr.group_hr_user` through `implied_ids`, so every HR Officer silently
+becomes an Equipment Manager.
+
+`security/xn_asset_register_security.xml` closes both:
+
+* a new **Asset Register Manager** group, which implies Equipment Manager,
+* every Maintenance menu regated on it with `(6, 0, [...])` -- replacing the
+  group list rather than adding to it, which is what strips `base.group_user`,
+* the `hr.group_hr_user` implication removed with `(3, ref(...))`.
+
+Removing an implication does not walk back the memberships Odoo already
+materialised, so `post_init_hook` strips Equipment Manager from users who do
+not hold Asset Register Manager. It never touches the superuser, and never
+touches anyone who holds the new group.
+
+**The group ships empty apart from the administrator.** That is deliberate --
+membership is assigned by hand so it cannot grow as a side effect of somebody
+being given an HR role. It also means that after installing, somebody has to
+grant it, or nobody can reach the register.
+
 ## Not included, pending a decision
 
 SIM cards (4 rows, holding a phone number and provider) have no home here yet.

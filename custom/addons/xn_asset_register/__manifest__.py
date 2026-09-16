@@ -46,8 +46,10 @@ adding two fields that nothing fills is worse than leaving them out.
         "hr_maintenance",
     ],
     "data": [
+        "security/xn_asset_register_security.xml",
         "views/maintenance_equipment_views.xml",
     ],
+    "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,
     "auto_install": False,
