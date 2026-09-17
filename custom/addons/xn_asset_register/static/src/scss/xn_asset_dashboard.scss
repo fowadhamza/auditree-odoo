@@ -1,0 +1,392 @@
+// Asset register dashboard.
+//
+// Scoped entirely under .xn_asset_dash so nothing here can reach the rest of
+// the backend. Colours are set inline from the component, because the series
+// palette has to match between the donut, the bars and the legend, and one
+// source for it is safer than two.
+
+.xn_asset_dash {
+    padding: 16px;
+    background: #f6f7f9;
+    overflow: auto;
+    height: 100%;
+
+    .xn_ad_msg {
+        padding: 32px;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .xn_ad_err {
+        color: #9b2c2c;
+    }
+
+    .xn_ad_head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+
+        h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+    }
+
+    // --- headline tiles ---------------------------------------------------
+    .xn_ad_tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .xn_ad_tile {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 14px 16px;
+        cursor: pointer;
+        transition: box-shadow .15s, transform .15s;
+
+        &:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+            transform: translateY(-1px);
+        }
+
+        .xn_ad_tile_n {
+            display: block;
+            font-size: 26px;
+            font-weight: 600;
+            line-height: 1.1;
+            color: #1f2937;
+        }
+
+        .xn_ad_tile_l {
+            display: block;
+            margin-top: 2px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        &.xn_ad_warn .xn_ad_tile_n {
+            color: #c0392b;
+        }
+    }
+
+    // --- cards ------------------------------------------------------------
+    .xn_ad_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 12px;
+        align-items: start;
+    }
+
+    .xn_ad_card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 14px 16px;
+
+        h3 {
+            margin: 0 0 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        h4 {
+            margin: 14px 0 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+    }
+
+    .xn_ad_card_wide {
+        grid-column: 1 / -1;
+    }
+
+    .xn_ad_note {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+    .xn_ad_muted {
+        color: #9ca3af;
+        font-size: 11px;
+    }
+
+    // --- donut ------------------------------------------------------------
+    .xn_ad_donut_wrap {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .xn_ad_donut {
+        width: 132px;
+        height: 132px;
+        flex: none;
+
+        .xn_ad_donut_n {
+            text-anchor: middle;
+            font-size: 20px;
+            font-weight: 600;
+            fill: #1f2937;
+        }
+
+        .xn_ad_donut_t {
+            text-anchor: middle;
+            font-size: 9px;
+            fill: #9ca3af;
+        }
+    }
+
+    .xn_ad_legend {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex: 1 1 150px;
+        min-width: 0;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+
+            &:hover {
+                background: #f3f4f6;
+            }
+        }
+
+        .xn_ad_leg_l {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #4b5563;
+        }
+    }
+
+    .xn_ad_legend_row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .xn_ad_dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        flex: none;
+    }
+
+    // --- horizontal bars --------------------------------------------------
+    .xn_ad_bars {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+
+            &:hover {
+                background: #f3f4f6;
+            }
+        }
+    }
+
+    .xn_ad_bar_l {
+        flex: 0 0 34%;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #4b5563;
+    }
+
+    .xn_ad_bar_track {
+        flex: 1;
+        height: 12px;
+        background: #eef1f4;
+        border-radius: 3px;
+        overflow: hidden;
+        min-width: 0;
+    }
+
+    .xn_ad_bar_fill {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        min-width: 2px;
+        transition: width .25s;
+    }
+
+    .xn_ad_bar_v {
+        flex: 0 0 auto;
+        min-width: 42px;
+        text-align: right;
+        font-weight: 600;
+        color: #374151;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .xn_ad_tag {
+        margin-left: 4px;
+        padding: 0 4px;
+        border-radius: 3px;
+        background: #fdecea;
+        color: #c0392b;
+        font-size: 10px;
+    }
+
+    // --- vertical columns -------------------------------------------------
+    .xn_ad_cols {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 170px;
+    }
+
+    .xn_ad_col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        cursor: pointer;
+        min-width: 0;
+
+        &:hover .xn_ad_col_fill {
+            background: #1e4f86;
+        }
+    }
+
+    .xn_ad_col_v {
+        font-size: 11px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 3px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .xn_ad_col_track {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        align-items: flex-end;
+        background: #f3f4f6;
+        border-radius: 3px 3px 0 0;
+        overflow: hidden;
+    }
+
+    .xn_ad_col_fill {
+        width: 100%;
+        background: #2b6cb0;
+        border-radius: 3px 3px 0 0;
+        min-height: 2px;
+        transition: height .25s, background .15s;
+    }
+
+    .xn_ad_col_l {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #6b7280;
+    }
+
+    // --- custody split ----------------------------------------------------
+    .xn_ad_split {
+        display: flex;
+        height: 26px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+
+    .xn_ad_split_seg {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        min-width: 2px;
+    }
+
+    // --- plain list -------------------------------------------------------
+    .xn_ad_list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            color: #4b5563;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+
+            &:last-child {
+                border-bottom: 0;
+            }
+
+            &:hover {
+                background: #f3f4f6;
+            }
+        }
+    }
+
+    // --- attention chips --------------------------------------------------
+    .xn_ad_chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .xn_ad_chip {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        border: 1px solid #f0d4cf;
+        background: #fdf4f2;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #7b3a2e;
+
+        b {
+            font-size: 16px;
+            color: #c0392b;
+        }
+
+        &:hover {
+            background: #fbe9e5;
+        }
+    }
+}

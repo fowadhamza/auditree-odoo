@@ -48,7 +48,15 @@ adding two fields that nothing fills is worse than leaving them out.
     "data": [
         "security/xn_asset_register_security.xml",
         "views/maintenance_equipment_views.xml",
+        "data/xn_asset_dashboard_action.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "xn_asset_register/static/src/scss/xn_asset_dashboard.scss",
+            "xn_asset_register/static/src/js/xn_asset_dashboard.js",
+            "xn_asset_register/static/src/xml/xn_asset_dashboard.xml",
+        ],
+    },
     "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,
