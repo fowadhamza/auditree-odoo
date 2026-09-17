@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_xn_asset_dashboard" model="ir.actions.client">
+        <field name="name">Asset Overview</field>
+        <field name="tag">xn_asset_dashboard</field>
+    </record>
+
+    <!--
+      Clicking an app in Odoo opens the first child menu of that app, so this
+      has to sort ahead of core's own Dashboard entry, which sits at sequence
+      0. Sequence -10 puts the overview there without touching the vendor
+      menu, which stays available underneath.
+
+      Gated on the same group as every other Maintenance menu. The Python
+      endpoint checks the group again rather than trusting the menu: a menu is
+      a hint about what to show, not an access control.
+    -->
+    <menuitem id="menu_xn_asset_dashboard"
+              name="Overview"
+              parent="maintenance.menu_maintenance_title"
+              action="action_xn_asset_dashboard"
+              groups="xn_asset_register.group_asset_register_manager"
+              sequence="-10"/>
+
+</odoo>

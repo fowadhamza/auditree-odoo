@@ -93,6 +93,42 @@ membership is assigned by hand so it cannot grow as a side effect of somebody
 being given an HR role. It also means that after installing, somebody has to
 grant it, or nobody can reach the register.
 
+## The Overview dashboard
+
+Clicking **Maintenance** opens an asset overview rather than the vendor's
+maintenance dashboard. Odoo opens an app's first child menu, so the menu sits
+at `sequence="-10"` against core's `0`; the vendor entry stays underneath
+rather than being removed.
+
+Panels: headline tiles, a condition donut, value by category, purchases per
+year, an age-of-fleet band chart, the custody split with inventory locations,
+the ten largest holders, and a row of chips for anything needing a decision.
+A toggle switches the category and year charts between counts and value.
+Every figure is clickable and opens the equipment list filtered to exactly the
+rows behind it.
+
+### No Chart.js
+
+Same reasoning as `xn_hr_dashboard`: Odoo 17 ships Chart.js only in
+`web.chartjs_lib`, which no backend bundle includes, so a canvas drawn without
+an explicit `loadBundle` stays blank with nothing in the console. Every chart
+here is a CSS box or a hand-built SVG, which cannot fail that way. Note that
+this contradicts CLAUDE.md section 5, which recommends the `loadBundle` route
+and cites a filename that does not exist -- the two in-house dashboards both
+avoid the library outright.
+
+### Arithmetic lives in one place
+
+The Python endpoint returns finished figures and the component's `shape()`
+turns them into percentages. The template contains no maths at all, so what is
+drawn and what is counted cannot drift apart.
+
+`xn_asset_dashboard_data` re-checks the group rather than trusting the menu: a
+menu is a hint about what to show, not an access control. It also reads with
+`sudo()` on purpose -- the dashboard reports the whole register, and record
+rules would otherwise hand an ordinary user a total assembled from the
+equipment they happen to follow, which looks like a company total and is not.
+
 ## Not included, pending a decision
 
 SIM cards (4 rows, holding a phone number and provider) have no home here yet.

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="xn_asset_register.Dashboard">
+        <div class="xn_asset_dash o_content">
+
+            <t t-if="state.loading">
+                <div class="xn_ad_msg">Loading the asset register...</div>
+            </t>
+
+            <t t-elif="state.error">
+                <div class="xn_ad_msg xn_ad_err">
+                    <b>The dashboard could not load.</b>
+                    <div><t t-esc="state.error"/></div>
+                </div>
+            </t>
+
+            <t t-elif="!state.data.headline.total">
+                <div class="xn_ad_msg">
+                    <b>No assets recorded yet.</b>
+                    <div>Once equipment is added it will be summarised here.</div>
+                </div>
+            </t>
+
+            <t t-else="">
+                <t t-set="d" t-value="state.data"/>
+
+                <div class="xn_ad_head">
+                    <h2>Asset register</h2>
+                    <button class="btn btn-sm btn-secondary" t-on-click="() => this.toggleView()">
+                        <t t-if="state.view === 'count'">Showing counts</t>
+                        <t t-else="">Showing value</t>
+                    </button>
+                </div>
+
+                <div class="xn_ad_tiles">
+                    <div class="xn_ad_tile" t-on-click="() => this.open('all')">
+                        <span class="xn_ad_tile_n"><t t-esc="d.headline.total"/></span>
+                        <span class="xn_ad_tile_l">Assets tracked</span>
+                    </div>
+                    <div class="xn_ad_tile" t-on-click="() => this.open('all')">
+                        <span class="xn_ad_tile_n">
+                            <t t-esc="d.currency"/><t t-esc="compact(d.headline.total_value)"/>
+                        </span>
+                        <span class="xn_ad_tile_l">Book value</span>
+                    </div>
+                    <div class="xn_ad_tile" t-on-click="() => this.open('assigned')">
+                        <span class="xn_ad_tile_n"><t t-esc="d.headline.assigned"/></span>
+                        <span class="xn_ad_tile_l">With employees</span>
+                    </div>
+                    <div class="xn_ad_tile" t-on-click="() => this.open('at_location')">
+                        <span class="xn_ad_tile_n"><t t-esc="d.headline.at_location"/></span>
+                        <span class="xn_ad_tile_l">In inventory</span>
+                    </div>
+                    <div class="xn_ad_tile xn_ad_warn" t-if="d.headline.broken"
+                         t-on-click="() => this.open('not_working')">
+                        <span class="xn_ad_tile_n"><t t-esc="d.headline.broken"/></span>
+                        <span class="xn_ad_tile_l">Needs attention</span>
+                    </div>
+                    <div class="xn_ad_tile xn_ad_warn" t-if="d.headline.leavers"
+                         t-on-click="() => this.open('leavers')">
+                        <span class="xn_ad_tile_n"><t t-esc="d.headline.leavers"/></span>
+                        <span class="xn_ad_tile_l">Held by leavers</span>
+                    </div>
+                </div>
+
+                <div class="xn_ad_grid">
+
+                    <section class="xn_ad_card">
+                        <h3>Condition</h3>
+                        <div class="xn_ad_donut_wrap">
+                            <svg viewBox="0 0 120 120" class="xn_ad_donut">
+                                <circle t-att-cx="d.donut.cx" t-att-cy="d.donut.cy"
+                                        t-att-r="d.donut.r" fill="none"
+                                        stroke="#eceff3" t-att-stroke-width="d.donut.stroke"/>
+                                <t t-foreach="d.condition" t-as="seg" t-key="seg.key">
+                                    <circle t-att-cx="d.donut.cx" t-att-cy="d.donut.cy"
+                                            t-att-r="d.donut.r" fill="none"
+                                            t-att-stroke="seg.colour"
+                                            t-att-stroke-width="d.donut.stroke"
+                                            t-att-stroke-dasharray="seg.dash"
+                                            t-att-stroke-dashoffset="seg.offset"
+                                            transform="rotate(-90 60 60)">
+                                        <title><t t-esc="seg.label"/>: <t t-esc="seg.count"/></title>
+                                    </circle>
+                                </t>
+                                <text x="60" y="56" class="xn_ad_donut_n"><t t-esc="d.headline.total"/></text>
+                                <text x="60" y="72" class="xn_ad_donut_t">items</text>
+                            </svg>
+                            <ul class="xn_ad_legend">
+                                <t t-foreach="d.condition" t-as="seg" t-key="seg.key">
+                                    <li t-on-click="() => this.open('condition', seg.key)">
+                                        <span class="xn_ad_dot" t-attf-style="background: {{seg.colour}}"/>
+                                        <span class="xn_ad_leg_l"><t t-esc="seg.label"/></span>
+                                        <b><t t-esc="seg.count"/></b>
+                                        <span class="xn_ad_muted"><t t-esc="seg.share"/>%</span>
+                                    </li>
+                                </t>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="xn_ad_card">
+                        <h3>Where the value sits</h3>
+                        <p class="xn_ad_note" t-if="d.topCategory">
+                            <b><t t-esc="d.topCategory.label"/></b> is
+                            <t t-esc="d.topCategory.count"/> of
+                            <t t-esc="d.headline.total"/> items but
+                            <b><t t-esc="d.concentration"/>%</b> of book value.
+                        </p>
+                        <ul class="xn_ad_bars">
+                            <t t-foreach="d.category" t-as="cat" t-key="cat.label">
+                                <li t-on-click="() => this.open('category', cat.label)">
+                                    <span class="xn_ad_bar_l" t-att-title="cat.label"><t t-esc="cat.label"/></span>
+                                    <span class="xn_ad_bar_track">
+                                        <span class="xn_ad_bar_fill"
+                                              t-attf-style="width: {{state.view === 'count' ? cat.countPct : cat.valuePct}}%; background: {{cat.colour}}"/>
+                                    </span>
+                                    <span class="xn_ad_bar_v">
+                                        <t t-if="state.view === 'count'"><t t-esc="cat.count"/></t>
+                                        <t t-else=""><t t-esc="d.currency"/><t t-esc="inr(cat.value)"/></t>
+                                    </span>
+                                </li>
+                            </t>
+                        </ul>
+                    </section>
+
+                    <section class="xn_ad_card">
+                        <h3>Bought per year</h3>
+                        <div class="xn_ad_cols">
+                            <t t-foreach="d.years" t-as="yr" t-key="yr.label">
+                                <div class="xn_ad_col" t-on-click="() => this.open('year', yr.label)">
+                                    <span class="xn_ad_col_v">
+                                        <t t-if="state.view === 'count'"><t t-esc="yr.count"/></t>
+                                        <t t-else=""><t t-esc="compact(yr.value)"/></t>
+                                    </span>
+                                    <span class="xn_ad_col_track">
+                                        <span class="xn_ad_col_fill"
+                                              t-attf-style="height: {{state.view === 'count' ? yr.countPct : yr.valuePct}}%"/>
+                                    </span>
+                                    <span class="xn_ad_col_l"><t t-esc="yr.label"/></span>
+                                </div>
+                            </t>
+                        </div>
+                    </section>
+
+                    <section class="xn_ad_card">
+                        <h3>Age of the fleet</h3>
+                        <p class="xn_ad_note">Time since purchase. The warmer bands are the replacement queue.</p>
+                        <ul class="xn_ad_bars">
+                            <t t-foreach="d.ageBands" t-as="band" t-key="band.label">
+                                <li>
+                                    <span class="xn_ad_bar_l"><t t-esc="band.label"/></span>
+                                    <span class="xn_ad_bar_track">
+                                        <span class="xn_ad_bar_fill"
+                                              t-attf-style="width: {{band.barPct}}%; background: {{band.colour}}"/>
+                                    </span>
+                                    <span class="xn_ad_bar_v"><t t-esc="band.count"/></span>
+                                </li>
+                            </t>
+                        </ul>
+                    </section>
+
+                    <section class="xn_ad_card">
+                        <h3>Custody</h3>
+                        <div class="xn_ad_split">
+                            <t t-foreach="d.custody" t-as="part" t-key="part.key">
+                                <div class="xn_ad_split_seg"
+                                     t-attf-style="width: {{part.barPct}}%; background: {{part.colour}}"
+                                     t-on-click="() => this.open(part.key)">
+                                    <t t-esc="part.count"/>
+                                </div>
+                            </t>
+                        </div>
+                        <ul class="xn_ad_legend xn_ad_legend_row">
+                            <t t-foreach="d.custody" t-as="part" t-key="part.key">
+                                <li t-on-click="() => this.open(part.key)">
+                                    <span class="xn_ad_dot" t-attf-style="background: {{part.colour}}"/>
+                                    <span class="xn_ad_leg_l"><t t-esc="part.label"/></span>
+                                    <b><t t-esc="part.count"/></b>
+                                </li>
+                            </t>
+                        </ul>
+                        <h4 t-if="d.locations.length">Inventory locations</h4>
+                        <ul class="xn_ad_list">
+                            <t t-foreach="d.locations" t-as="loc" t-key="loc.label">
+                                <li t-on-click="() => this.open('location', loc.label)">
+                                    <span><t t-esc="loc.label"/></span>
+                                    <b><t t-esc="loc.count"/></b>
+                                </li>
+                            </t>
+                        </ul>
+                    </section>
+
+                    <section class="xn_ad_card">
+                        <h3>Who holds the most</h3>
+                        <ul class="xn_ad_bars">
+                            <t t-foreach="d.holders" t-as="h" t-key="h.label">
+                                <li t-on-click="() => this.open('holder', h.id)">
+                                    <span class="xn_ad_bar_l" t-att-title="h.label">
+                                        <t t-esc="h.label"/>
+                                        <span class="xn_ad_tag" t-if="!h.active">left</span>
+                                    </span>
+                                    <span class="xn_ad_bar_track">
+                                        <span class="xn_ad_bar_fill"
+                                              t-attf-style="width: {{h.barPct}}%; background: {{h.active ? '#2b6cb0' : '#c0392b'}}"/>
+                                    </span>
+                                    <span class="xn_ad_bar_v"><t t-esc="h.count"/></span>
+                                </li>
+                            </t>
+                        </ul>
+                    </section>
+
+                    <section class="xn_ad_card xn_ad_card_wide" t-if="d.attention.length">
+                        <h3>Needs a decision</h3>
+                        <div class="xn_ad_chips">
+                            <t t-foreach="d.attention" t-as="a" t-key="a.key">
+                                <button class="xn_ad_chip" t-on-click="() => this.open(a.key)">
+                                    <b><t t-esc="a.count"/></b>
+                                    <span><t t-esc="a.label"/></span>
+                                </button>
+                            </t>
+                        </div>
+                    </section>
+
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>
