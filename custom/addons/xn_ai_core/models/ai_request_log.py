@@ -63,6 +63,16 @@ class AiRequestLog(models.Model):
     res_model = fields.Char(string='Related Model', readonly=True)
     res_id = fields.Integer(string='Related Record', readonly=True)
 
+    feedback = fields.Selection(
+        [('up', 'Helpful'),
+         ('down', 'Not helpful')],
+        string='Feedback', readonly=True, index=True,
+        help="What the person who asked thought of the answer. This is the "
+             "only signal available for whether the assistant is actually "
+             "working: token counts say it ran, not that it was right.")
+    feedback_comment = fields.Char(string='Feedback Comment', readonly=True)
+    feedback_date = fields.Datetime(string='Feedback Given', readonly=True)
+
     request_payload = fields.Text(
         string='Request', readonly=True,
         help="Only populated when payload logging is enabled in Settings.")
@@ -74,6 +84,25 @@ class AiRequestLog(models.Model):
     def _compute_total_tokens(self):
         for log in self:
             log.total_tokens = (log.input_tokens or 0) + (log.output_tokens or 0)
+
+    def record_feedback(self, rating, comment=None):
+        """Attach a rating to this log row.
+
+        Callers are responsible for checking the rater is the person who
+        asked. This method is reached through sudo(), because an ordinary
+        user has no write access to the log and should not be given any:
+        the check belongs at the controller, against one record, not as a
+        blanket permission over the table.
+        """
+        self.ensure_one()
+        if rating not in ('up', 'down'):
+            return False
+        self.sudo().write({
+            'feedback': rating,
+            'feedback_comment': (comment or '')[:500] or False,
+            'feedback_date': fields.Datetime.now(),
+        })
+        return True
 
     @api.model
     def tokens_used_since(self, start):
