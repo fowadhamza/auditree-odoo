@@ -3,6 +3,9 @@ from odoo import models, fields, api, _
 
 import json
 import logging
+import pytz
+
+from datetime import datetime, time, timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -74,8 +77,46 @@ class AiAssistant(models.AbstractModel):
                 "type": "function",
                 "function": {
                     "name": "get_my_leave_balance",
-                    "description": "The current user's remaining leave, broken "
-                                   "down by leave type, for the current year.",
+                    "description": "The current user's currently available "
+                                   "leave, broken down by leave type. Remaining "
+                                   "days already account for approved and "
+                                   "pending requests.",
+                    "parameters": {"type": "object", "properties": {},
+                                   "required": []},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_my_assets",
+                    "description": "Company equipment currently assigned to "
+                                   "the current user: laptops, monitors, "
+                                   "headsets and so on, with asset code and "
+                                   "recorded condition.",
+                    "parameters": {"type": "object", "properties": {},
+                                   "required": []},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_my_document_expiry",
+                    "description": "Expiry dates of the current user's "
+                                   "identity documents (passport, visa, work "
+                                   "permit, ID), with days remaining. Use for "
+                                   "questions about documents expiring or "
+                                   "needing renewal.",
+                    "parameters": {"type": "object", "properties": {},
+                                   "required": []},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_my_attendance_summary",
+                    "description": "The current user's hours worked this week "
+                                   "and whether they are currently checked in "
+                                   "or out.",
                     "parameters": {"type": "object", "properties": {},
                                    "required": []},
                 },
@@ -115,44 +156,191 @@ class AiAssistant(models.AbstractModel):
         if not employee:
             return {"error": "No employee record is linked to this user."}
 
-        year_start = fields.Date.context_today(self).replace(month=1, day=1)
+        # Read Odoo's own figures rather than recomputing them. The Time Off
+        # dashboard reads exactly these fields, so the two agree by
+        # construction instead of by coincidence.
+        #
+        # This replaces hand-rolled arithmetic that reported roughly five
+        # times the real balance: it summed allocations over all time while
+        # filtering leave taken to the current year, so expired allocations
+        # were counted and the days already spent against them were not. It
+        # also ignored allocation validity windows and accruals entirely.
+        #
+        # virtual_remaining_leaves, not remaining_leaves: the virtual figure
+        # also subtracts submitted-but-unapproved requests, which is what
+        # someone means when they ask how much leave they have left. Without
+        # it the tool invites people to double-book days they have already
+        # requested.
+        leave_types = self.env['hr.leave.type'].with_context(
+            employee_id=employee.id).search([])
 
-        allocations = self.env['hr.leave.allocation'].search([
-            ('employee_id', '=', employee.id),
-            ('state', '=', 'validate'),
-        ])
-        taken = self.env['hr.leave'].search([
-            ('employee_id', '=', employee.id),
-            ('state', '=', 'validate'),
-            ('request_date_from', '>=', year_start),
-        ])
+        rows = [
+            {
+                "type": leave_type.name,
+                "allocated_days": round(leave_type.max_leaves, 2),
+                "taken_days": round(leave_type.leaves_taken, 2),
+                "remaining_days": round(
+                    leave_type.virtual_remaining_leaves, 2),
+            }
+            for leave_type in leave_types
+            if leave_type.max_leaves or leave_type.leaves_taken
+        ]
 
-        balances = {}
-        for allocation in allocations:
-            name = allocation.holiday_status_id.name
-            balances.setdefault(name, {"allocated": 0.0, "taken": 0.0})
-            balances[name]["allocated"] += allocation.number_of_days or 0.0
-        for leave in taken:
-            name = leave.holiday_status_id.name
-            balances.setdefault(name, {"allocated": 0.0, "taken": 0.0})
-            balances[name]["taken"] += leave.number_of_days or 0.0
-
-        if not balances:
+        if not rows:
             return {"note": "No leave allocations or approved leave found "
                             "for this employee."}
 
         return {
             "employee": employee.name,
-            "leave_types": [
+            "leave_types": sorted(rows, key=lambda row: row["type"]),
+        }
+
+    @api.model
+    def tool_get_my_assets(self):
+        """Equipment booked out to the caller.
+
+        Readable without sudo: maintenance.equipment grants access to records
+        the user follows, and Odoo subscribes the owner when an item is
+        assigned, so an employee can see their own kit and nobody else's.
+        """
+        employee = self._my_employee()
+        if not employee:
+            return {"error": "No employee record is linked to this user."}
+
+        equipment = self.env['maintenance.equipment'].search(
+            [('employee_id', '=', employee.id)])
+        if not equipment:
+            return {"note": "No company equipment is currently assigned to "
+                            "you."}
+
+        conditions = dict(
+            self.env['maintenance.equipment']._fields['xn_condition'].selection)
+
+        return {
+            "employee": employee.name,
+            "equipment": [
                 {
-                    "type": name,
-                    "allocated_days": round(values["allocated"], 2),
-                    "taken_days": round(values["taken"], 2),
-                    "remaining_days": round(
-                        values["allocated"] - values["taken"], 2),
+                    "item": item.name,
+                    "asset_code": item.xn_asset_code or None,
+                    "serial_number": item.serial_no or None,
+                    "category": item.category_id.name or None,
+                    "condition": conditions.get(item.xn_condition),
+                    "assigned_on": str(item.assign_date)
+                    if item.assign_date else None,
                 }
-                for name, values in sorted(balances.items())
+                for item in equipment
             ],
+        }
+
+    @api.model
+    def tool_get_my_document_expiry(self):
+        """Identity-document expiry dates for the caller.
+
+        The core hr fields (visa, passport, permit, ID) carry
+        groups="hr.group_hr_user", so an ordinary employee gets an AccessError
+        reading them off hr.employee. They are however on res.users'
+        self-readable whitelist, so the caller can read them about themselves
+        there. That is the whole reason this reads from two records rather
+        than one, and it is what keeps the no-sudo rule intact.
+
+        work_permit_expiration_date is deliberately omitted: it is restricted
+        on hr.employee and not exposed on res.users, so it cannot be read
+        without widening access.
+        """
+        employee = self._my_employee()
+        if not employee:
+            return {"error": "No employee record is linked to this user."}
+
+        user = self.env.user
+        today = fields.Date.context_today(self)
+
+        # (label, expiry date, reference number)
+        candidates = [
+            ("Passport", employee.passport_expiry_date, user.passport_id),
+            ("Visa", user.visa_expire, user.visa_no),
+            ("Identification", employee.id_expiry_date,
+             user.identification_id),
+            ("Work permit", None, user.permit_no),
+        ]
+
+        documents = []
+        for label, expiry, number in candidates:
+            if not expiry and not number:
+                continue
+            entry = {"document": label, "number": number or None,
+                     "expires_on": None, "days_remaining": None,
+                     "status": "no expiry date recorded"}
+            if expiry:
+                days = (expiry - today).days
+                entry["expires_on"] = str(expiry)
+                entry["days_remaining"] = days
+                entry["status"] = (
+                    "expired" if days < 0
+                    else "expires within 30 days" if days <= 30
+                    else "expires within 90 days" if days <= 90
+                    else "valid")
+            documents.append(entry)
+
+        if not documents:
+            return {"note": "No identity documents are recorded against your "
+                            "employee record. Nothing is stored, so nothing "
+                            "can be checked - ask HR to add your passport, "
+                            "visa or permit details."}
+
+        return {"employee": employee.name, "documents": documents}
+
+    @api.model
+    def tool_get_my_attendance_summary(self):
+        """Hours booked this week, and whether the caller is checked in.
+
+        Hours are summed from the caller's own hr.attendance records rather
+        than read off hr.employee.hours_today, which carries a groups= on the
+        field and is therefore unreadable for an ordinary employee. Attendance
+        records themselves are visible to their owner by record rule, so this
+        works for everybody without sudo.
+        """
+        employee = self._my_employee()
+        if not employee:
+            return {"error": "No employee record is linked to this user."}
+
+        today = fields.Date.context_today(self)
+        week_start = today - timedelta(days=today.weekday())
+
+        # check_in is stored in UTC, week_start is a date in the user's own
+        # timezone. Converting the boundary rather than comparing naively is
+        # what stops Monday morning's hours landing in the previous week.
+        tz = pytz.timezone(self.env.user.tz or 'UTC')
+        start_utc = tz.localize(
+            datetime.combine(week_start, time.min)
+        ).astimezone(pytz.UTC).replace(tzinfo=None)
+
+        attendances = self.env['hr.attendance'].search([
+            ('employee_id', '=', employee.id),
+            ('check_in', '>=', fields.Datetime.to_string(start_utc)),
+        ])
+
+        # worked_hours is only populated once an entry is checked out, so an
+        # open session contributes nothing to the total. Reporting it
+        # separately is honest; folding an estimate into the total is not.
+        hours = sum(attendances.mapped('worked_hours'))
+        checked_in = employee.attendance_state == 'checked_in'
+
+        last_check_in = None
+        if checked_in and employee.last_attendance_id.check_in:
+            last_check_in = fields.Datetime.context_timestamp(
+                self, employee.last_attendance_id.check_in
+            ).strftime('%Y-%m-%d %H:%M')
+
+        return {
+            "employee": employee.name,
+            "week_starting": str(week_start),
+            "hours_this_week": round(hours, 2),
+            "completed_sessions": len(attendances.filtered('check_out')),
+            "currently": "checked in" if checked_in else "checked out",
+            "checked_in_since": last_check_in,
+            "note": "Hours cover completed sessions only; an open session is "
+                    "not counted until you check out."
+            if checked_in else None,
         }
 
     @api.model
