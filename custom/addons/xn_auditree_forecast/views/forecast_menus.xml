@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <menuitem id="menu_forecast_root" name="Forecast" sequence="85"
+              web_icon="xn_auditree_forecast,static/description/icon.png"
               groups="xn_auditree_forecast.group_forecast_user"/>
 
     <menuitem id="menu_forecast_dashboard" name="Dashboard" parent="menu_forecast_root"
