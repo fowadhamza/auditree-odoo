@@ -12,6 +12,7 @@
                 <field name="purpose"/>
                 <field name="user_id"/>
                 <field name="state"/>
+                <field name="feedback" optional="show"/>
                 <field name="input_tokens" sum="Input" optional="show"/>
                 <field name="output_tokens" sum="Output" optional="show"/>
                 <field name="total_tokens" sum="Total" optional="hide"/>
@@ -54,6 +55,11 @@
                         <group string="Safety">
                             <field name="redaction_count"/>
                         </group>
+                        <group string="Feedback">
+                            <field name="feedback"/>
+                            <field name="feedback_date"/>
+                            <field name="feedback_comment"/>
+                        </group>
                     </group>
                     <group string="Detail" invisible="not error_message">
                         <field name="error_message" nolabel="1"/>
@@ -90,6 +96,11 @@
                 <separator/>
                 <filter name="filter_redacted" string="Had redactions"
                         domain="[('redaction_count', '&gt;', 0)]"/>
+                <separator/>
+                <filter name="filter_thumbs_down" string="Marked not helpful"
+                        domain="[('feedback', '=', 'down')]"/>
+                <filter name="filter_thumbs_up" string="Marked helpful"
+                        domain="[('feedback', '=', 'up')]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_purpose" string="Purpose"
                             context="{'group_by': 'purpose'}"/>

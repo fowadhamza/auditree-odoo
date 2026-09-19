@@ -50,7 +50,10 @@ class MailBot(models.AbstractModel):
             user.sudo().write({'odoobot_state': 'idle', 'odoobot_failed': False})
 
         try:
-            reply = self.env['ai.assistant'].answer(body)
+            # No history: the Discuss bot answers each message on its own.
+            # Threading a conversation through mail.message is a separate
+            # exercise and the launcher is the surface being kept.
+            reply = (self.env['ai.assistant'].answer(body) or {}).get('text')
         except UserError as exc:
             # ai.service raises UserError for refusals the asker should see:
             # kill switch off, budget exhausted, provider unreachable.

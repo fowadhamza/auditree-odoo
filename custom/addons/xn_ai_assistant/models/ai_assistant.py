@@ -31,7 +31,13 @@ SYSTEM_PROMPT = (
     "title alone.\n"
     "\n"
     "When you state a leave balance, add that the Time Off app is the "
-    "authoritative record."
+    "authoritative record.\n"
+    "\n"
+    "When you cannot answer because no tool covers it, say so in one short "
+    "sentence and then name what you can help with, drawn from the list "
+    "below. Never leave a refusal as a dead end: a person who is told only "
+    "'no' stops asking, while one who is told what else is available usually "
+    "tries again."
 )
 
 
@@ -188,12 +194,48 @@ class AiAssistant(models.AbstractModel):
     # ------------------------------------------------------------------
 
     @api.model
-    def answer(self, question):
-        """Answer `question` as the current user. Returns plain text."""
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": question},
-        ]
+    def _system_prompt(self):
+        """The static prompt plus a capability list built from the tools.
+
+        Generated rather than written out, so a module that adds a tool also
+        updates what the assistant says it can do. A hand-maintained list
+        drifts the first time somebody adds a tool and forgets the prompt,
+        and the failure is invisible: the assistant simply denies being able
+        to do something it can.
+        """
+        capabilities = "\n".join(
+            "- %s" % schema["function"].get("description", "").strip()
+            for schema in self._tool_schemas()
+            if schema.get("function", {}).get("description"))
+        if not capabilities:
+            return SYSTEM_PROMPT
+        return "%s\n\nWhat you can help with:\n%s" % (
+            SYSTEM_PROMPT, capabilities)
+
+    @api.model
+    def answer(self, question, history=None):
+        """Answer `question` as the current user.
+
+        :param history: prior turns as [{"role", "content"}], oldest first.
+            Supplied by the caller rather than stored here, because where a
+            conversation lives is a decision for the front end: the launcher
+            keeps it in the session, and the Discuss bot has no history at
+            all.
+        :return: {"text": str, "log_id": int or None}
+
+        Returns a dict rather than a string so the caller can attach feedback
+        to the exact call that produced the answer. Without the log id there
+        is no way to tell which of a day's requests a thumbs-down refers to.
+        """
+        messages = [{"role": "system", "content": self._system_prompt()}]
+        for turn in (history or []):
+            # Only the two roles a conversation is made of. Anything else in
+            # the stored history is ignored rather than trusted, so a stray
+            # or crafted entry cannot become a system instruction.
+            if turn.get('role') in ('user', 'assistant') and turn.get('content'):
+                messages.append({"role": turn['role'],
+                                 "content": turn['content']})
+        messages.append({"role": "user", "content": question})
         service = self.env['ai.service']
 
         for _round in range(MAX_TOOL_ROUNDS):
@@ -205,7 +247,8 @@ class AiAssistant(models.AbstractModel):
             )
             tool_calls = result.get('tool_calls') or []
             if not tool_calls:
-                return (result.get('content') or '').strip()
+                return {"text": (result.get('content') or '').strip(),
+                        "log_id": result.get('log_id')}
 
             messages.append({
                 "role": "assistant",
@@ -228,4 +271,5 @@ class AiAssistant(models.AbstractModel):
         _logger.warning(
             "xn_ai_assistant: gave up after %d tool rounds for user %s",
             MAX_TOOL_ROUNDS, self.env.user.login)
-        return _("Sorry, I could not work that one out.")
+        return {"text": _("Sorry, I could not work that one out."),
+                "log_id": None}

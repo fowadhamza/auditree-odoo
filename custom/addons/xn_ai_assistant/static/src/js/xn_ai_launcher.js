@@ -38,8 +38,9 @@ export class AiAssistantLauncher extends Component {
         this.state = useState({
             open: false,
             pending: false,
+            restored: false,
             draft: "",
-            // {role: "user" | "bot" | "error", text: string}
+            // {role: "user" | "bot" | "error", text, logId?, rating?}
             messages: [],
         });
     }
@@ -72,6 +73,36 @@ export class AiAssistantLauncher extends Component {
             // The panel is rendered by the same tick that flips `open`, so the
             // input does not exist yet when this runs synchronously.
             setTimeout(() => this.inputRef.el && this.inputRef.el.focus(), 0);
+            this.restoreHistory();
+        }
+    }
+
+    /**
+     * Redraw a conversation the server still remembers.
+     *
+     * Memory lives in the session, so it survives a page refresh while the
+     * component's own state does not. Without this the panel opens empty
+     * while the next answer quietly uses three exchanges of context the
+     * person cannot see, which is worse than having no memory at all.
+     *
+     * Runs once per page load: after that the in-memory list is the truth,
+     * and refetching would duplicate anything just sent.
+     */
+    async restoreHistory() {
+        if (this.state.restored || this.state.messages.length) {
+            this.state.restored = true;
+            return;
+        }
+        this.state.restored = true;
+        try {
+            const result = await this.rpc("/xn_ai/assistant/history", {});
+            if (result && result.ok && result.messages.length) {
+                this.state.messages = result.messages;
+                this.scrollToEnd();
+            }
+        } catch (error) {
+            // A conversation that cannot be restored is an empty panel, which
+            // is the same as before this existed. Nothing to tell the user.
         }
     }
 
@@ -88,8 +119,8 @@ export class AiAssistantLauncher extends Component {
         }, 0);
     }
 
-    async send() {
-        const question = (this.state.draft || "").trim();
+    async send(text) {
+        const question = (typeof text === "string" ? text : this.state.draft || "").trim();
         if (!question || this.state.pending) {
             return;
         }
@@ -101,7 +132,12 @@ export class AiAssistantLauncher extends Component {
         try {
             const result = await this.rpc("/xn_ai/assistant/ask", { question });
             if (result && result.ok) {
-                this.state.messages.push({ role: "bot", text: result.answer });
+                this.state.messages.push({
+                    role: "bot",
+                    text: result.answer,
+                    logId: result.log_id || null,
+                    rating: null,
+                });
             } else {
                 this.state.messages.push({
                     role: "error",
@@ -119,12 +155,56 @@ export class AiAssistantLauncher extends Component {
         }
     }
 
+    /** Fill and send one of the example prompts. */
+    askExample(text) {
+        this.send(text);
+    }
+
+    /**
+     * Rate an answer. Optimistic: the thumb fills immediately and is reverted
+     * if the server refuses, because a rating that appears not to register
+     * gets clicked repeatedly and then not given at all.
+     */
+    async rate(message, rating) {
+        if (!message.logId || message.rating === rating) {
+            return;
+        }
+        const previous = message.rating;
+        message.rating = rating;
+        try {
+            const result = await this.rpc("/xn_ai/assistant/feedback", {
+                log_id: message.logId,
+                rating: rating,
+            });
+            if (!result || !result.ok) {
+                message.rating = previous;
+            }
+        } catch (error) {
+            message.rating = previous;
+        }
+    }
+
+    /** Forget the conversation, on the server as well as on screen. */
+    async clearConversation() {
+        this.state.messages = [];
+        try {
+            await this.rpc("/xn_ai/assistant/clear", {});
+        } catch (error) {
+            // The visible conversation is already gone; a failure here only
+            // means the server still holds context it will stop using once
+            // the session ends.
+        }
+    }
+
     onKeydown(ev) {
         // Enter sends, Shift+Enter is a newline. Matches every chat input
         // people already use, so it needs no explaining.
         if (ev.key === "Enter" && !ev.shiftKey) {
             ev.preventDefault();
             this.send();
+        }
+        if (ev.key === "Escape") {
+            this.close();
         }
     }
 }

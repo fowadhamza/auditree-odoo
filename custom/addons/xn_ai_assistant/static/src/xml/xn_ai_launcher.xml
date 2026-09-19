@@ -7,39 +7,86 @@
             <div class="o_xn_ai_panel" t-if="state.open">
                 <div class="o_xn_ai_header">
                     <span class="o_xn_ai_title">Auditree Assistant</span>
-                    <button class="btn btn-sm o_xn_ai_close"
-                            t-on-click="close"
-                            title="Close">
-                        <i class="fa fa-times"/>
-                    </button>
+                    <span class="o_xn_ai_header_actions">
+                        <button class="btn btn-sm o_xn_ai_header_btn"
+                                t-if="state.messages.length"
+                                t-on-click="clearConversation"
+                                title="Start a new conversation">
+                            <i class="fa fa-eraser"/>
+                        </button>
+                        <button class="btn btn-sm o_xn_ai_header_btn"
+                                t-on-click="close"
+                                title="Close">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </span>
                 </div>
 
-                <div class="o_xn_ai_thread" t-ref="thread">
+                <!--
+                  aria-live so a screen reader announces replies as they
+                  arrive. Without it the assistant is silent to anyone using
+                  one, since nothing else on the page changes focus.
+                -->
+                <div class="o_xn_ai_thread" t-ref="thread"
+                     aria-live="polite" aria-atomic="false">
+
                     <div class="o_xn_ai_hint" t-if="!state.messages.length">
-                        <p>Ask about your own HR records, for example:</p>
-                        <ul>
-                            <li>How many leave days do I have left?</li>
-                            <li>What is my job title?</li>
-                        </ul>
-                        <p class="text-muted mb-0">
-                            Answers come from Odoo. The Time Off app remains
-                            the authoritative record.
+                        <p class="mb-2">Ask about your own records, for example:</p>
+                        <button class="btn btn-sm btn-outline-secondary o_xn_ai_example"
+                                t-on-click="() => this.askExample('How many leave days do I have left?')">
+                            How many leave days do I have left?
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary o_xn_ai_example"
+                                t-on-click="() => this.askExample('What is my job title?')">
+                            What is my job title?
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary o_xn_ai_example"
+                                t-on-click="() => this.askExample('Find our leave policy document')">
+                            Find our leave policy document
+                        </button>
+                        <p class="text-muted mt-2 mb-0">
+                            Answers come from Odoo and your Microsoft
+                            documents. The Time Off app remains the
+                            authoritative record.
                         </p>
                     </div>
 
                     <t t-foreach="state.messages" t-as="message" t-key="message_index">
-                        <!--
-                          t-out with a markup() value, not t-esc: formatted()
-                          escapes the text itself before building links, so
-                          the string arriving here is already safe.
-                        -->
-                        <div t-attf-class="o_xn_ai_msg o_xn_ai_msg_{{message.role}}"
-                             t-out="formatted(message.text)"/>
+                        <div class="o_xn_ai_row">
+                            <!--
+                              t-out with a markup() value, not t-esc:
+                              formatted() escapes the text itself before
+                              building links, so what arrives here is safe.
+                            -->
+                            <div t-attf-class="o_xn_ai_msg o_xn_ai_msg_{{message.role}}"
+                                 t-out="formatted(message.text)"/>
+
+                            <div class="o_xn_ai_rate"
+                                 t-if="message.role === 'bot' and message.logId">
+                                <button class="btn btn-sm o_xn_ai_thumb"
+                                        t-att-class="message.rating === 'up' ? 'o_xn_ai_thumb_on' : ''"
+                                        t-on-click="() => this.rate(message, 'up')"
+                                        title="This was helpful">
+                                    <i class="fa fa-thumbs-up"/>
+                                </button>
+                                <button class="btn btn-sm o_xn_ai_thumb"
+                                        t-att-class="message.rating === 'down' ? 'o_xn_ai_thumb_on' : ''"
+                                        t-on-click="() => this.rate(message, 'down')"
+                                        title="This was not helpful">
+                                    <i class="fa fa-thumbs-down"/>
+                                </button>
+                                <span class="o_xn_ai_thanks" t-if="message.rating">
+                                    Thanks
+                                </span>
+                            </div>
+                        </div>
                     </t>
 
                     <div class="o_xn_ai_msg o_xn_ai_msg_bot o_xn_ai_pending"
                          t-if="state.pending">
-                        Thinking...
+                        <span class="o_xn_ai_dot"/>
+                        <span class="o_xn_ai_dot"/>
+                        <span class="o_xn_ai_dot"/>
                     </div>
                 </div>
 
@@ -51,7 +98,7 @@
                               t-model="state.draft"
                               t-on-keydown="onKeydown"/>
                     <button class="btn btn-primary o_xn_ai_send"
-                            t-on-click="send"
+                            t-on-click="() => this.send()"
                             t-att-disabled="state.pending or !state.draft.trim()">
                         Send
                     </button>
