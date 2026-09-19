@@ -1,8 +1,14 @@
 /** @odoo-module **/
 
-import { Component, useState, useRef } from "@odoo/owl";
+import { Component, useState, useRef, markup } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { escape } from "@web/core/utils/strings";
+
+// Matches a bare http(s) URL up to the first whitespace, then trims trailing
+// punctuation so "see https://x/doc." does not produce a link ending in a dot.
+const URL_RE = /https?:\/\/[^\s<>"']+/g;
+const TRAILING_PUNCTUATION = /[.,;:!?)\]}]+$/;
 
 /**
  * Floating assistant launcher, bottom right of the web client.
@@ -36,6 +42,28 @@ export class AiAssistantLauncher extends Component {
             // {role: "user" | "bot" | "error", text: string}
             messages: [],
         });
+    }
+
+    /**
+     * Render one message as safe HTML with bare URLs turned into links.
+     *
+     * Order matters and is the whole security argument: the text is escaped
+     * FIRST, then links are built from the already-escaped string. Linkifying
+     * before escaping would let model output inject markup into the panel,
+     * and model output includes whatever a SharePoint document happened to be
+     * called.
+     */
+    formatted(text) {
+        const safe = escape(text || "");
+        const linked = safe.replace(URL_RE, (match) => {
+            const trailing = (match.match(TRAILING_PUNCTUATION) || [""])[0];
+            const url = trailing ? match.slice(0, -trailing.length) : match;
+            return (
+                `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>` +
+                trailing
+            );
+        });
+        return markup(linked.replace(/\n/g, "<br/>"));
     }
 
     toggle() {

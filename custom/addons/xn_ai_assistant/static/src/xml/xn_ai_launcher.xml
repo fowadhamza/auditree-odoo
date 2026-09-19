@@ -28,9 +28,13 @@
                     </div>
 
                     <t t-foreach="state.messages" t-as="message" t-key="message_index">
-                        <div t-attf-class="o_xn_ai_msg o_xn_ai_msg_{{message.role}}">
-                            <t t-esc="message.text"/>
-                        </div>
+                        <!--
+                          t-out with a markup() value, not t-esc: formatted()
+                          escapes the text itself before building links, so
+                          the string arriving here is already safe.
+                        -->
+                        <div t-attf-class="o_xn_ai_msg o_xn_ai_msg_{{message.role}}"
+                             t-out="formatted(message.text)"/>
                     </t>
 
                     <div class="o_xn_ai_msg o_xn_ai_msg_bot o_xn_ai_pending"
