@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+          A user sees their own connection row and nothing else.
+
+          The controller and the token machinery use sudo() with an explicit
+          user filter, so this rule is not what makes the feature work. It is
+          what limits the damage if some later code path reads the model
+          without that filter. Two independent mistakes would be needed to
+          expose one person's refresh token to another.
+
+          The token fields themselves additionally carry groups= on the field
+          definition, so they are not readable at all outside the AI
+          Administrator group, whatever the row rule permits.
+        -->
+        <record id="rule_graph_token_own" model="ir.rule">
+            <field name="name">Graph token: own row only</field>
+            <field name="model_id" ref="model_xn_graph_token"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!--
+          Administrators can see that a connection exists, for support. The
+          field-level groups still apply, so this shows who has connected and
+          when, not the credentials themselves.
+        -->
+        <record id="rule_graph_token_admin" model="ir.rule">
+            <field name="name">Graph token: administrators see all</field>
+            <field name="model_id" ref="model_xn_graph_token"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('xn_ai_core.group_ai_administrator'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

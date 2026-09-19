@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_xn_graph_token_user,xn_graph_token_user,model_xn_graph_token,base.group_user,1,1,0,1
+access_xn_graph_token_admin,xn_graph_token_admin,model_xn_graph_token,xn_ai_core.group_ai_administrator,1,1,1,1
