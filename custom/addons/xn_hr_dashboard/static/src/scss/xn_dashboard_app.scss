@@ -32,6 +32,13 @@
     --xn-radius: 6px;
     --xn-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
+    // One duration and one curve for every hover on the page, so the whole
+    // dashboard retunes from here. 120ms is short enough not to read as
+    // latency and long enough to register; the curve starts fast and
+    // decelerates, so the response feels immediate and the settle smooth.
+    --xn-fast: 120ms;
+    --xn-ease: cubic-bezier(.2, 0, .2, 1);
+
     background: var(--xn-paper);
     color: var(--xn-ink);
 
@@ -153,6 +160,8 @@
         text-align: left;
         color: inherit;
         font: inherit;
+        transition: background var(--xn-fast) var(--xn-ease),
+                    border-color var(--xn-fast) var(--xn-ease);
 
         &:hover {
             border-color: var(--xn-rule);
@@ -189,6 +198,8 @@
         border-radius: 5px;
         padding: 9px 18px;
         cursor: pointer;
+        transition: background var(--xn-fast) var(--xn-ease),
+                    border-color var(--xn-fast) var(--xn-ease);
 
         &:hover {
             background: var(--xn-accent-2);
@@ -362,6 +373,8 @@
         border: 1px solid var(--xn-rule);
         border-radius: var(--xn-radius);
         padding: 14px 16px;
+        transition: background var(--xn-fast) var(--xn-ease),
+                    border-color var(--xn-fast) var(--xn-ease);
         display: flex;
         flex-direction: column;
         gap: 2px;
@@ -804,5 +817,18 @@
         .xn_gap_row {
             grid-template-columns: 1fr 60px 56px;
         }
+    }
+}
+
+// Anyone who has asked their OS to reduce motion gets the old instant
+// repaint. Scoped to .xn_dash so this cannot reach another view.
+@media (prefers-reduced-motion: reduce) {
+    .xn_dash,
+    .xn_dash *,
+    .xn_dash *::before,
+    .xn_dash *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
     }
 }
