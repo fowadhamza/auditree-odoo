@@ -5,9 +5,18 @@
         <field name="tag">hr_dashboard</field>
     </record>
 <!--  Menu record for dashboard  -->
+    <!--
+      Superseded by xn_hr_dashboard, which owns the Dashboard app now.
+      Deactivated rather than deleted, and the module is left installed:
+      hrms_dashboard has taken ir.model.data ownership of two core fields
+      (hr.employee.birthday and hr.leave.duration_display), so uninstalling
+      it would target those columns and take every stored birthday with
+      them. Flip active back to True to restore the old dashboard.
+    -->
     <menuitem id="hrms_dashboard_menu_root"
               name="Dashboard"
               action="hr_action_dashboard"
               web_icon="hrms_dashboard,static/description/icon.png"
+              active="False"
               sequence="-100" groups="base.group_user"/>
 </odoo>

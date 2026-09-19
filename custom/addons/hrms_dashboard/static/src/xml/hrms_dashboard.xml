@@ -29,7 +29,7 @@
                     <div class="oh-media">
                         <div class="employee-icon">
                             <img class="align-self-center mr-3" alt=""
-                                 t-att-src="'data:image/png;base64,'+this.state.login_employee['image_1920']"/>
+                                 t-att-src="'/web/image?model=hr.employee&amp;field=avatar_256&amp;id=' + this.state.login_employee['id']"/>
                         </div>
                         <div class="media-body employee-name">
                             <h2 class="text-color display-6"><t t-esc="this.state.login_employee['name']"/> </h2>
