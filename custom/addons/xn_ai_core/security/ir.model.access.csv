@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ai_request_log_admin,ai_request_log_admin,model_ai_request_log,xn_ai_core.group_ai_administrator,1,0,0,1

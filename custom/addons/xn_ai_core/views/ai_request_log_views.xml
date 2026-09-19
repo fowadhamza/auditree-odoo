@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ai_request_log_tree" model="ir.ui.view">
+        <field name="name">ai.request.log.tree</field>
+        <field name="model">ai.request.log</field>
+        <field name="arch" type="xml">
+            <tree string="AI Requests" create="false" edit="false" delete="false"
+                  decoration-danger="state == 'error'"
+                  decoration-warning="state == 'blocked' or redaction_count > 0">
+                <field name="create_date" string="When"/>
+                <field name="purpose"/>
+                <field name="user_id"/>
+                <field name="state"/>
+                <field name="input_tokens" sum="Input" optional="show"/>
+                <field name="output_tokens" sum="Output" optional="show"/>
+                <field name="total_tokens" sum="Total" optional="hide"/>
+                <field name="latency_ms" string="ms" optional="show"/>
+                <field name="redaction_count" string="Redactions" optional="show"/>
+                <field name="deployment" optional="hide"/>
+                <field name="provider" optional="hide"/>
+                <field name="company_id" optional="hide" groups="base.group_multi_company"/>
+                <field name="error_message" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ai_request_log_form" model="ir.ui.view">
+        <field name="name">ai.request.log.form</field>
+        <field name="model">ai.request.log</field>
+        <field name="arch" type="xml">
+            <form string="AI Request" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group string="Call">
+                            <field name="purpose"/>
+                            <field name="state"/>
+                            <field name="provider"/>
+                            <field name="deployment"/>
+                            <field name="latency_ms"/>
+                        </group>
+                        <group string="Context">
+                            <field name="user_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="create_date" string="When"/>
+                            <field name="res_model"/>
+                            <field name="res_id"/>
+                        </group>
+                        <group string="Usage">
+                            <field name="input_tokens"/>
+                            <field name="output_tokens"/>
+                            <field name="total_tokens"/>
+                        </group>
+                        <group string="Safety">
+                            <field name="redaction_count"/>
+                        </group>
+                    </group>
+                    <group string="Detail" invisible="not error_message">
+                        <field name="error_message" nolabel="1"/>
+                    </group>
+                    <!--
+                      Both payload fields are empty unless payload logging was
+                      switched on when the call was made, so the sections stay
+                      hidden rather than showing two empty boxes.
+                    -->
+                    <group string="Request" invisible="not request_payload">
+                        <field name="request_payload" nolabel="1"/>
+                    </group>
+                    <group string="Response" invisible="not response_payload">
+                        <field name="response_payload" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ai_request_log_search" model="ir.ui.view">
+        <field name="name">ai.request.log.search</field>
+        <field name="model">ai.request.log</field>
+        <field name="arch" type="xml">
+            <search string="AI Requests">
+                <field name="purpose"/>
+                <field name="user_id"/>
+                <filter name="filter_success" string="Successful"
+                        domain="[('state', '=', 'success')]"/>
+                <filter name="filter_error" string="Errors"
+                        domain="[('state', '=', 'error')]"/>
+                <filter name="filter_blocked" string="Blocked"
+                        domain="[('state', '=', 'blocked')]"/>
+                <separator/>
+                <filter name="filter_redacted" string="Had redactions"
+                        domain="[('redaction_count', '&gt;', 0)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_purpose" string="Purpose"
+                            context="{'group_by': 'purpose'}"/>
+                    <filter name="group_user" string="User"
+                            context="{'group_by': 'user_id'}"/>
+                    <filter name="group_state" string="Result"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_month" string="Month"
+                            context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ai_request_log" model="ir.actions.act_window">
+        <field name="name">AI Requests</field>
+        <field name="res_model">ai.request.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_purpose': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No AI requests recorded yet</p>
+            <p>Every call to an AI provider is logged here with its token
+               usage, so spend and usage can be reviewed without leaving
+               Odoo.</p>
+        </field>
+    </record>
+
+    <!-- No web_icon: this is a technical menu, not an application tile. -->
+    <menuitem id="menu_ai_root"
+              name="AI"
+              sequence="90"
+              groups="xn_ai_core.group_ai_administrator"/>
+
+    <menuitem id="menu_ai_request_log"
+              name="Request Log"
+              parent="menu_ai_root"
+              action="action_ai_request_log"
+              sequence="10"
+              groups="xn_ai_core.group_ai_administrator"/>
+
+</odoo>

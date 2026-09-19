@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+      Its own category, following xn_asset_register.
+
+      Odoo labels each block on the user form with the category name, so a
+      group sitting in a general category shows up as a row that says nothing
+      about what it controls. A dedicated category makes the block readable.
+    -->
+    <record id="module_category_ai" model="ir.module.category">
+        <field name="name">AI</field>
+        <field name="description">Access to AI configuration and the request log.</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <!--
+      Deliberately narrow, and deliberately not implied by any other role.
+
+      The request log holds a record of every question asked of the assistant,
+      including who asked it. If payload logging is ever switched on it also
+      holds whatever employee data those questions returned. That is a more
+      sensitive collection than the records it was drawn from, because it
+      crosses departments and sits under one access rule instead of many.
+
+      Membership is assigned by hand. It is not granted to HR Manager or to
+      Settings by implication, so it cannot be acquired as a side effect of
+      being given an unrelated role.
+    -->
+    <record id="group_ai_administrator" model="res.groups">
+        <field name="name">AI Administrator</field>
+        <field name="category_id" ref="module_category_ai"/>
+        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        <field name="comment">Can configure AI features and read the request
+            log, which records every question asked of the assistant and who
+            asked it.</field>
+    </record>
+
+</odoo>
