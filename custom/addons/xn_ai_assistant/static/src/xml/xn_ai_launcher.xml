@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="xn_ai_assistant.Launcher">
+        <div class="o_xn_ai_launcher">
+
+            <div class="o_xn_ai_panel" t-if="state.open">
+                <div class="o_xn_ai_header">
+                    <span class="o_xn_ai_title">Auditree Assistant</span>
+                    <button class="btn btn-sm o_xn_ai_close"
+                            t-on-click="close"
+                            title="Close">
+                        <i class="fa fa-times"/>
+                    </button>
+                </div>
+
+                <div class="o_xn_ai_thread" t-ref="thread">
+                    <div class="o_xn_ai_hint" t-if="!state.messages.length">
+                        <p>Ask about your own HR records, for example:</p>
+                        <ul>
+                            <li>How many leave days do I have left?</li>
+                            <li>What is my job title?</li>
+                        </ul>
+                        <p class="text-muted mb-0">
+                            Answers come from Odoo. The Time Off app remains
+                            the authoritative record.
+                        </p>
+                    </div>
+
+                    <t t-foreach="state.messages" t-as="message" t-key="message_index">
+                        <div t-attf-class="o_xn_ai_msg o_xn_ai_msg_{{message.role}}">
+                            <t t-esc="message.text"/>
+                        </div>
+                    </t>
+
+                    <div class="o_xn_ai_msg o_xn_ai_msg_bot o_xn_ai_pending"
+                         t-if="state.pending">
+                        Thinking...
+                    </div>
+                </div>
+
+                <div class="o_xn_ai_composer">
+                    <textarea t-ref="input"
+                              class="form-control"
+                              rows="2"
+                              placeholder="Ask a question..."
+                              t-model="state.draft"
+                              t-on-keydown="onKeydown"/>
+                    <button class="btn btn-primary o_xn_ai_send"
+                            t-on-click="send"
+                            t-att-disabled="state.pending or !state.draft.trim()">
+                        Send
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn o_xn_ai_bubble"
+                    t-on-click="toggle"
+                    title="Ask Auditree Assistant">
+                <i t-attf-class="fa {{ state.open ? 'fa-chevron-down' : 'fa-comments' }}"/>
+            </button>
+
+        </div>
+    </t>
+
+</templates>
