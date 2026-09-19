@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+      Landing page for the consent round trip. Deliberately plain: it is shown
+      after a redirect back from Microsoft, and the only things a user needs
+      are whether it worked and a way back into Odoo.
+    -->
+    <template id="connect_result" name="Microsoft Graph Connection">
+        <t t-call="web.frontend_layout">
+            <div class="container my-5">
+                <div t-attf-class="alert #{ok and 'alert-success' or 'alert-warning'}">
+                    <h4 t-if="ok">Connected</h4>
+                    <h4 t-if="not ok">Not connected</h4>
+                    <p t-esc="message"/>
+                </div>
+                <a class="btn btn-primary" href="/web">Back to Auditree ERP</a>
+            </div>
+        </t>
+    </template>
+
+    <record id="view_xn_graph_token_tree" model="ir.ui.view">
+        <field name="name">xn.graph.token.tree</field>
+        <field name="model">xn.graph.token</field>
+        <field name="arch" type="xml">
+            <tree string="Microsoft Connections" create="false"
+                  decoration-muted="not connected_on">
+                <field name="user_id"/>
+                <field name="connected_on"/>
+                <field name="expires_at" string="Token Expires"/>
+                <field name="scopes" optional="hide"/>
+                <field name="last_error" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_graph_token_form" model="ir.ui.view">
+        <field name="name">xn.graph.token.form</field>
+        <field name="model">xn.graph.token</field>
+        <field name="arch" type="xml">
+            <form string="Microsoft Connection" create="false">
+                <header>
+                    <button name="action_disconnect" type="object"
+                            string="Disconnect" class="btn-secondary"
+                            confirm="Forget this connection? The person will need to connect again before the assistant can search their documents."/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="user_id" readonly="1"/>
+                        <field name="connected_on" readonly="1"/>
+                        <field name="expires_at" readonly="1"/>
+                        <field name="scopes" readonly="1"/>
+                        <field name="last_error" readonly="1"/>
+                    </group>
+                    <!--
+                      The token fields are not shown. They carry groups= on the
+                      field definition so only AI Administrators can read them
+                      at all, and there is no reason to put a working
+                      credential on a screen even for those people.
+                    -->
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_xn_graph_token" model="ir.actions.act_window">
+        <field name="name">Microsoft Connections</field>
+        <field name="res_model">xn.graph.token</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nobody has connected yet</p>
+            <p>Users connect their own Microsoft documents from their
+               preferences. Until they do, the assistant cannot search
+               SharePoint on their behalf.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_xn_graph_token"
+              name="Microsoft Connections"
+              parent="xn_ai_core.menu_ai_root"
+              action="action_xn_graph_token"
+              sequence="20"
+              groups="xn_ai_core.group_ai_administrator"/>
+
+</odoo>

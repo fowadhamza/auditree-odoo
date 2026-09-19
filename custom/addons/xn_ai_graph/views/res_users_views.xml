@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+      Connect / disconnect from the user's own preferences.
+
+      Plain links rather than buttons calling a method: the flow is a browser
+      redirect to Microsoft and back, which a form button cannot do.
+    -->
+    <record id="view_users_form_graph_connect" model="ir.ui.view">
+        <field name="name">res.users.form.inherit.xn.ai.graph</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="before">
+                <page string="Assistant" name="xn_ai_graph">
+                    <group>
+                        <div colspan="2">
+                            <p>
+                                Connect your Microsoft account so the
+                                assistant can search your SharePoint and
+                                OneDrive documents.
+                            </p>
+                            <p class="text-muted">
+                                It will only ever find files you can already
+                                open yourself. Connecting does not give anyone
+                                else access to your documents, and you can
+                                disconnect at any time.
+                            </p>
+                            <a class="btn btn-primary" role="button"
+                               href="/xn_ai/graph/connect">
+                                Connect my documents
+                            </a>
+                            <a class="btn btn-link" role="button"
+                               href="/xn_ai/graph/disconnect">
+                                Disconnect
+                            </a>
+                        </div>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
