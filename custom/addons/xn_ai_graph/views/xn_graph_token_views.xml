@@ -2,21 +2,39 @@
 <odoo>
 
     <!--
-      Landing page for the consent round trip. Deliberately plain: it is shown
-      after a redirect back from Microsoft, and the only things a user needs
-      are whether it worked and a way back into Odoo.
+      Landing page for the consent round trip.
+
+      Self-contained on purpose: it does NOT call web.frontend_layout. That
+      layout expects a website request context, and rendering it from a plain
+      http.Controller route raises KeyError: 'website'. The exception then
+      rolls back the whole request transaction, which silently discards the
+      token that was just stored a few lines earlier. The user sees a 500 and
+      the connection appears never to have happened.
+
+      Keeping this page dependency-free means the last thing the callback does
+      cannot undo the first thing it did.
     -->
     <template id="connect_result" name="Microsoft Graph Connection">
-        <t t-call="web.frontend_layout">
-            <div class="container my-5">
-                <div t-attf-class="alert #{ok and 'alert-success' or 'alert-warning'}">
-                    <h4 t-if="ok">Connected</h4>
-                    <h4 t-if="not ok">Not connected</h4>
-                    <p t-esc="message"/>
+        <html>
+            <head>
+                <title>Auditree Assistant</title>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <link rel="stylesheet" href="/web/static/lib/bootstrap/dist/css/bootstrap.css"/>
+            </head>
+            <body class="bg-light">
+                <div class="container" style="max-width: 640px; margin-top: 4rem;">
+                    <div t-attf-class="alert #{ok and 'alert-success' or 'alert-warning'}">
+                        <h4 class="alert-heading" t-if="ok">Connected</h4>
+                        <h4 class="alert-heading" t-if="not ok">Not connected</h4>
+                        <p class="mb-0" t-esc="message"/>
+                    </div>
+                    <a class="btn btn-primary" role="button" href="/web">
+                        Back to Auditree ERP
+                    </a>
                 </div>
-                <a class="btn btn-primary" href="/web">Back to Auditree ERP</a>
-            </div>
-        </t>
+            </body>
+        </html>
     </template>
 
     <record id="view_xn_graph_token_tree" model="ir.ui.view">

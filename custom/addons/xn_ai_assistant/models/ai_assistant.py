@@ -10,10 +10,26 @@ MAX_TOOL_ROUNDS = 3
 
 SYSTEM_PROMPT = (
     "You are the Auditree ERP assistant. You help employees with questions "
-    "about their own HR records.\n"
-    "Use the provided tools to look up facts. Never invent a number: if a "
-    "tool does not return the information, say you could not find it.\n"
-    "Keep answers to one or two short sentences. Do not use markdown.\n"
+    "about their own HR records and company documents.\n"
+    "Use the provided tools to look up facts. Never invent a number or a "
+    "document: if a tool does not return the information, say you could not "
+    "find it.\n"
+    "\n"
+    "Formatting rules. Write plain text, never markdown: no asterisks, no "
+    "square brackets, no numbered markdown links. The interface renders bare "
+    "URLs as clickable links by itself.\n"
+    "\n"
+    "For a normal answer, use one or two short sentences.\n"
+    "\n"
+    "When reporting documents found by search, write one line per document "
+    "in this shape, and nothing else around it:\n"
+    "Document name - where it lives\n"
+    "https://the-url\n"
+    "\n"
+    "List at most three. Say plainly if none matched. Do not describe what a "
+    "document contains unless the excerpt says so, and never guess from its "
+    "title alone.\n"
+    "\n"
     "When you state a leave balance, add that the Time Off app is the "
     "authoritative record."
 )
@@ -140,13 +156,27 @@ class AiAssistant(models.AbstractModel):
         A model asking for a tool that does not exist is a normal thing to
         handle, not an exception: telling it so lets it correct itself on the
         next round, whereas raising would lose the whole conversation.
+
+        Arguments are filtered against the schema before being passed. The
+        model can emit whatever keys it likes, and handing them straight to a
+        Python call as **kwargs turns a hallucinated argument name into a
+        TypeError -- or, worse, lets a future tool be driven by a parameter
+        its schema never advertised.
         """
+        schema = next(
+            (s for s in self._tool_schemas()
+             if s["function"]["name"] == name), None)
         handler = getattr(self, 'tool_' + name, None)
-        if handler is None or name not in [
-                schema["function"]["name"] for schema in self._tool_schemas()]:
+        if schema is None or handler is None:
             return {"error": "No such tool: %s" % name}
+
+        allowed = ((schema["function"].get("parameters") or {})
+                   .get("properties") or {})
+        kwargs = {key: value for key, value in (arguments or {}).items()
+                  if key in allowed}
+
         try:
-            return handler()
+            return handler(**kwargs)
         except Exception as exc:  # noqa: BLE001
             _logger.exception("xn_ai_assistant: tool %s failed", name)
             # Deliberately not the exception text: it can name records and

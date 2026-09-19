@@ -46,6 +46,7 @@ encryption. Treat a database dump accordingly.
     "depends": [
         "base",
         "xn_ai_core",
+        "xn_ai_assistant",
     ],
     "data": [
         "security/xn_ai_graph_security.xml",

@@ -2,11 +2,19 @@
 <odoo>
 
     <!--
-      Connect / disconnect from the user's own preferences.
+      Connect / disconnect links.
 
       Plain links rather than buttons calling a method: the flow is a browser
       redirect to Microsoft and back, which a form button cannot do.
+
+      This has to be added to two views. base.view_users_form is the admin
+      form under Settings, Users and Companies. The dialog a user opens from
+      their own avatar is base.view_users_form_simple_modif, a separate view
+      with its own layout, and an inheritance on the first does not appear in
+      the second. Only the second one is reachable by somebody without
+      Settings access, which is everybody this feature is for.
     -->
+
     <record id="view_users_form_graph_connect" model="ir.ui.view">
         <field name="name">res.users.form.inherit.xn.ai.graph</field>
         <field name="model">res.users</field>
@@ -38,6 +46,33 @@
                         </div>
                     </group>
                 </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_users_simple_form_graph_connect" model="ir.ui.view">
+        <field name="name">res.users.preferences.inherit.xn.ai.graph</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='preferences']" position="after">
+                <group string="Assistant" name="xn_ai_graph_prefs">
+                    <div colspan="2">
+                        <p class="mb-2">
+                            Let the assistant search your Microsoft SharePoint
+                            and OneDrive documents. It will only find files
+                            you can already open yourself.
+                        </p>
+                        <a class="btn btn-primary btn-sm" role="button"
+                           href="/xn_ai/graph/connect">
+                            Connect my documents
+                        </a>
+                        <a class="btn btn-link btn-sm" role="button"
+                           href="/xn_ai/graph/disconnect">
+                            Disconnect
+                        </a>
+                    </div>
+                </group>
             </xpath>
         </field>
     </record>
