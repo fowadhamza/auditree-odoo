@@ -18,7 +18,7 @@
                 <field name="employee_name" string="Employee" optional="show"/>
                 <field name="department_id" string="Department" optional="show"/>
                 <field name="company_id" string="Company" groups="base.group_multi_company" optional="hide"/>
-                <field name="year" optional="show"/>
+                <field name="year" optional="show" options="{'enable_formatting': false}"/>
                 <field name="month" optional="show"/>
 
                 <!-- Casual Leave: accrual-only in this org (see model docstring) -
