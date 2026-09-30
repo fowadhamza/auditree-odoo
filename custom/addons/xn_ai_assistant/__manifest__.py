@@ -50,13 +50,9 @@ Known limits
         "hr_holidays",
     ],
     "data": [],
-    "assets": {
-        "web.assets_backend": [
-            "xn_ai_assistant/static/src/scss/xn_ai_launcher.scss",
-            "xn_ai_assistant/static/src/js/xn_ai_launcher.js",
-            "xn_ai_assistant/static/src/xml/xn_ai_launcher.xml",
-        ],
-    },
+    # The floating launcher (static/src/*/xn_ai_launcher.*) is not loaded:
+    # the chat bubble was removed from the web client. The files are kept so
+    # it can be restored by re-adding them to web.assets_backend.
     "installable": True,
     "application": False,
     "auto_install": False,
