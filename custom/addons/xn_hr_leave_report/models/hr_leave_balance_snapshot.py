@@ -3,7 +3,10 @@ import logging
 
 from odoo import fields, models
 
-from .accrual_balance import build_accrual_balance_expr, build_accrual_ctes
+from .accrual_balance import (
+    build_accrual_balance_expr, build_accrual_ctes,
+    build_regular_allocated_expr, build_regular_taken_expr,
+)
 from .leave_type_columns import LEAVE_TYPE_COLUMNS, resolve_leave_type_ids
 
 _logger = logging.getLogger(__name__)
@@ -17,29 +20,24 @@ class HrLeaveBalanceSnapshot(models.Model):
     hr.leave.period.report (period activity, accrual excluded) can answer:
     "what was this employee's balance as of March 2026".
 
-    For REGULAR (one-time/manual) leave types - Earned Leave b/f, Maternity,
-    Comp-off - this is exact: a cumulative sum of dated allocation and leave
-    records as of the target month, continuous across months with no
-    activity (the balance simply doesn't change until the next event).
+    Every balance follows the same rules as Odoo's Time Off dashboard (see
+    accrual_balance.py): only allocations valid at the month-end count,
+    nothing carries over between allocations, and requests waiting for
+    approval are subtracted along with approved ones. The current month's
+    row therefore equals the dashboard's "available" figure.
 
-    For ACCRUAL leave types - Casual, Sick in this org - this uses the same
-    carry-over-aware projection as hr.leave.balance.report (see
-    accrual_balance.py for the shared logic and its reasoning), evaluated as
-    of each month's end instead of today.
+    For REGULAR (one-time/manual) leave types - Earned Leave b/f, Maternity,
+    Comp-off - past months are exact.
+
+    For ACCRUAL leave types - Casual, Sick in this org - past months are a
+    projection (monthly rate x months elapsed, capped), because Odoo keeps
+    no history of what its accrual cron granted month by month.
 
     Known limitations of the projection:
     - Assumes a single accrual level per plan (true for every plan in this
       database at the time this was written - see hr_leave_accrual_level).
-    - Carries over from at most one immediately preceding period; a chain
-      of 3+ consecutive accrual periods for the same employee/type is not
-      fully modeled.
-    - Does NOT replicate Odoo's own cron exactly (e.g. exact day-of-month
-      timing within a period) - it is accurate as of each month boundary,
-      which is what this report shows.
-
-    Validated by comparing "balance as of the current month" here against
-    hr.leave.balance.report's live total for the same employee/leave type -
-    they should match exactly (both use the same accrual_balance.py logic).
+    - Does NOT replicate Odoo's own cron exactly (e.g. proration for a
+      mid-month start) - only the current month uses the real stored value.
     """
     _name = 'hr.leave.balance.snapshot'
     _description = 'HR Leave Balance Snapshot (Projected, by Month)'
@@ -60,10 +58,10 @@ class HrLeaveBalanceSnapshot(models.Model):
         ('10', 'October'), ('11', 'November'), ('12', 'December'),
     ], string='Month', readonly=True)
 
-    _PROJECTED_HELP = ("Calculated projection (monthly accrual rate x months elapsed, "
-                        "capped, plus carry-over) - Odoo keeps no ledger of accrual "
-                        "history to read this from directly. See the model's help "
-                        "for what this does and doesn't account for.")
+    _PROJECTED_HELP = ("Current month: same as the Time Off dashboard (approved and "
+                        "pending requests subtracted). Past months: projection "
+                        "(monthly accrual rate x months elapsed, capped) - Odoo keeps "
+                        "no ledger of accrual history to read this from directly.")
 
     casual_balance = fields.Float(string='Casual Balance', readonly=True, digits=(16, 1), help=_PROJECTED_HELP)
     sick_balance = fields.Float(string='Sick Balance', readonly=True, digits=(16, 1), help=_PROJECTED_HELP)
@@ -153,20 +151,10 @@ class HrLeaveBalanceSnapshot(models.Model):
                     month_start_expr=month_start_expr, month_end_expr=month_end_expr,
                 )
             else:
-                expr = """(
-                    COALESCE((
-                        SELECT SUM(a2.number_of_days) FROM hr_leave_allocation a2
-                        WHERE a2.employee_id = grid.employee_id AND a2.holiday_status_id = {type_id}
-                          AND a2.allocation_type != 'accrual' AND a2.state = 'validate'
-                          AND a2.date_from::date <= {month_end}
-                    ), 0)
-                    - COALESCE((
-                        SELECT SUM(l2.number_of_days) FROM hr_leave l2
-                        WHERE l2.employee_id = grid.employee_id AND l2.holiday_status_id = {type_id}
-                          AND l2.state = 'validate'
-                          AND l2.date_from::date <= {month_end}
-                    ), 0)
-                )""".format(type_id=type_id, month_end=month_end_expr)
+                expr = "(COALESCE(%s, 0) - COALESCE(%s, 0))" % (
+                    build_regular_allocated_expr(type_id, 'grid.employee_id', month_end_expr),
+                    build_regular_taken_expr(type_id, 'grid.employee_id', month_end_expr),
+                )
             raw_exprs[key] = expr
             balance_exprs.append("COALESCE(%s, 0) AS %s_balance" % (expr, key))
 
