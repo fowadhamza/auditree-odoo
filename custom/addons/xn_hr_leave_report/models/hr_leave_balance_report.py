@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models
 
-from .accrual_balance import build_accrual_allocated_expr, build_accrual_balance_expr, build_accrual_ctes
+from .accrual_balance import (
+    build_accrual_allocated_expr, build_accrual_balance_expr, build_accrual_ctes,
+    build_regular_allocated_expr, build_regular_taken_expr,
+)
 from .leave_type_columns import LEAVE_TYPE_COLUMNS, resolve_leave_type_ids, sql_id_literal
 
 
@@ -11,29 +14,18 @@ class HrLeaveBalanceReport(models.Model):
     Each leave type gets its own Allocated / Taken / Balance columns so HR
     can compare every employee side-by-side in a single scrollable table.
 
-    This is a lifetime, all-time running balance - it does not accept a
-    date/period filter. See hr.leave.period.report for the period-scoped
-    activity view, and hr.leave.balance.snapshot for balance as of a
-    specific past month.
+    This is the balance right now - it does not accept a date/period
+    filter. See hr.leave.period.report for the period-scoped activity view,
+    and hr.leave.balance.snapshot for balance as of a specific past month.
 
-    ACCRUAL leave types (Casual, Sick in this org) use the same carry-over-
-    aware projection as hr.leave.balance.snapshot (see accrual_balance.py):
-    only the current accrual period's own accrual, plus carry-over from the
-    immediately preceding period capped by that period's own plan rules
-    (zero if its action_with_unused_accruals is 'lost'). This deliberately
-    does NOT just sum every accrual allocation an employee has ever had -
-    that would silently keep crediting a superseded plan's full total
-    forever, including days a "no carry-over" policy (e.g. Sick Leave) says
-    should have expired. See the Leave Policy cross-check for the incident
-    that surfaced this.
-
-    REGULAR (one-time/manual) leave types - Earned Leave b/f, Maternity,
-    Comp-off - are still a plain sum of dated records (no accrual/carry-over
-    concept applies), but now cut off at today: an allocation or leave
-    request dated in the future no longer counts as already granted/taken
-    in a report titled "balance right now". Previously this had no date
-    bound at all, so an approved-but-not-yet-happened leave request could
-    silently reduce today's displayed balance.
+    Balance equals the "available" figure on Odoo's Time Off dashboard, for
+    every leave type (see accrual_balance.py for the shared rules):
+    - Allocated: allocations valid today only. For accrual types this is
+      what Odoo's accrual cron has actually granted so far.
+    - Taken: approved AND waiting-for-approval requests inside those
+      allocations, including requests booked for a future date - the
+      dashboard subtracts both.
+    - Nothing carries over from an expired or superseded allocation.
     """
     _name = 'hr.leave.balance.report'
     _description = 'HR Leave Balance Report'
@@ -107,15 +99,15 @@ class HrLeaveBalanceReport(models.Model):
         accrual_ctes = [build_accrual_ctes(sql_id(key), key) for key in accrual_type_ids]
         cte_sql = ',\n'.join(accrual_ctes)
 
-        # -- Regular types: unchanged FILTER-based lifetime sums --
-        alloc_cols = ',\n                        '.join(
-            "SUM(number_of_days) FILTER (WHERE holiday_status_id = %s) AS %s_a" % (sql_id(key), key)
+        # -- Regular types: allocations valid today, approved + pending leave inside them --
+        regular_alloc = {
+            key: build_regular_allocated_expr(sql_id(key), 'e.id', month_end_expr)
             for key in regular_type_ids
-        )
-        taken_cols = ',\n                        '.join(
-            "SUM(number_of_days) FILTER (WHERE holiday_status_id = %s) AS %s_t" % (sql_id(key), key)
+        }
+        regular_taken = {
+            key: build_regular_taken_expr(sql_id(key), 'e.id', month_end_expr)
             for key in regular_type_ids
-        )
+        }
 
         # -- Per-type Allocated/Taken/Balance select fragments --
         select_fragments = []
@@ -139,13 +131,14 @@ class HrLeaveBalanceReport(models.Model):
                     % (label, allocated_expr, key, allocated_expr, balance_expr, key, balance_expr, key)
                 )
             else:
-                allocated_exprs[key] = "a.%s_a" % key
+                allocated_exprs[key] = regular_alloc[key]
                 select_fragments.append(
                     "-- %s\n"
-                    "                    COALESCE(a.%s_a, 0) AS %s_allocated,\n"
-                    "                    COALESCE(t.%s_t, 0) AS %s_taken,\n"
-                    "                    COALESCE(a.%s_a, 0) - COALESCE(t.%s_t, 0) AS %s_balance"
-                    % (label, key, key, key, key, key, key, key)
+                    "                    COALESCE(%s, 0) AS %s_allocated,\n"
+                    "                    COALESCE(%s, 0) AS %s_taken,\n"
+                    "                    COALESCE(%s, 0) - COALESCE(%s, 0) AS %s_balance"
+                    % (label, regular_alloc[key], key, regular_taken[key], key,
+                       regular_alloc[key], regular_taken[key], key)
                 )
         select_cols = ',\n\n                    '.join(select_fragments)
 
@@ -161,33 +154,16 @@ class HrLeaveBalanceReport(models.Model):
                     month_start_expr=month_start_expr, month_end_expr=month_end_expr,
                 ))
             else:
-                total_allocated_terms.append("COALESCE(a.%s_a, 0)" % key)
+                total_allocated_terms.append("COALESCE(%s, 0)" % regular_alloc[key])
                 total_balance_terms.append(
-                    "(COALESCE(a.%s_a, 0) - COALESCE(t.%s_t, 0))" % (key, key)
+                    "(COALESCE(%s, 0) - COALESCE(%s, 0))" % (regular_alloc[key], regular_taken[key])
                 )
         total_allocated_expr = ' + '.join(total_allocated_terms)
         total_balance_expr = ' + '.join(total_balance_terms)
 
         sql = """
             CREATE OR REPLACE VIEW hr_leave_balance_report AS (
-                WITH
-                {cte_sql}
-                {comma}alloc AS (
-                    SELECT
-                        employee_id
-                        {alloc_cols_comma}{alloc_cols}
-                    FROM hr_leave_allocation
-                    WHERE state = 'validate' AND date_from::date <= CURRENT_DATE
-                    GROUP BY employee_id
-                ),
-                taken AS (
-                    SELECT
-                        employee_id
-                        {taken_cols_comma}{taken_cols}
-                    FROM hr_leave
-                    WHERE state = 'validate' AND date_from::date <= CURRENT_DATE
-                    GROUP BY employee_id
-                )
+                {with_sql}
                 SELECT
                     e.id                             AS id,
                     e.id                             AS employee_id,
@@ -202,15 +178,10 @@ class HrLeaveBalanceReport(models.Model):
                     ({total_balance_expr})                                AS total_balance
 
                 FROM hr_employee e
-                LEFT JOIN alloc a ON a.employee_id = e.id
-                LEFT JOIN taken t ON t.employee_id = e.id
                 WHERE e.active = True
             )
         """.format(
-            cte_sql=cte_sql,
-            comma=',' if cte_sql else '',
-            alloc_cols=alloc_cols, alloc_cols_comma=',\n                        ' if alloc_cols else '',
-            taken_cols=taken_cols, taken_cols_comma=',\n                        ' if taken_cols else '',
+            with_sql=('WITH ' + cte_sql) if cte_sql else '',
             select_cols=select_cols,
             total_allocated_expr=total_allocated_expr,
             total_balance_expr=total_balance_expr,
