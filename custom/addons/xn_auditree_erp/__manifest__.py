@@ -13,6 +13,7 @@
                 "hr","website_hr_recruitment",
                 "project",
                 "hr_attendance",
+                "hr_timesheet",
                 "xn_user_custom","account","msr_bank_customization","msr_company_header",
                 ],
     "data": [
@@ -28,6 +29,7 @@
         'views/account_move_views.xml',
         'views/res_company_views.xml',
         'views/res_partner_bank_views.xml',
+        'views/hr_timesheet_menus.xml',
         'report/report.xml',
         'report/invoice_report_template.xml',
         'report/report_payslip.xml',
