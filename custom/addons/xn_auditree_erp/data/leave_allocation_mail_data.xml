@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Sent to the employee's Time Off approver when an allocation is requested -->
+    <data noupdate="1">
+        <record id="email_template_leave_allocation_request" model="mail.template">
+            <field name="name">Time Off: Leave Allocation Request to Approver</field>
+            <field name="model_id" ref="hr_holidays.model_hr_leave_allocation"/>
+            <field name="subject">Leave allocation request: {{ object.employee_id.name }} - {{ object.holiday_status_id.name }}</field>
+            <field name="email_from">{{ (object.employee_id.company_id.email_formatted or user.company_id.email_formatted) }}</field>
+            <field name="reply_to">{{ object.employee_id.work_email or '' }}</field>
+            <field name="body_html" type="html">
+                <table border="0" cellpadding="0" cellspacing="0" width="590"
+                       style="background-color: white; border-collapse: collapse; margin-left: 20px;">
+                    <tr>
+                        <td valign="top" style="padding: 0px 10px;">
+                            <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                                Hello <t t-out="object.employee_id.leave_manager_id.name or ''"></t>,
+                                <br/>
+                                <br/>
+                                <strong t-out="object.employee_id.name or ''"></strong> has requested a leave
+                                allocation that is waiting for your approval.
+                                <br/>
+                                <br/>
+                                <table border="0" cellpadding="3" cellspacing="0" style="font-size: 13px;">
+                                    <tr>
+                                        <td><strong>Employee</strong></td>
+                                        <td t-out="object.employee_id.name or ''"></td>
+                                    </tr>
+                                    <tr t-if="object.employee_id.department_id">
+                                        <td><strong>Department</strong></td>
+                                        <td t-out="object.employee_id.department_id.name or ''"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Leave Type</strong></td>
+                                        <td t-out="object.holiday_status_id.name or ''"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Duration</strong></td>
+                                        <td t-if="object.type_request_unit == 'hour'"><t t-out="object.number_of_hours_display"></t> hour(s)</td>
+                                        <td t-else=""><t t-out="object.number_of_days_display"></t> day(s)</td>
+                                    </tr>
+                                    <tr t-if="object.name">
+                                        <td><strong>Reason</strong></td>
+                                        <td t-out="object.name or ''"></td>
+                                    </tr>
+                                </table>
+                                <br/>
+                                <br/>
+                                <a t-attf-href="{{object._notify_get_action_link('view')}}" style="padding: 5px 10px; color: #FFFFFF; text-decoration: none; background-color: #875A7B; border: 1px solid #875A7B; border-radius: 3px"> Review Request </a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo>
