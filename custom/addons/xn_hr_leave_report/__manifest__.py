@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'HR Leave Balance Report',
-    'version': '17.0.3.0.0',
+    'version': '17.0.3.0.2',
     'summary': 'Consolidated leave balance table for all employees (HR/Admin view)',
     'description': """
         Adds two menus under Leaves > Management:

@@ -40,34 +40,34 @@ class HrLeaveBalanceReport(models.Model):
     company_id = fields.Many2one('res.company', string='Company', readonly=True)
 
     # -- Casual Leave --
-    casual_allocated = fields.Float(string='Casual - Allocated', readonly=True, digits=(16, 1))
-    casual_taken = fields.Float(string='Casual - Taken', readonly=True, digits=(16, 1))
-    casual_balance = fields.Float(string='Casual - Balance', readonly=True, digits=(16, 1))
+    casual_allocated = fields.Float(string='Casual - Allocated', readonly=True, digits=(16, 2))
+    casual_taken = fields.Float(string='Casual - Taken', readonly=True, digits=(16, 2))
+    casual_balance = fields.Float(string='Casual - Balance', readonly=True, digits=(16, 2))
 
     # -- Sick Leave --
-    sick_allocated = fields.Float(string='Sick - Allocated', readonly=True, digits=(16, 1))
-    sick_taken = fields.Float(string='Sick - Taken', readonly=True, digits=(16, 1))
-    sick_balance = fields.Float(string='Sick - Balance', readonly=True, digits=(16, 1))
+    sick_allocated = fields.Float(string='Sick - Allocated', readonly=True, digits=(16, 2))
+    sick_taken = fields.Float(string='Sick - Taken', readonly=True, digits=(16, 2))
+    sick_balance = fields.Float(string='Sick - Balance', readonly=True, digits=(16, 2))
 
     # -- Earned Leave b/f --
-    earned_allocated = fields.Float(string='Earned b/f - Allocated', readonly=True, digits=(16, 1))
-    earned_taken = fields.Float(string='Earned b/f - Taken', readonly=True, digits=(16, 1))
-    earned_balance = fields.Float(string='Earned b/f - Balance', readonly=True, digits=(16, 1))
+    earned_allocated = fields.Float(string='Earned b/f - Allocated', readonly=True, digits=(16, 2))
+    earned_taken = fields.Float(string='Earned b/f - Taken', readonly=True, digits=(16, 2))
+    earned_balance = fields.Float(string='Earned b/f - Balance', readonly=True, digits=(16, 2))
 
     # -- Maternity Leave --
-    maternity_allocated = fields.Float(string='Maternity - Allocated', readonly=True, digits=(16, 1))
-    maternity_taken = fields.Float(string='Maternity - Taken', readonly=True, digits=(16, 1))
-    maternity_balance = fields.Float(string='Maternity - Balance', readonly=True, digits=(16, 1))
+    maternity_allocated = fields.Float(string='Maternity - Allocated', readonly=True, digits=(16, 2))
+    maternity_taken = fields.Float(string='Maternity - Taken', readonly=True, digits=(16, 2))
+    maternity_balance = fields.Float(string='Maternity - Balance', readonly=True, digits=(16, 2))
 
     # -- Comp-off --
-    compoff_allocated = fields.Float(string='Comp-off - Allocated', readonly=True, digits=(16, 1))
-    compoff_taken = fields.Float(string='Comp-off - Taken', readonly=True, digits=(16, 1))
-    compoff_balance = fields.Float(string='Comp-off - Balance', readonly=True, digits=(16, 1))
+    compoff_allocated = fields.Float(string='Comp-off - Allocated', readonly=True, digits=(16, 2))
+    compoff_taken = fields.Float(string='Comp-off - Taken', readonly=True, digits=(16, 2))
+    compoff_balance = fields.Float(string='Comp-off - Balance', readonly=True, digits=(16, 2))
 
     # -- Total row --
-    total_allocated = fields.Float(string='Total Allocated', readonly=True, digits=(16, 1))
-    total_taken = fields.Float(string='Total Taken', readonly=True, digits=(16, 1))
-    total_balance = fields.Float(string='Total Balance', readonly=True, digits=(16, 1))
+    total_allocated = fields.Float(string='Total Allocated', readonly=True, digits=(16, 2))
+    total_taken = fields.Float(string='Total Taken', readonly=True, digits=(16, 2))
+    total_balance = fields.Float(string='Total Balance', readonly=True, digits=(16, 2))
 
     def _is_accrual_type(self, type_id):
         """True if this leave type has ANY accrual-type allocation on record
