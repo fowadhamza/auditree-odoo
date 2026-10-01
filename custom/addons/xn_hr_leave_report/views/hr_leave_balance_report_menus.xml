@@ -23,4 +23,11 @@
               sequence="22"
               groups="hr.group_hr_user"/>
 
+    <!-- Hide stock Odoo's own "Leave Balance Report" (hr.leave.employee.type.report),
+         which sits in the same Management menu under the same name as ours.
+         The stock menuitem never sets active, so this survives -u hr_holidays. -->
+    <record id="hr_holidays.menu_leave_balance_report" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
 </odoo>
