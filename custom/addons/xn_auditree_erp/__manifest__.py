@@ -10,7 +10,7 @@
     "author": "shameem",
     "website": "https://www.xetensolutions.com",
     "depends": ["base",
-                "hr","website_hr_recruitment",
+                "hr","hr_holidays","website_hr_recruitment",
                 "project",
                 "hr_attendance",
                 "hr_timesheet",
@@ -18,6 +18,7 @@
                 ],
     "data": [
         "data/mail_data.xml",
+        "data/leave_allocation_mail_data.xml",
         'security/secutity.xml',
         "security/ir.model.access.csv",
         "views/hr_department_views.xml",
@@ -38,6 +39,7 @@
     "assets": {
         "web.assets_backend": [
             "xn_auditree_erp/static/src/scss/loading_indicator.scss",
+            "xn_auditree_erp/static/src/scss/dashboard_refinements.scss",
         ],
     },
 
