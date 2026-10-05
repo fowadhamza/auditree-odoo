@@ -40,6 +40,9 @@
         "web.assets_backend": [
             "xn_auditree_erp/static/src/scss/loading_indicator.scss",
             "xn_auditree_erp/static/src/scss/dashboard_refinements.scss",
+            "xn_auditree_erp/static/src/scss/ui_motion.scss",
+            "xn_auditree_erp/static/src/js/notification_motion.js",
+            "xn_auditree_erp/static/src/xml/notification_motion.xml",
         ],
     },
 
