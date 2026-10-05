@@ -21,7 +21,12 @@ class HREmployee(models.Model):
                                help="Employee joining date computed from the"
                                     " contract start date")
 
-    employee_type = fields.Selection(selection_add=[('temporary', 'Temporary'), ], ondelete={'temporary': 'cascade'})
+    # 'system' marks shared mailboxes (hr@, accounts@, it@...) that Odoo gave
+    # an employee record when their user was created. They are not people, so
+    # xn_hr_dashboard leaves them out of headcount and every HR figure.
+    employee_type = fields.Selection(
+        selection_add=[('temporary', 'Temporary'), ('system', 'Shared / System Account')],
+        ondelete={'temporary': 'cascade', 'system': 'set default'})
     emp_blood_type = fields.Selection(
         [('a+', 'A+'), ('a-', 'A-'), ('b+', 'B+'), ('b-', 'B-'), ('o+', 'O+'), ('o-', 'O-'), ('ab+', 'AB+'),
          ('ab-', 'AB-')], string="Blood Group")
