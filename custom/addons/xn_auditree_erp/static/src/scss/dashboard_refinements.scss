@@ -1,0 +1,404 @@
+/* ============================================================================
+   Auditree dashboard refinements
+
+   Local visual overrides for the vendor `hrms_dashboard` module. Kept in
+   xn_auditree_erp (not in hrms_dashboard/) so a vendor upgrade cannot
+   silently overwrite them - same reasoning as loading_indicator.scss.
+
+   Restyles existing markup only; no templates are patched. Worst case on a
+   vendor DOM change is that a rule stops matching and their styling returns.
+
+   NOTE ON !important: the vendor sets several tile colours with !important
+   (.oh-timesheets .stat-icon etc). Overriding those requires !important at
+   equal specificity. It is used only where their rules force it.
+   ============================================================================ */
+
+// --- palette ---------------------------------------------------------------
+$xn-ground:      #eef1f6;
+$xn-surface:     #ffffff;
+$xn-ink:         #1c2531;
+$xn-muted:       #64748b;
+$xn-faint:       #94a3b8;
+$xn-rule:        #e2e8f0;
+$xn-accent:      #3f6098;
+
+// The four tile hues are the vendor's own. Keeping them preserves the
+// dashboard's identity; what changes is how much visual weight they carry.
+$xn-payslip:     #ff8762;
+$xn-timesheet:   #5ebade;
+$xn-contract:    #b298e1;
+$xn-broad:       #70cac1;
+
+$xn-radius:      10px;
+$xn-shadow:      0 1px 2px rgba(28, 37, 49, 0.06), 0 4px 12px rgba(28, 37, 49, 0.05);
+$xn-shadow-lift: 0 2px 4px rgba(28, 37, 49, 0.08), 0 10px 24px rgba(28, 37, 49, 0.09);
+
+// --- page ground -----------------------------------------------------------
+.oh_dashboards {
+    background-color: $xn-ground !important;
+    padding: 20px 18px 32px !important;
+}
+
+// --- cards -----------------------------------------------------------------
+// IMPORTANT: .stat-widget-one lives *inside* .oh-card > .oh-card-body.
+// Styling both as cards produces a card-within-a-card. Only the outer
+// element gets the border, radius and shadow.
+.oh_dashboards {
+    .oh-card,
+    .hr_notification {
+        background: $xn-surface;
+        border: 1px solid $xn-rule;
+        border-radius: $xn-radius;
+        box-shadow: $xn-shadow;
+        overflow: hidden;
+        transition: box-shadow 140ms ease, transform 140ms ease;
+    }
+
+    .oh-card:hover {
+        box-shadow: $xn-shadow-lift;
+        transform: translateY(-1px);
+    }
+
+    // The inner widget is layout only - never its own surface.
+    .stat-widget-one {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .oh-card-body {
+        padding: 0;
+    }
+}
+
+// --- KPI tiles -------------------------------------------------------------
+// Stock gives each tile a large saturated block roughly a third of its width.
+// The colour encodes nothing, so it competes with the number it is meant to
+// label. Same hue, far less area: a compact tinted square with a coloured
+// glyph, letting the figure carry the emphasis.
+.oh_dashboards .stat-widget-one {
+    display: flex !important;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    min-height: 84px;
+
+    .stat-icon {
+        flex: 0 0 46px !important;
+        width: 46px !important;
+        height: 46px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        text-align: center;
+
+        i {
+            font-size: 19px !important;
+            font-weight: 400 !important;
+            color: inherit !important;
+        }
+    }
+
+    .stat-content {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .stat-text {
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: $xn-muted !important;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-digit {
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 1.05;
+        color: $xn-ink;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+// Per-tile hue, applied as a tint rather than a slab. !important is required
+// here because the vendor forces these backgrounds the same way.
+.oh_dashboards {
+    .oh-payslip .stat-icon {
+        background: rgba($xn-payslip, 0.14) !important;
+        color: darken($xn-payslip, 18%) !important;
+    }
+    .oh-timesheets .stat-icon {
+        background: rgba($xn-timesheet, 0.16) !important;
+        color: darken($xn-timesheet, 18%) !important;
+    }
+    .oh-contracts .stat-icon {
+        background: rgba($xn-contract, 0.18) !important;
+        color: darken($xn-contract, 22%) !important;
+    }
+    .oh-broad-factor .stat-icon {
+        background: rgba($xn-broad, 0.18) !important;
+        color: darken($xn-broad, 20%) !important;
+    }
+
+    // The vendor also tints the labels per tile; unify them so the row scans
+    // as one group rather than four unrelated widgets.
+    .oh-timesheets .stat-widget-one .stat-text,
+    .oh-contracts .stat-widget-one .stat-text,
+    .oh-broad-factor .stat-widget-one .stat-text {
+        color: $xn-muted !important;
+    }
+}
+
+// --- section headings ------------------------------------------------------
+.oh_dashboards {
+    .hr_notification_head {
+        background: $xn-surface;
+        color: $xn-ink;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 14px 18px;
+        border-bottom: 1px solid $xn-rule;
+    }
+
+    .oh-card h4 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: $xn-muted;
+        margin: 0 0 14px;
+    }
+}
+
+// --- chart panels ----------------------------------------------------------
+// Several chart cards reserve far more height than their SVG uses, leaving
+// large dead areas. Cap them so panels sit closer to their content.
+.oh_dashboards {
+    .oh-card svg {
+        display: block;
+        margin: 0 auto;
+    }
+
+    svg text {
+        fill: $xn-muted !important;
+        font-size: 11px !important;
+    }
+
+    .nv-axis line,
+    .nv-axis path {
+        stroke: rgba($xn-rule, 0.9) !important;
+    }
+
+    // Legend tables beside the pie charts
+    table td {
+        padding: 6px 10px;
+        font-size: 12.5px;
+        color: $xn-ink;
+        border-bottom: 1px solid rgba($xn-rule, 0.65);
+    }
+    table tr:last-child td { border-bottom: none; }
+    table td:last-child {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        color: $xn-muted;
+    }
+}
+
+// --- list rows (birthdays, events, announcements) --------------------------
+.oh_dashboards .hr_notification {
+    .media {
+        padding: 12px 18px;
+        border-bottom: 1px solid rgba($xn-rule, 0.7);
+        align-items: center;
+    }
+    .media:last-child { border-bottom: none; }
+
+    img {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1px solid $xn-rule;
+        object-fit: cover;
+        background: $xn-ground;
+    }
+
+    .media-body {
+        h2, .display-6 {
+            font-size: 14px !important;
+            font-weight: 600;
+            color: $xn-ink;
+            margin: 0 0 1px;
+        }
+        p {
+            font-size: 12.5px;
+            color: $xn-muted;
+            margin: 0;
+            line-height: 1.45;
+        }
+        p.text-light {
+            color: $xn-faint !important;
+            font-size: 12px;
+        }
+    }
+}
+
+// --- empty states ----------------------------------------------------------
+// Blank white boxes read as broken rather than empty.
+.oh_dashboards .hr_notification {
+    .text-align:empty {
+        display: block;
+        min-height: 92px;
+        position: relative;
+    }
+    .text-align:empty::after {
+        content: "Nothing scheduled";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $xn-faint;
+        font-size: 12.5px;
+        font-style: italic;
+    }
+}
+
+// --- check-in button -------------------------------------------------------
+.oh_dashboards .hr_attendance_btn {
+    border-radius: $xn-radius;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    box-shadow: $xn-shadow;
+    transition: box-shadow 140ms ease, transform 140ms ease;
+
+    &:hover {
+        box-shadow: $xn-shadow-lift;
+        transform: translateY(-1px);
+    }
+}
+
+// --- text helpers ----------------------------------------------------------
+.oh_dashboards {
+    .text-color { color: $xn-ink !important; }
+    .text-light { color: $xn-faint !important; }
+}
+
+// --- reduced motion --------------------------------------------------------
+@media (prefers-reduced-motion: reduce) {
+    .oh_dashboards * {
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+// ============================================================================
+// (2) Reclaiming vertical space
+//
+// Several panels reserve far more height than their content uses, which is the
+// real reason the page reads as sparse. Each rule below targets a specific
+// vendor declaration rather than blanket-shrinking things.
+// ============================================================================
+.oh_dashboards {
+
+    // Departments pie: vendor pads 90px left and 65px bottom, so the chart sits
+    // off-centre inside a tall box. Centre it and reclaim the dead band.
+    .emp_graph {
+        padding-left: 0 !important;
+        padding-bottom: 12px !important;
+        padding-top: 4px;
+        text-align: center !important;
+    }
+
+    // The departments card ships an empty <h4> that still occupies a line.
+    .oh-card h4:empty,
+    .oh-card-body > h4.mb-0:empty {
+        display: none !important;
+        margin: 0 !important;
+    }
+
+    // Monthly leave legend uses margin-top 77px / margin-bottom -97px and a
+    // fixed 250px scroll box, which opens a gap above the chart.
+    .monthly_leave_graph_view .legend {
+        height: auto !important;
+        max-height: 220px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        margin: 0 0 0 12px !important;
+    }
+
+    // Broad factor panel is pinned to 336px whatever it contains.
+    .leave_broad_factor {
+        height: auto !important;
+        max-height: 320px;
+    }
+
+    // Trim the gap the vendor leaves under every card.
+    .oh-card {
+        margin-bottom: 1rem !important;
+    }
+
+    // Charts that render an empty plot still claim full height. Cap the SVG so
+    // an empty series does not hold open a large blank panel.
+    .graph_view svg,
+    .leave_graph svg,
+    .broad_factor_graph svg {
+        max-height: 300px;
+    }
+}
+
+// ============================================================================
+// (4) Employee profile panel
+//
+// The underlying issue is missing data, not styling: for this user gender,
+// date of birth, joining date, nationality and mobile are all NULL in
+// hr_employee. Across 28 active employees only 3 have a mobile number.
+// CSS cannot fix that. What it can do is stop empty look like broken.
+// ============================================================================
+.oh_dashboards .employee-prof {
+
+    // The avatar slot is a flat #999 slab when no photo is set. Make it read as
+    // a deliberate placeholder rather than a missing image.
+    .employee-icon {
+        background: linear-gradient(160deg, #55708c 0%, #3e6282 100%) !important;
+        position: relative;
+        height: 150px !important;
+    }
+
+    .employee-icon:empty::after,
+    .employee-icon:not(:has(img))::after {
+        content: "\f007";              // fa-user
+        font-family: FontAwesome;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 46px;
+        color: rgba(255, 255, 255, 0.28);
+    }
+
+    // Placeholder values ("- - -", "--/--/----") are forced to #b6b6b6 inline by
+    // the vendor. Soften them so the labels lead and the gaps recede.
+    p[style*="b6b6b6"] {
+        color: rgba(255, 255, 255, 0.34) !important;
+        letter-spacing: 0.04em;
+    }
+
+    // Field labels: small, consistent, clearly secondary.
+    p {
+        font-size: 12px;
+        margin-bottom: 2px;
+    }
+}
