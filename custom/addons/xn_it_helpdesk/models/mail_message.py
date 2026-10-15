@@ -11,16 +11,23 @@ class MailMessage(models.Model):
     internal user who can read a record also reads its notes. Employees can
     read their own tickets, so without this they would see what the IT team
     writes to each other. Applies to helpdesk.ticket messages only.
+
+    Scoped to members of "Raise IT Tickets": users outside that group cannot
+    raise tickets, so their message searches are left exactly as core does
+    them. That is what lets the module be trialled on production without
+    touching anyone else's chatter. (A non-member that IT adds as a follower
+    of a ticket would see its notes -- don't, during the trial.)
     """
     _inherit = 'mail.message'
 
     @api.model
     def _xn_hide_it_notes(self):
-        """True for an internal user outside the IT team. Share users are
+        """True for a ticket requester outside the IT team. Share users are
         already restricted by core mail, and the superuser sees everything."""
         user = self.env.user
         return (not self.env.is_superuser()
                 and user._is_internal()
+                and user.has_group('xn_it_helpdesk.group_xn_helpdesk_requester')
                 and not user.has_group('helpdesk_mgmt.group_helpdesk_user_own'))
 
     @api.model
