@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Emails to the employee who raised the ticket. "received" is sent from
+        create(); the other three are attached to stages (mail_template_id)
+        and sent by helpdesk_mgmt's _track_template on a stage change.
+        noupdate so IT can reword them without -u putting them back.
+    -->
+    <data noupdate="1">
+        <record id="mail_template_ticket_received" model="mail.template">
+            <field name="name">IT Helpdesk: Ticket Received</field>
+            <field name="model_id" ref="helpdesk_mgmt.model_helpdesk_ticket"/>
+            <field name="subject">[{{ object.number }}] We have received your IT ticket: {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or user.company_id.email_formatted) }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                    <p>Hello <t t-out="object.xn_employee_id.name or object.partner_name or ''"/>,</p>
+                    <p>Your IT ticket <b t-out="object.number"/> has been received. The IT team will pick it up shortly.</p>
+                    <ul>
+                        <li><b>Subject:</b> <t t-out="object.name"/></li>
+                        <li><b>Category:</b> <t t-out="object.category_id.complete_name or '-'"/></li>
+                        <li><b>Priority:</b> <t t-out="{'0': 'Low', '1': 'Medium', '2': 'High', '3': 'Critical'}.get(object.priority, '')"/></li>
+                    </ul>
+                    <p>You will get an email whenever its status changes. To add details or files, reply on the ticket:</p>
+                    <p>
+                        <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
+                           style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
+                    </p>
+                    <p>IT Helpdesk</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_ticket_status" model="mail.template">
+            <field name="name">IT Helpdesk: Status Update</field>
+            <field name="model_id" ref="helpdesk_mgmt.model_helpdesk_ticket"/>
+            <field name="subject">[{{ object.number }}] Status: {{ object.stage_id.name }} - {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or user.company_id.email_formatted) }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                    <p>Hello <t t-out="object.xn_employee_id.name or object.partner_name or ''"/>,</p>
+                    <p>Your IT ticket <b t-out="object.number"/> (<t t-out="object.name"/>) is now <b t-out="object.stage_id.name"/>.</p>
+                    <p t-if="object.user_id">It is being handled by <t t-out="object.user_id.name"/>.</p>
+                    <p>
+                        <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
+                           style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
+                    </p>
+                    <p>IT Helpdesk</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_ticket_resolved" model="mail.template">
+            <field name="name">IT Helpdesk: Ticket Resolved</field>
+            <field name="model_id" ref="helpdesk_mgmt.model_helpdesk_ticket"/>
+            <field name="subject">[{{ object.number }}] Resolved: {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or user.company_id.email_formatted) }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                    <p>Hello <t t-out="object.xn_employee_id.name or object.partner_name or ''"/>,</p>
+                    <p>Your IT ticket <b t-out="object.number"/> (<t t-out="object.name"/>) has been resolved.</p>
+                    <p><b>Resolution:</b></p>
+                    <div t-out="object.xn_resolution_note"/>
+                    <p>
+                        Please open the ticket and click <b>Confirm Resolution</b> if the
+                        issue is fixed, or <b>Reopen</b> if it persists.
+                    </p>
+                    <p>
+                        <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
+                           style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
+                    </p>
+                    <p>IT Helpdesk</p>
+                </div>
+            </field>
+        </record>
+
+        <record id="mail_template_ticket_closed" model="mail.template">
+            <field name="name">IT Helpdesk: Ticket Closed</field>
+            <field name="model_id" ref="helpdesk_mgmt.model_helpdesk_ticket"/>
+            <field name="subject">[{{ object.number }}] Closed: {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or user.company_id.email_formatted) }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                    <p>Hello <t t-out="object.xn_employee_id.name or object.partner_name or ''"/>,</p>
+                    <p>Your IT ticket <b t-out="object.number"/> (<t t-out="object.name"/>) has been closed.</p>
+                    <p>If the problem comes back, open the ticket and click <b>Reopen</b>.</p>
+                    <p>
+                        <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
+                           style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
+                    </p>
+                    <p>IT Helpdesk</p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

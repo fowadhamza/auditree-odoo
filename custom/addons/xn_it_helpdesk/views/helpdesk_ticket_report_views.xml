@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_helpdesk_ticket_report_search" model="ir.ui.view">
+        <field name="name">xn.helpdesk.ticket.report.search</field>
+        <field name="model">xn.helpdesk.ticket.report</field>
+        <field name="arch" type="xml">
+            <search string="IT Ticket Analysis">
+                <field name="number" string="Ticket"
+                       filter_domain="['|', ('number', 'ilike', self), ('name', 'ilike', self)]"/>
+                <field name="employee_id" string="Employee (name or ID)"
+                       filter_domain="['|', ('employee_id', 'ilike', self), ('employee_code', 'ilike', self)]"/>
+                <field name="department_id"/>
+                <field name="category_id"/>
+                <field name="user_id"/>
+                <field name="stage_id"/>
+                <filter string="Open" name="open" domain="[('is_open', '=', True)]"/>
+                <filter string="Resolved or Closed" name="done" domain="[('is_open', '=', False)]"/>
+                <separator/>
+                <filter string="High and Critical" name="high_critical"
+                        domain="[('priority', 'in', ('2', '3'))]"/>
+                <filter string="Unassigned" name="unassigned" domain="[('user_id', '=', False)]"/>
+                <separator/>
+                <filter string="Submitted On" name="filter_create_date" date="create_date"/>
+                <filter string="Resolved On" name="filter_resolved_date" date="resolved_date"/>
+                <group expand="0" string="Group By">
+                    <filter string="Age Bracket" name="group_age" context="{'group_by': 'age_bucket'}"/>
+                    <filter string="Status" name="group_stage" context="{'group_by': 'stage_id'}"/>
+                    <filter string="Category" name="group_category" context="{'group_by': 'category_id'}"/>
+                    <filter string="Priority" name="group_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="Assigned To" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Employee" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="Submitted On" name="group_create_date" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_xn_helpdesk_ticket_report_pivot" model="ir.ui.view">
+        <field name="name">xn.helpdesk.ticket.report.pivot</field>
+        <field name="model">xn.helpdesk.ticket.report</field>
+        <field name="arch" type="xml">
+            <pivot string="IT Ticket Analysis" sample="1">
+                <field name="category_id" type="row"/>
+                <field name="stage_id" type="col"/>
+                <field name="resolution_hours" type="measure" widget="float_time"/>
+                <field name="age_days" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_helpdesk_ticket_report_graph" model="ir.ui.view">
+        <field name="name">xn.helpdesk.ticket.report.graph</field>
+        <field name="model">xn.helpdesk.ticket.report</field>
+        <field name="arch" type="xml">
+            <graph string="IT Ticket Analysis" type="bar" sample="1">
+                <field name="age_bucket"/>
+                <field name="priority"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_xn_helpdesk_ticket_report_tree" model="ir.ui.view">
+        <field name="name">xn.helpdesk.ticket.report.tree</field>
+        <field name="model">xn.helpdesk.ticket.report</field>
+        <field name="arch" type="xml">
+            <tree string="IT Ticket Analysis" create="false" edit="false" delete="false">
+                <field name="number"/>
+                <field name="name"/>
+                <field name="employee_id" optional="show"/>
+                <field name="employee_code" optional="hide"/>
+                <field name="department_id" optional="hide"/>
+                <field name="category_id" optional="show"/>
+                <field name="priority" optional="show"/>
+                <field name="user_id" optional="show"/>
+                <field name="stage_id" optional="show"/>
+                <field name="create_date" optional="show"/>
+                <field name="resolved_date" optional="show"/>
+                <field name="age_days" optional="show" avg="Average"/>
+                <field name="age_bucket" optional="show"/>
+                <field name="resolution_hours" widget="float_time" optional="show" avg="Average"/>
+                <field name="reopen_count" optional="hide" sum="Total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_xn_helpdesk_ticket_report" model="ir.actions.act_window">
+        <field name="name">Ageing and Resolution Time</field>
+        <field name="res_model">xn.helpdesk.ticket.report</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="search_view_id" ref="view_xn_helpdesk_ticket_report_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">No tickets yet</p>
+            <p>Age is measured from submission to resolution, or to now for open tickets.
+               Resolution time is submission to the latest resolution.</p>
+        </field>
+    </record>
+</odoo>

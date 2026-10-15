@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Employees (base.group_user) get create on helpdesk.ticket from
+        ir.model.access.csv, but no write: every change they are allowed to
+        make (confirm, reopen) goes through a button that checks they raised
+        the ticket. Which tickets they can see is helpdesk_mgmt's existing
+        "Internal Tickets" rule: tickets where they are the contact or a
+        follower. Internal IT notes are hidden in models/mail_message.py.
+    -->
+    <data noupdate="1">
+        <record id="xn_helpdesk_ticket_report_comp_rule" model="ir.rule">
+            <field name="name">IT Helpdesk Analysis: multi-company</field>
+            <field name="model_id" ref="model_xn_helpdesk_ticket_report"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>
