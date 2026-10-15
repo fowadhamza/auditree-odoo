@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        One app, "IT Helpdesk", replacing helpdesk_mgmt's "Helpdesk" menu.
+        Every internal user sees Dashboard and My Tickets; the ticket queues
+        and reporting need a Helpdesk group; Configuration needs Helpdesk
+        Manager (the IT administrator).
+    -->
+    <record id="helpdesk_mgmt.helpdesk_ticket_main_menu" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <menuitem id="menu_xn_it_helpdesk_root"
+              name="IT Helpdesk"
+              sequence="16"
+              web_icon="helpdesk_mgmt,static/description/icon.png"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_xn_it_helpdesk_dashboard"
+              name="Dashboard"
+              parent="menu_xn_it_helpdesk_root"
+              action="action_xn_helpdesk_dashboard"
+              sequence="1"/>
+
+    <menuitem id="menu_xn_it_helpdesk_my_tickets"
+              name="My Tickets"
+              parent="menu_xn_it_helpdesk_root"
+              action="action_xn_helpdesk_my_tickets"
+              sequence="5"/>
+
+    <menuitem id="menu_xn_it_helpdesk_tickets"
+              name="Tickets"
+              parent="menu_xn_it_helpdesk_root"
+              sequence="10"
+              groups="helpdesk_mgmt.group_helpdesk_user_own"/>
+    <menuitem id="menu_xn_it_helpdesk_all"
+              name="All Tickets"
+              parent="menu_xn_it_helpdesk_tickets"
+              action="action_xn_helpdesk_ticket_all"
+              sequence="10"/>
+    <menuitem id="menu_xn_it_helpdesk_assigned"
+              name="Assigned to Me"
+              parent="menu_xn_it_helpdesk_tickets"
+              action="action_xn_helpdesk_ticket_assigned"
+              sequence="20"/>
+    <menuitem id="menu_xn_it_helpdesk_unassigned"
+              name="Unassigned"
+              parent="menu_xn_it_helpdesk_tickets"
+              action="action_xn_helpdesk_ticket_unassigned"
+              sequence="30"/>
+
+    <menuitem id="menu_xn_it_helpdesk_reporting"
+              name="Reporting"
+              parent="menu_xn_it_helpdesk_root"
+              sequence="20"
+              groups="helpdesk_mgmt.group_helpdesk_user"/>
+    <menuitem id="menu_xn_it_helpdesk_report"
+              name="Ageing and Resolution Time"
+              parent="menu_xn_it_helpdesk_reporting"
+              action="action_xn_helpdesk_ticket_report"
+              sequence="10"/>
+
+    <menuitem id="menu_xn_it_helpdesk_config"
+              name="Configuration"
+              parent="menu_xn_it_helpdesk_root"
+              sequence="90"
+              groups="helpdesk_mgmt.group_helpdesk_manager"/>
+    <menuitem id="menu_xn_it_helpdesk_settings"
+              name="Settings"
+              parent="menu_xn_it_helpdesk_config"
+              action="helpdesk_mgmt.action_helpdesk_mgmt_config_settings"
+              sequence="1"/>
+    <menuitem id="menu_xn_it_helpdesk_categories"
+              name="Categories"
+              parent="menu_xn_it_helpdesk_config"
+              action="helpdesk_mgmt.helpdesk_ticket_category_action"
+              sequence="10"/>
+    <menuitem id="menu_xn_it_helpdesk_stages"
+              name="Stages"
+              parent="menu_xn_it_helpdesk_config"
+              action="helpdesk_mgmt.helpdesk_ticket_stage_action"
+              sequence="20"/>
+    <menuitem id="menu_xn_it_helpdesk_teams"
+              name="Teams"
+              parent="menu_xn_it_helpdesk_config"
+              action="helpdesk_mgmt.helpdesk_ticket_team_action"
+              sequence="30"/>
+</odoo>

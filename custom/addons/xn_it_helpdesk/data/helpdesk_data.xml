@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Reshapes helpdesk_mgmt's default data for IT. Several records belong
+        to helpdesk_mgmt (prefixed helpdesk_mgmt.); writing them from here is
+        the inherit-don't-patch route, and noupdate keeps the IT
+        administrator's later edits.
+    -->
+    <data noupdate="1">
+        <!-- Ticket numbers: IT-001, IT-002, ... -->
+        <record id="helpdesk_mgmt.helpdesk_ticket_sequence" model="ir.sequence">
+            <field name="prefix">IT-</field>
+            <field name="padding">3</field>
+        </record>
+
+        <!-- Stages: New, In Progress, On Hold, Resolved, Closed -->
+        <record id="helpdesk_mgmt.helpdesk_ticket_stage_new" model="helpdesk.ticket.stage">
+            <field name="xn_state">new</field>
+        </record>
+        <record id="helpdesk_mgmt.helpdesk_ticket_stage_in_progress" model="helpdesk.ticket.stage">
+            <field name="xn_state">in_progress</field>
+            <field name="mail_template_id" ref="mail_template_ticket_status"/>
+        </record>
+        <record id="helpdesk_mgmt.helpdesk_ticket_stage_awaiting" model="helpdesk.ticket.stage">
+            <field name="name">On Hold</field>
+            <field name="xn_state">on_hold</field>
+            <field name="mail_template_id" ref="mail_template_ticket_status"/>
+        </record>
+        <record id="helpdesk_mgmt.helpdesk_ticket_stage_done" model="helpdesk.ticket.stage">
+            <field name="name">Resolved</field>
+            <field name="xn_state">resolved</field>
+            <field name="fold" eval="False"/>
+            <field name="close_from_portal" eval="False"/>
+            <field name="mail_template_id" ref="mail_template_ticket_resolved"/>
+        </record>
+        <record id="helpdesk_mgmt.helpdesk_ticket_stage_cancelled" model="helpdesk.ticket.stage">
+            <field name="name">Closed</field>
+            <field name="xn_state">closed</field>
+            <field name="fold" eval="True"/>
+            <!-- Closing needs resolution notes, so not from the portal. -->
+            <field name="close_from_portal" eval="False"/>
+            <field name="mail_template_id" ref="mail_template_ticket_closed"/>
+        </record>
+        <record id="helpdesk_mgmt.helpdesk_ticket_stage_rejected" model="helpdesk.ticket.stage">
+            <field name="active" eval="False"/>
+        </record>
+
+        <!-- Categories -->
+        <record id="category_hardware" model="helpdesk.ticket.category">
+            <field name="name">Hardware</field>
+            <field name="sequence">10</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        <record id="category_software" model="helpdesk.ticket.category">
+            <field name="name">Software</field>
+            <field name="sequence">20</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        <record id="category_network" model="helpdesk.ticket.category">
+            <field name="name">Network</field>
+            <field name="sequence">30</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        <record id="category_access_request" model="helpdesk.ticket.category">
+            <field name="name">Access Request</field>
+            <field name="sequence">40</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        <record id="category_other" model="helpdesk.ticket.category">
+            <field name="name">Other</field>
+            <field name="sequence">90</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!--
+            The IT team. Only its members can be assigned tickets (helpdesk_mgmt
+            limits Assigned To to the team), so add every IT person here as
+            well as to a Helpdesk group.
+        -->
+        <record id="team_it_support" model="helpdesk.ticket.team">
+            <field name="name">IT Support</field>
+            <!--
+                Keep the default company: _get_applicable_stages only offers
+                stages of the team's company, and helpdesk_mgmt's stages
+                carry the main company.
+            -->
+            <field name="category_ids" eval="[(6, 0, [
+                ref('category_hardware'), ref('category_software'),
+                ref('category_network'), ref('category_access_request'),
+                ref('category_other')])]"/>
+        </record>
+    </data>
+</odoo>

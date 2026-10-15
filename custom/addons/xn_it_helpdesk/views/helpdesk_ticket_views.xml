@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        IT Helpdesk's own ticket views. helpdesk_mgmt's views are written for
+        customer support (contacts, channels, tags); these replace them in the
+        IT Helpdesk menus. Priority 10 also makes them the default views, so
+        the links in notification emails open this form.
+
+        One form serves both audiences. Employees (xn_is_it_user False) can
+        fill in a new ticket but see an existing one read-only, apart from the
+        chatter and the Confirm / Reopen buttons.
+    -->
+
+    <record id="view_xn_helpdesk_ticket_search" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.search.xn</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority">10</field>
+        <field name="arch" type="xml">
+            <search string="IT Tickets">
+                <field name="number" string="Ticket"
+                       filter_domain="['|', ('number', 'ilike', self), ('name', 'ilike', self)]"/>
+                <field name="xn_employee_id" string="Employee (name or ID)"
+                       filter_domain="['|', '|', ('xn_employee_id', 'ilike', self), ('xn_employee_code', 'ilike', self), ('partner_name', 'ilike', self)]"/>
+                <field name="xn_department_id"/>
+                <field name="category_id"/>
+                <field name="user_id" string="Assigned To"/>
+                <field name="stage_id" string="Status"/>
+                <field name="description"/>
+                <filter string="Raised by Me" name="raised_by_me"
+                        domain="[('partner_id.user_ids', 'in', [uid])]"/>
+                <filter string="Assigned to Me" name="assigned_to_me"
+                        domain="[('user_id', '=', uid)]"/>
+                <filter string="Unassigned" name="unassigned"
+                        domain="[('user_id', '=', False)]"/>
+                <separator/>
+                <filter string="Open" name="open"
+                        domain="[('xn_stage_state', 'not in', ('resolved', 'closed'))]"/>
+                <filter string="Resolved" name="resolved"
+                        domain="[('xn_stage_state', '=', 'resolved')]"/>
+                <filter string="Closed" name="closed_tickets"
+                        domain="[('xn_stage_state', '=', 'closed')]"/>
+                <separator/>
+                <filter string="High and Critical" name="high_critical"
+                        domain="[('priority', 'in', ('2', '3'))]"/>
+                <filter string="Critical" name="critical"
+                        domain="[('priority', '=', '3')]"/>
+                <separator/>
+                <filter string="Reopened" name="reopened"
+                        domain="[('xn_reopen_count', '&gt;', 0)]"/>
+                <separator/>
+                <filter string="Submitted On" name="filter_create_date" date="create_date"/>
+                <filter string="Resolved On" name="filter_resolved_date" date="xn_resolved_date"/>
+                <separator/>
+                <filter string="Archived" name="archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_stage" context="{'group_by': 'stage_id'}"/>
+                    <filter string="Category" name="group_category" context="{'group_by': 'category_id'}"/>
+                    <filter string="Priority" name="group_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="Assigned To" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Employee" name="group_employee" context="{'group_by': 'xn_employee_id'}"/>
+                    <filter string="Department" name="group_department" context="{'group_by': 'xn_department_id'}"/>
+                    <filter string="Submitted On" name="group_create_date" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_xn_helpdesk_ticket_tree" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.tree.xn</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority">10</field>
+        <field name="arch" type="xml">
+            <tree string="IT Tickets" decoration-muted="xn_stage_state == 'closed'"
+                  decoration-danger="priority == '3' and xn_stage_state not in ('resolved', 'closed')">
+                <field name="number" decoration-bf="1"/>
+                <field name="name"/>
+                <field name="xn_employee_id" optional="show"/>
+                <field name="xn_employee_code" optional="hide"/>
+                <field name="xn_department_id" optional="hide"/>
+                <field name="category_id" optional="show"/>
+                <field name="priority" optional="show"/>
+                <field name="user_id" string="Assigned To" widget="many2one_avatar_user" optional="show"/>
+                <field name="create_date" string="Submitted On" optional="show"/>
+                <field name="xn_resolved_date" optional="hide"/>
+                <field name="xn_resolution_hours" widget="float_time" optional="hide"/>
+                <field name="xn_stage_state" column_invisible="1"/>
+                <field name="stage_id" string="Status" widget="badge"
+                       decoration-info="xn_stage_state == 'new'"
+                       decoration-primary="xn_stage_state == 'in_progress'"
+                       decoration-warning="xn_stage_state == 'on_hold'"
+                       decoration-success="xn_stage_state == 'resolved'"
+                       decoration-muted="xn_stage_state == 'closed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_helpdesk_ticket_form" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.xn</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority">10</field>
+        <field name="arch" type="xml">
+            <form string="IT Ticket">
+                <field name="xn_is_it_user" invisible="1"/>
+                <field name="xn_is_requester" invisible="1"/>
+                <field name="xn_stage_state" invisible="1"/>
+                <field name="active" invisible="1"/>
+                <field name="user_ids" invisible="1"/>
+                <field name="partner_name" invisible="1"/>
+                <header>
+                    <button name="action_xn_in_progress" string="Start Work" type="object"
+                            class="btn-primary"
+                            invisible="not id or not xn_is_it_user or xn_stage_state not in ('new', 'on_hold')"/>
+                    <button name="action_xn_on_hold" string="Put On Hold" type="object"
+                            invisible="not id or not xn_is_it_user or xn_stage_state not in ('new', 'in_progress')"/>
+                    <button name="action_xn_resolve" string="Mark Resolved" type="object"
+                            class="btn-primary"
+                            invisible="not id or not xn_is_it_user or xn_stage_state not in ('new', 'in_progress', 'on_hold')"/>
+                    <button name="action_xn_close" string="Close" type="object"
+                            invisible="not id or not xn_is_it_user or xn_stage_state != 'resolved'"/>
+                    <button name="action_xn_confirm_resolution" string="Confirm Resolution" type="object"
+                            class="btn-primary"
+                            invisible="not id or not xn_is_requester or xn_stage_state != 'resolved'"/>
+                    <button name="action_xn_reopen" string="Reopen" type="object"
+                            confirm="Reopen this ticket? Add a reply below explaining what still does not work."
+                            invisible="not id or not (xn_is_requester or xn_is_it_user) or xn_stage_state not in ('resolved', 'closed')"/>
+                    <button name="assign_to_me" string="Assign to Me" type="object"
+                            invisible="not id or not xn_is_it_user or user_id"/>
+                    <field name="stage_id" widget="statusbar"
+                           options="{'clickable': '1', 'fold_field': 'fold'}"
+                           readonly="not xn_is_it_user"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="number" readonly="1" invisible="not id"/></h1>
+                        <h2>
+                            <field name="name" placeholder="Short summary, e.g. Laptop will not connect to VPN"
+                                   readonly="id and not xn_is_it_user"/>
+                        </h2>
+                    </div>
+                    <group name="main">
+                        <group name="requester" string="Raised By">
+                            <field name="xn_employee_id" options="{'no_create': True, 'no_open': True}"
+                                   readonly="not xn_is_it_user"/>
+                            <field name="xn_employee_code" readonly="not xn_is_it_user"/>
+                            <field name="partner_email" string="Email" readonly="not xn_is_it_user"/>
+                            <field name="xn_department_id" options="{'no_create': True, 'no_open': True}"
+                                   readonly="not xn_is_it_user"/>
+                            <!-- Set by the Employee onchange; force_save or it is dropped. -->
+                            <field name="partner_id" string="Contact" readonly="1" force_save="1"
+                                   invisible="not xn_is_it_user"/>
+                            <field name="create_date" string="Submitted On" readonly="1"
+                                   invisible="not id"/>
+                        </group>
+                        <group name="issue" string="Issue">
+                            <field name="category_id" required="1" options="{'no_create': True, 'no_open': True}"
+                                   readonly="id and not xn_is_it_user"/>
+                            <field name="priority" readonly="id and not xn_is_it_user"/>
+                            <field name="team_id" options="{'no_create': True}"
+                                   invisible="not xn_is_it_user" readonly="not xn_is_it_user"/>
+                            <field name="user_id" string="Assigned To" widget="many2one_avatar_user"
+                                   options="{'no_create': True}"
+                                   readonly="not xn_is_it_user"/>
+                            <field name="company_id" options="{'no_create': True}"
+                                   groups="base.group_multi_company"
+                                   readonly="not xn_is_it_user"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description"
+                                   placeholder="What is happening, since when, and what you have already tried. Attach screenshots with the paperclip in the chatter once the ticket is saved."
+                                   readonly="id and not xn_is_it_user"/>
+                        </page>
+                        <page string="Resolution" name="resolution"
+                              invisible="not xn_is_it_user and not xn_resolved_date">
+                            <field name="xn_resolution_note"
+                                   placeholder="What was wrong and what was done to fix it. Required before the ticket can be marked Resolved; the employee sees this."
+                                   readonly="not xn_is_it_user"/>
+                        </page>
+                        <page string="Timeline" name="timeline" invisible="not id">
+                            <group>
+                                <group>
+                                    <field name="assigned_date" string="Last Assigned On" readonly="1"/>
+                                    <field name="last_stage_update" string="Last Status Change" readonly="1"/>
+                                    <field name="xn_reopen_count" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="xn_resolved_date" readonly="1"/>
+                                    <field name="xn_closed_date" readonly="1"/>
+                                    <field name="xn_resolution_hours" widget="float_time" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids" options="{'post_refresh': 'recipients', 'open_attachments': True}"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_xn_helpdesk_my_tickets" model="ir.actions.act_window">
+        <field name="name">My Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('partner_id.user_ids', 'in', [uid])]</field>
+        <field name="search_view_id" ref="view_xn_helpdesk_ticket_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_xn_helpdesk_ticket_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_xn_helpdesk_ticket_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Raise an IT ticket</p>
+            <p>Click New, describe the problem and pick a category. The IT team is notified straight away and you get an email at every step.</p>
+        </field>
+    </record>
+
+    <record id="action_xn_helpdesk_ticket_all" model="ir.actions.act_window">
+        <field name="name">All Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_xn_helpdesk_ticket_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_xn_helpdesk_ticket_tree')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('helpdesk_mgmt.view_helpdesk_ticket_kanban')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_xn_helpdesk_ticket_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No tickets here</p>
+            <p>Tickets raised by employees appear here. Remove the Open filter to see resolved and closed ones.</p>
+        </field>
+    </record>
+
+    <record id="action_xn_helpdesk_ticket_assigned" model="ir.actions.act_window">
+        <field name="name">Assigned to Me</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_xn_helpdesk_ticket_search"/>
+        <field name="context">{'search_default_assigned_to_me': 1, 'search_default_open': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('helpdesk_mgmt.view_helpdesk_ticket_kanban')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_xn_helpdesk_ticket_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_xn_helpdesk_ticket_form')})]"/>
+    </record>
+
+    <record id="action_xn_helpdesk_ticket_unassigned" model="ir.actions.act_window">
+        <field name="name">Unassigned</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_xn_helpdesk_ticket_search"/>
+        <field name="context">{'search_default_unassigned': 1, 'search_default_open': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_xn_helpdesk_ticket_tree')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('helpdesk_mgmt.view_helpdesk_ticket_kanban')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_xn_helpdesk_ticket_form')})]"/>
+    </record>
+</odoo>

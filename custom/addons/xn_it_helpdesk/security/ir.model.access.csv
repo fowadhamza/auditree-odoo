@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_helpdesk_ticket_xn_employee,helpdesk.ticket.xn.employee,helpdesk_mgmt.model_helpdesk_ticket,base.group_user,1,0,1,0
+access_xn_helpdesk_ticket_report_user,xn.helpdesk.ticket.report.user,model_xn_helpdesk_ticket_report,helpdesk_mgmt.group_helpdesk_user,1,0,0,0
