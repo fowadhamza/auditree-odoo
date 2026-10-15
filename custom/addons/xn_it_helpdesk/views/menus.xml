@@ -2,9 +2,10 @@
 <odoo>
     <!--
         One app, "IT Helpdesk", replacing helpdesk_mgmt's "Helpdesk" menu.
-        Every internal user sees Dashboard and My Tickets; the ticket queues
-        and reporting need a Helpdesk group; Configuration needs Helpdesk
-        Manager (the IT administrator).
+        Members of "Raise IT Tickets" (and the IT team, which implies it) see
+        Dashboard and My Tickets; the ticket queues and reporting need a
+        Helpdesk group; Configuration needs Helpdesk Manager (the IT
+        administrator).
     -->
     <record id="helpdesk_mgmt.helpdesk_ticket_main_menu" model="ir.ui.menu">
         <field name="active" eval="False"/>
@@ -14,7 +15,7 @@
               name="IT Helpdesk"
               sequence="16"
               web_icon="helpdesk_mgmt,static/description/icon.png"
-              groups="base.group_user"/>
+              groups="group_xn_helpdesk_requester"/>
 
     <menuitem id="menu_xn_it_helpdesk_dashboard"
               name="Dashboard"

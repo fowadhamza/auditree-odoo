@@ -11,8 +11,8 @@ IT Helpdesk on top of the OCA Helpdesk Management module
 
 helpdesk_mgmt is installed untouched; everything Auditree-specific lives here.
 
-Employees (any internal user)
------------------------------
+Requesters ("Raise IT Tickets" group)
+-------------------------------------
 * Raise tickets from IT Helpdesk > My Tickets. Name, employee ID, email and
   department are filled in from their employee record.
 * See only their own tickets, reply and attach files from the chatter,
@@ -50,8 +50,9 @@ Other rules
     "license": "AGPL-3",
     "depends": ["helpdesk_mgmt", "hr", "mail"],
     "data": [
-        "security/ir.model.access.csv",
+        # Groups first: the access CSV references the requester group.
         "security/xn_it_helpdesk_security.xml",
+        "security/ir.model.access.csv",
         "data/mail_template_data.xml",
         "data/helpdesk_data.xml",
         "data/ir_cron_data.xml",

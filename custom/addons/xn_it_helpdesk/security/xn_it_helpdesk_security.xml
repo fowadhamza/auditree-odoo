@@ -1,13 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Employees (base.group_user) get create on helpdesk.ticket from
-        ir.model.access.csv, but no write: every change they are allowed to
-        make (confirm, reopen) goes through a button that checks they raised
-        the ticket. Which tickets they can see is helpdesk_mgmt's existing
-        "Internal Tickets" rule: tickets where they are the contact or a
-        follower. Internal IT notes are hidden in models/mail_message.py.
+        Who can raise tickets is a group, not "every internal user", so the
+        app can be trialled on production with a handful of people:
+
+        * group_xn_helpdesk_requester: sees IT Helpdesk, can create tickets
+          (create only, no write: confirm and reopen are buttons that check
+          the requester) and is the only non-IT audience whose chatter gets
+          the internal-note filter in models/mail_message.py. Nobody else's
+          Odoo changes.
+        * Every helpdesk_mgmt group implies it, so the IT team can raise
+          tickets too.
+
+        Going live for everyone = add this group to all employees (or make
+        base.group_user imply it).
+
+        Which tickets a requester sees is helpdesk_mgmt's existing "Internal
+        Tickets" rule: tickets where they are the contact or a follower.
     -->
+    <record id="module_category_xn_it_helpdesk" model="ir.module.category">
+        <field name="name">IT Helpdesk</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="group_xn_helpdesk_requester" model="res.groups">
+        <field name="name">Raise IT Tickets</field>
+        <field name="category_id" ref="module_category_xn_it_helpdesk"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Can open the IT Helpdesk app, raise tickets and follow their own.</field>
+    </record>
+
+    <record id="helpdesk_mgmt.group_helpdesk_user_own" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_xn_helpdesk_requester'))]"/>
+    </record>
+
     <data noupdate="1">
         <record id="xn_helpdesk_ticket_report_comp_rule" model="ir.rule">
             <field name="name">IT Helpdesk Analysis: multi-company</field>
