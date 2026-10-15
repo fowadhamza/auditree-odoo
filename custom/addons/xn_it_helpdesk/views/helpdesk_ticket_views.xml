@@ -170,8 +170,13 @@
                     <notebook>
                         <page string="Description" name="description">
                             <field name="description"
-                                   placeholder="What is happening, since when, and what you have already tried. Attach screenshots with the paperclip in the chatter once the ticket is saved."
+                                   placeholder="What is happening, since when, and what you have already tried."
                                    readonly="id and not xn_is_it_user"/>
+                            <!-- New tickets only; afterwards files go through the chatter paperclip. -->
+                            <group invisible="id">
+                                <field name="xn_attachment_ids" widget="many2many_binary"
+                                       string="Screenshots / Files"/>
+                            </group>
                         </page>
                         <page string="Resolution" name="resolution"
                               invisible="not xn_is_it_user and not xn_resolved_date">

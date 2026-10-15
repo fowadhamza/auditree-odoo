@@ -24,11 +24,12 @@
                         <li><b>Category:</b> <t t-out="object.category_id.complete_name or '-'"/></li>
                         <li><b>Priority:</b> <t t-out="{'0': 'Low', '1': 'Medium', '2': 'High', '3': 'Critical'}.get(object.priority, '')"/></li>
                     </ul>
-                    <p>You will get an email whenever its status changes. To add details or files, reply on the ticket:</p>
+                    <p>You will get an email whenever its status changes. To add details or files, reply on the ticket in Odoo:</p>
                     <p>
                         <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
                            style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
                     </p>
+                    <p style="color: #888888;">Replying to this email does not update the ticket. Please reply on the ticket in Odoo.</p>
                     <p>IT Helpdesk</p>
                 </div>
             </field>
@@ -51,6 +52,7 @@
                         <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
                            style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
                     </p>
+                    <p style="color: #888888;">Replying to this email does not update the ticket. Please reply on the ticket in Odoo.</p>
                     <p>IT Helpdesk</p>
                 </div>
             </field>
@@ -72,12 +74,15 @@
                     <div t-out="object.xn_resolution_note"/>
                     <p>
                         Please open the ticket and click <b>Confirm Resolution</b> if the
-                        issue is fixed, or <b>Reopen</b> if it persists.
+                        issue is fixed, or <b>Reopen</b> if it persists. If we hear nothing
+                        within <t t-out="object.env['ir.config_parameter'].sudo().get_param('xn_it_helpdesk.autoclose_days', '3')"/> days,
+                        the ticket closes automatically.
                     </p>
                     <p>
                         <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
                            style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
                     </p>
+                    <p style="color: #888888;">Replying to this email does not update the ticket. Please reply on the ticket in Odoo.</p>
                     <p>IT Helpdesk</p>
                 </div>
             </field>
@@ -100,6 +105,7 @@
                         <a t-att-href="'%s/mail/view?model=helpdesk.ticket&amp;res_id=%s' % (object.get_base_url(), object.id)"
                            style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">View <t t-out="object.number"/></a>
                     </p>
+                    <p style="color: #888888;">Replying to this email does not update the ticket. Please reply on the ticket in Odoo.</p>
                     <p>IT Helpdesk</p>
                 </div>
             </field>
