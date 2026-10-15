@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- No "Tickets" entry on the website's /my page: tickets live in the backend. -->
+    <record id="helpdesk_mgmt.portal_my_home" model="ir.ui.view">
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

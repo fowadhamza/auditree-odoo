@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 from markupsafe import Markup
 
 from odoo import models, fields, api, _
@@ -56,6 +58,12 @@ class HelpdeskTicket(models.Model):
         string='Resolution Time (Hours)', group_operator='avg',
         compute='_compute_xn_resolution_hours', store=True,
         help="Hours from submission to the latest resolution.")
+
+    # Files picked on the new-ticket form. They are uploaded before the ticket
+    # exists; create() moves them onto the ticket so they show in the chatter.
+    xn_attachment_ids = fields.Many2many(
+        'ir.attachment', 'xn_helpdesk_ticket_upload_rel', 'ticket_id', 'attachment_id',
+        string='Attachments', copy=False)
 
     # --- Who is looking ----------------------------------------------------
     xn_is_it_user = fields.Boolean(compute='_compute_xn_is_it_user')
@@ -155,8 +163,13 @@ class HelpdeskTicket(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.su and self._xn_is_shared_account():
+            raise UserError(_(
+                "Shared and system accounts cannot raise IT tickets. "
+                "Please raise it from your personal login."))
         tickets = super().create(vals_list)
         for ticket in tickets.sudo():
+            ticket._xn_link_uploads()
             # The requester follows the ticket so IT replies reach them.
             if ticket.partner_id:
                 ticket.message_subscribe(partner_ids=ticket.partner_id.ids)
@@ -207,6 +220,60 @@ class HelpdeskTicket(models.Model):
     # ---------------------------------------------------------------------
     # Helpers
     # ---------------------------------------------------------------------
+
+    @api.model
+    def _xn_is_shared_account(self, user=None):
+        """True for a shared mailbox login (employee type 'system', added by
+        xn_auditree_erp) that is not in the IT team. it@ is shared but works
+        the tickets, so IT membership wins."""
+        user = user or self.env.user
+        if user.has_group('helpdesk_mgmt.group_helpdesk_user_own'):
+            return False
+        # Without xn_auditree_erp no employee has type 'system': always False.
+        return any(emp.employee_type == 'system' for emp in user.sudo().employee_ids)
+
+    def _xn_link_uploads(self):
+        """Move files uploaded on the new-ticket form onto the ticket.
+
+        The upload widget creates them with res_id 0, before the ticket
+        exists. Only files the current user uploaded and that are still
+        unattached are taken, so a hand-crafted id list cannot pull in
+        someone else's attachment.
+        """
+        user = self.env.user
+        for ticket in self:
+            uploads = ticket.xn_attachment_ids.filtered(
+                lambda a: a.res_model == ticket._name and not a.res_id
+                and a.create_uid == user)
+            uploads.write({'res_id': ticket.id})
+            ticket.xn_attachment_ids = uploads
+
+    @api.model
+    def _xn_cron_autoclose_resolved(self):
+        """Close tickets left in Resolved with no confirmation or reopen.
+
+        The delay is the system parameter xn_it_helpdesk.autoclose_days
+        (default 3); 0 turns auto-closing off.
+        """
+        days = int(self.env['ir.config_parameter'].sudo().get_param(
+            'xn_it_helpdesk.autoclose_days', 3))
+        if days <= 0:
+            return
+        cutoff = fields.Datetime.now() - timedelta(days=days)
+        tickets = self.search([
+            ('xn_stage_state', '=', 'resolved'),
+            ('xn_resolved_date', '<=', cutoff),
+        ])
+        for ticket in tickets:
+            ticket._xn_move_to('closed')
+            # A notification, not a note, so the employee sees it too.
+            ticket.message_post(
+                body=_("Closed automatically: resolved %s days ago with no "
+                       "confirmation or reopen.", days),
+                message_type='notification', subtype_xmlid='mail.mt_note')
+        if tickets:
+            _logger.info("IT Helpdesk auto-closed %s ticket(s): %s",
+                         len(tickets), ', '.join(tickets.mapped('number')))
 
     def _xn_get_stage(self, state):
         self.ensure_one()

@@ -34,6 +34,16 @@ Notifications
 * Employee: acknowledgement on submission, an email on every status change
   (with the resolution details when resolved), and every IT reply.
 * IT team: every new ticket; the assignee on assignment (standard Odoo).
+* Replies happen in Odoo only; there is no incoming-mail alias.
+
+Other rules
+-----------
+* Resolved tickets close themselves after 3 days without a confirmation or
+  reopen (system parameter xn_it_helpdesk.autoclose_days; 0 turns it off).
+* Shared mailbox logins (employee type Shared / System Account) cannot see
+  the app or raise tickets, except it@auditree.com, which is on the IT team.
+* helpdesk_mgmt's website pages (/my/tickets, /new/ticket) redirect to the
+  backend app.
 """,
     "author": "Auditree",
     # AGPL to match helpdesk_mgmt, which this module extends.
@@ -44,10 +54,12 @@ Notifications
         "security/xn_it_helpdesk_security.xml",
         "data/mail_template_data.xml",
         "data/helpdesk_data.xml",
+        "data/ir_cron_data.xml",
         "views/helpdesk_ticket_views.xml",
         "views/helpdesk_ticket_stage_views.xml",
         "views/helpdesk_ticket_report_views.xml",
         "views/menus.xml",
+        "views/portal_views.xml",
     ],
     "post_init_hook": "post_init_hook",
     "installable": True,
