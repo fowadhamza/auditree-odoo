@@ -29,6 +29,8 @@ cd ~/Projects/Auditree && git worktree remove /tmp/lm
 
 ## New laptop -- restore (Ubuntu 24.04, WSL or native)
 
+Full walkthrough with post-restore steps and troubleshooting: **NEW-LAPTOP.md**.
+
 The SSH key is inside the bundle, so fetch the branch over HTTPS
 (GitHub username + a personal access token when prompted):
 
