@@ -102,14 +102,33 @@ gcloud compute ssh auditreelive-prod-mum --zone=asia-south1-a --tunnel-through-i
 The SSH firewall rule only allowlists specific IPs; `--tunnel-through-iap` works
 from any network.
 
-**e. Claude Code memory.** Open the project in Claude Code once (VS Code ->
-open `\\wsl.localhost\Ubuntu-24.04\home\<user>\Projects\Auditree`), then copy the
-old memory into the folder it creates:
+**e. Claude Code sessions, memory and settings.** The `claude/` folder of the
+branch holds a separately encrypted copy of `%USERPROFILE%\.claude` from the old
+laptop: all session transcripts (Auditree + AmityOdoo), memory, settings, skills,
+plugins, plans. Restore it on the Windows side:
 
-```bash
-ls /mnt/c/Users/*/.claude/projects/        # find the folder ending in ...-Projects-Auditree
-cp ~/claude-memory-from-old-laptop/* "/mnt/c/Users/<WinUser>/.claude/projects/<that folder>/memory/"
-```
+1. Install Git for Windows (provides gpg), VS Code and the Claude Code extension;
+   log in to Claude Code once, then close VS Code.
+2. Copy the folder to Windows -- in the Ubuntu terminal:
+   `cp -r ~/auditree-migration/claude /mnt/c/Users/<WinUser>/claude-migration`
+3. In PowerShell:
+   ```powershell
+   cd $env:USERPROFILE\claude-migration
+   powershell -ExecutionPolicy Bypass -File .\restore-claude.ps1
+   ```
+4. Open `\\wsl.localhost\Ubuntu-24.04\home\fowadhamza\Projects\Auditree` in VS Code;
+   the old sessions appear in Claude Code's session history (or `claude --resume`).
+
+Sessions are keyed by the project path. If your distro or Linux username differs
+from `Ubuntu-24.04` / `fowadhamza`, rename the folder under
+`%USERPROFILE%\.claude\projects\` to match -- e.g. user `fowad` would need
+`--wsl-localhost-Ubuntu-24-04-home-fowad-Projects-Auditree`. Simplest is to open
+the project once, see which folder Claude Code creates, and move the old files
+into it.
+
+`~/.claude.json` is not swapped in automatically (it would clobber the new login);
+the old one is saved as `.claude.json.from-old-laptop` if you need MCP server or
+other settings from it.
 
 If the new laptop is not IBM-managed, delete `no-wsl-execution-on-managed-laptop.md`
 and its line in `MEMORY.md` -- that restriction was about the old device.
