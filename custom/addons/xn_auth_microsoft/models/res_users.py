@@ -3,8 +3,11 @@ import logging
 
 from odoo import api, models
 from odoo.exceptions import AccessDenied
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
+
+OAUTH_SIGNIN_PATH = '/auth_oauth/signin'
 
 
 class ResUsers(models.Model):
@@ -84,3 +87,29 @@ class ResUsers(models.Model):
             if user:
                 return user
         return self.browse()
+
+    def _mfa_url(self):
+        """Skip the emailed 2FA code when signing in with Microsoft 365.
+
+        auth_totp_mail_enforce asks every employee without an authenticator
+        app for a code sent by email. Entra ID already enforces MFA on the
+        Microsoft sign-in, so asking again there is a second prompt for the
+        same proof. Odoo password logins still get the emailed code.
+
+        Session.authenticate calls this with no record of how the user proved
+        who they are, so the request path is the signal. That route only
+        accepts an access token the provider has just validated; a password
+        cannot reach it. Only the emailed code is skipped: a user who enrolled
+        an authenticator app in Odoo itself (_mfa_type 'totp') is still asked.
+        """
+        url = super()._mfa_url()
+        if url and self._mfa_type() == 'totp_mail' and self._xn_is_oauth_signin():
+            return None
+        return url
+
+    @api.model
+    def _xn_is_oauth_signin(self):
+        """True while serving an OAuth sign-in request."""
+        if not request:
+            return False
+        return request.httprequest.path.rstrip('/') == OAUTH_SIGNIN_PATH

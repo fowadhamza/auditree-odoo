@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Auditree Microsoft 365 Login',
-    'version': '17.0.1.0.0',
+    'version': '17.0.1.1.0',
     'summary': 'Sign in to Auditree with Microsoft 365 (Entra ID) accounts',
     'description': """
         Binds Microsoft 365 / Entra ID OAuth2 logins to existing Odoo users.
@@ -23,7 +23,9 @@
     'author': 'Auditree',
     'website': 'https://www.auditree.com',
     'license': 'OPL-1',
-    'depends': ['auth_oauth'],
+    # auth_totp_mail_enforce so that the _mfa_url override below sits on top
+    # of the emailed-code check rather than underneath it.
+    'depends': ['auth_oauth', 'auth_totp_mail_enforce'],
     'data': [
         'data/auth_oauth_provider_data.xml',
     ],

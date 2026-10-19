@@ -52,6 +52,18 @@ Odoo.com" provider that `auth_oauth` enables by default.
 
 Password login stays available alongside Microsoft sign-in.
 
+## Two-factor authentication
+
+2FA is enforced for employees by `auth_totp_mail_enforce` (Settings >
+Permissions > Enforce two-factor authentication, policy "Employees only"),
+which emails a code to anyone without an authenticator app.
+
+This module skips that emailed code on Microsoft sign-ins, because Entra ID
+already enforces MFA there. Odoo password logins still get the code, and a
+user who enrolled an authenticator app in Odoo is still asked for it either
+way. If Entra MFA is ever relaxed, this skip should go too -- it relies on
+Microsoft doing the second factor.
+
 ## Moving to another server
 
 Code and the provider record travel (the record lives in the database, which
