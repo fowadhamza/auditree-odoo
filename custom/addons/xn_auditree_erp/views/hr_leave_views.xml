@@ -7,15 +7,18 @@
         <field name="arch" type="xml">
             <xpath expr="//div[field[@name='request_unit_half']]" position="after">
                 <field name="xn_is_multi_day" invisible="1"/>
+                <field name="xn_is_split" invisible="1"/>
                 <field name="xn_daily_group" invisible="1"/>
-                <label for="xn_start_half" string=""
-                       invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day or xn_daily_half"/>
-                <div class="o_row o_row_readonly"
-                     invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day or xn_daily_half">
-                    <field name="xn_start_half" class="oe_inline" readonly="state not in ('draft', 'confirm')"/>
-                    <label for="xn_start_half"/>
-                    <field name="xn_end_half" class="oe_inline ms-5" readonly="state not in ('draft', 'confirm')"/>
-                    <label for="xn_end_half"/>
+                <field name="xn_first_day"
+                       invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day or xn_daily_half"
+                       readonly="state not in ('draft', 'confirm')"/>
+                <field name="xn_last_day"
+                       invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day or xn_daily_half"
+                       readonly="state not in ('draft', 'confirm')"/>
+                <label for="xn_last_day" string="" invisible="not xn_is_split"/>
+                <div class="text-muted" invisible="not xn_is_split">
+                    Saved as linked requests: the half day(s) on their own plus the
+                    full days. Approving or refusing one applies to all of them.
                 </div>
                 <label for="xn_daily_half" string=""
                        invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day"/>
@@ -36,18 +39,18 @@
                 </div>
                 <field name="xn_daily_group_info" invisible="not xn_daily_group"/>
             </xpath>
-            <!-- Before saving, a "half day on each day" request would show the
-                 full-day count of the range; show the real half-day total. -->
+            <!-- Before saving, a request that will be split would show the
+                 day count of the whole range; show the real total instead. -->
             <xpath expr="//label[@for='number_of_days_display']" position="attributes">
-                <attribute name="invisible">(request_unit_half and leave_type_request_unit != 'hour') or xn_daily_half</attribute>
+                <attribute name="invisible">(request_unit_half and leave_type_request_unit != 'hour') or xn_daily_half or xn_is_split</attribute>
             </xpath>
             <xpath expr="//div[@name='duration_display']" position="attributes">
-                <attribute name="invisible">(request_unit_half and leave_type_request_unit != 'hour') or xn_daily_half</attribute>
+                <attribute name="invisible">(request_unit_half and leave_type_request_unit != 'hour') or xn_daily_half or xn_is_split</attribute>
             </xpath>
             <xpath expr="//div[@name='duration_display']" position="after">
-                <label for="xn_daily_half_total" invisible="not xn_daily_half"/>
-                <div class="o_row" invisible="not xn_daily_half">
-                    <field name="xn_daily_half_total" class="oe_inline" digits="[16, 2]"/>
+                <label for="xn_preview_total" invisible="not xn_daily_half and not xn_is_split"/>
+                <div invisible="not xn_daily_half and not xn_is_split">
+                    <field name="xn_preview_total" class="oe_inline" digits="[16, 2]"/>
                     <span class="ms-3">Days</span>
                 </div>
             </xpath>
