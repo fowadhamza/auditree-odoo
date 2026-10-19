@@ -21,5 +21,6 @@
               name="Dashboard"
               action="action_xn_dashboard"
               groups="base.group_user"
+              web_icon="xn_hr_dashboard,static/description/icon.png"
               sequence="-100"/>
 </odoo>

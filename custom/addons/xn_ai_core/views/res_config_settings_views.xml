@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_res_config_settings_ai" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.xn.ai</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- The Integrations block is anchored by name, not id. -->
+            <xpath expr="//block[@name='integration']" position="inside">
+
+                <setting id="xn_ai_enabled_setting"
+                         string="AI features"
+                         help="Master switch for every AI feature in this database.">
+                    <field name="xn_ai_enabled"/>
+                    <div class="content-group" invisible="not xn_ai_enabled">
+                        <div class="mt8">
+                            <label for="xn_ai_provider" class="o_light_label"/>
+                            <field name="xn_ai_provider"/>
+                        </div>
+                        <div class="mt8">
+                            <label for="xn_ai_azure_endpoint" class="o_light_label"/>
+                            <field name="xn_ai_azure_endpoint"
+                                   placeholder="https://your-resource.cognitiveservices.azure.com/"/>
+                        </div>
+                        <div class="mt8">
+                            <label for="xn_ai_azure_deployment" class="o_light_label"/>
+                            <field name="xn_ai_azure_deployment"
+                                   placeholder="auditree-chat-v1"/>
+                        </div>
+                        <div class="mt8">
+                            <label for="xn_ai_azure_api_version" class="o_light_label"/>
+                            <field name="xn_ai_azure_api_version"/>
+                        </div>
+                        <div class="mt8">
+                            <label for="xn_ai_api_key_present" class="o_light_label"/>
+                            <field name="xn_ai_api_key_present" readonly="1"/>
+                            <div class="text-muted">
+                                Set the AUDITREE_AI_API_KEY environment variable
+                                on the Odoo server. The key is never displayed
+                                or stored here.
+                            </div>
+                        </div>
+                    </div>
+                </setting>
+
+                <setting id="xn_ai_limits_setting"
+                         string="AI spend limits"
+                         help="Ceilings that apply to every AI call."
+                         invisible="not xn_ai_enabled">
+                    <div class="content-group">
+                        <div class="mt8">
+                            <label for="xn_ai_monthly_token_budget" class="o_light_label"/>
+                            <field name="xn_ai_monthly_token_budget"/>
+                        </div>
+                        <div class="mt8">
+                            <label for="xn_ai_max_tokens_default" class="o_light_label"/>
+                            <field name="xn_ai_max_tokens_default"/>
+                        </div>
+                    </div>
+                </setting>
+
+                <setting id="xn_ai_logging_setting"
+                         string="Store AI prompts and responses"
+                         help="Leave this off unless you are debugging."
+                         invisible="not xn_ai_enabled">
+                    <field name="xn_ai_log_payloads"/>
+                    <div class="text-muted" invisible="not xn_ai_log_payloads">
+                        Prompts and responses are now being stored in the
+                        request log. That log becomes a second copy of whatever
+                        employee data was sent, under different access rules
+                        than the records it came from. Turn this off again once
+                        you are done.
+                    </div>
+                </setting>
+
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

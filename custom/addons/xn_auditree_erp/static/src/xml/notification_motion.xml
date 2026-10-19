@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        Keys for the systray animations in ../scss/ui_motion.scss: the badge
+        remounts on every count change (pop), the icon only when xnBump
+        increments, i.e. when the count goes up (wobble).
+    -->
+
+    <t t-inherit="mail.MessagingMenu" t-inherit-mode="extension">
+        <xpath expr="//i[hasclass('fa-comments')]" position="attributes">
+            <attribute name="t-key">xnBump.n</attribute>
+            <attribute name="t-att-class">{'o_xn_bump': xnBump.n}</attribute>
+        </xpath>
+        <xpath expr="//span[hasclass('o-mail-MessagingMenu-counter')]" position="attributes">
+            <attribute name="t-key">counter</attribute>
+        </xpath>
+    </t>
+
+    <t t-inherit="mail.ActivityMenu" t-inherit-mode="extension">
+        <xpath expr="//i[hasclass('fa-clock-o')]" position="attributes">
+            <attribute name="t-key">xnBump.n</attribute>
+            <attribute name="t-att-class">{'o_xn_bump': xnBump.n}</attribute>
+        </xpath>
+        <xpath expr="//span[hasclass('o-mail-ActivityMenu-counter')]" position="attributes">
+            <attribute name="t-key">store.activityCounter</attribute>
+        </xpath>
+    </t>
+
+</templates>

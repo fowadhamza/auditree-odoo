@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+sh_backend_base.access_sh_user_push_notification,access_sh_user_push_notification,sh_backend_base.model_sh_user_push_notification,base.group_user,1,1,1,1
+sh_backend_base.access_sh_push_notification,access_sh_push_notification,sh_backend_base.model_sh_push_notification,base.group_user,1,1,1,1

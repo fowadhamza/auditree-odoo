@@ -1,0 +1,312 @@
+/* ============================================================================
+   Auditree UI motion
+
+   Small entrance/hover animations for the backend header, its dropdowns and
+   the toast notifications. CSS only, except for the toast countdown and the
+   systray icon wobble, which need the hooks in ../js/notification_motion.js
+   and ../xml/notification_motion.xml (no vendor file is edited). If a vendor
+   DOM change stops a rule matching, the element simply goes back to
+   appearing without motion.
+
+   Rules:
+   - Everything sits inside prefers-reduced-motion: no-preference, so users
+     who turned motion off at OS level see stock behaviour.
+   - Entrances use the standalone `translate` / `scale` properties, not
+     `transform`, so they never fight inline transforms or Odoo's own
+     opacity transitions (owl-fade on .o_notification).
+   - Nothing runs longer than 250ms, except things that exist to be
+     noticed: the statusbar stage flash (380ms), the toast entrance and its
+     error shake / success ring (~0.5s each), the systray wobble (600ms)
+     and the toast countdown bar (4s, it tracks Odoo's autoclose timer).
+   - Entrances use fill-mode `backwards`, never `both`/`forwards`, and no
+     resting state sets translate/scale on a container. Odoo 17 dropdown
+     menus are position: fixed and rendered inline; any ancestor left with a
+     non-none translate/scale becomes their containing block and the menu
+     opens in the wrong place.
+   ============================================================================ */
+
+$xn-motion-fast: 120ms;
+$xn-motion-base: 200ms;
+$xn-ease-out:    cubic-bezier(0.2, 0.8, 0.2, 1);
+$xn-ease-pop:    cubic-bezier(0.34, 1.56, 0.64, 1);
+
+@media (prefers-reduced-motion: no-preference) {
+
+    // --- 1. toast notifications ---------------------------------------------
+    // Odoo already fades them (owl-fade, opacity). On top of that they slide
+    // in from off-screen with a small overshoot; errors (border-danger) then
+    // shake once and successes (border-success) flash a green ring.
+    // There is no exit animation: a closed toast is dropped from the
+    // container's t-foreach at once (and leaveDuration is 0), so it is gone
+    // before any CSS could run.
+    .o_notification_manager .o_notification {
+        animation: xn_toast_in 460ms $xn-ease-pop backwards;
+
+        &.border-danger {
+            animation: xn_toast_in 460ms $xn-ease-pop backwards,
+                       xn_toast_shake 420ms ease-in-out 460ms;
+        }
+
+        &.border-success {
+            animation: xn_toast_in 460ms $xn-ease-pop backwards,
+                       xn_toast_ring 700ms ease-out 300ms;
+        }
+    }
+
+    // --- 1b. toast countdown bar ---------------------------------------------
+    // o_xn_toast_timed is added by notification_motion.js to every toast that
+    // is not sticky, so a sticky toast never shows a bar that empties without
+    // closing it. 4000ms is AUTOCLOSE_DELAY in web's notification_service.js.
+    // Hovering any toast freezes every timer and leaving restarts them all
+    // from the full 4s, so while one is hovered all bars drop the animation
+    // (show full) and replay from the start afterwards -- same as the timers.
+    // The colour comes from the toast's own border-<type> colour.
+    .o_notification_manager .o_notification.o_xn_toast_timed::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 0;
+        border-top: 3px solid;
+        border-top-color: inherit;
+        opacity: 0.6;
+        transform-origin: left center;
+        pointer-events: none;
+        animation: xn_toast_countdown 4000ms linear forwards;
+    }
+
+    .o_notification_manager:has(.o_notification:hover) .o_xn_toast_timed::after {
+        animation: none;
+    }
+
+    // --- 2. systray counters pop when the number changes ---------------------
+    // notification_motion.xml keys the badge by its count, so it remounts
+    // (and this replays) on every change, not only when it goes from 0 to 1+.
+    .o-mail-MessagingMenu-counter,
+    .o-mail-ActivityMenu-counter {
+        animation: xn_badge_pop 260ms $xn-ease-pop backwards;
+    }
+
+    // --- 2b. chat / activity icon wobbles when its count goes up -------------
+    // o_xn_bump is set, and the icon remounted, by notification_motion.js
+    // only when the count increases -- not on page load, not when a message
+    // is read or an activity is done. `rotate` does not create a containing
+    // block, and the icon is not an ancestor of the dropdown menu anyway.
+    .o_menu_systray .o_xn_bump {
+        animation: xn_wobble 600ms ease-in-out;
+    }
+
+    // --- 3. header dropdowns drop in -----------------------------------------
+    // Covers the systray menus, user menu and app section menus. Odoo
+    // positions these with top/left, so `translate` is free to animate.
+    .o_main_navbar .o-dropdown--menu {
+        animation: xn_menu_in $xn-motion-fast $xn-ease-out backwards;
+    }
+
+    // --- 4. navbar section underline grows from the centre on hover ----------
+    // Direct children only: top-level section toggles have no caret
+    // (.o-dropdown--no-caret), but submenu toggles inside an open section
+    // menu do, and their ::after must be left alone.
+    .o_main_navbar .o_menu_sections {
+        > .o_nav_entry,
+        > .o-dropdown > .dropdown-toggle {
+            position: relative;
+
+            &::after {
+                content: "";
+                position: absolute;
+                left: 20%;
+                right: 20%;
+                bottom: 4px;
+                height: 2px;
+                border: 0;          // .dropdown-toggle uses ::after for its caret
+                margin: 0;
+                border-radius: 2px;
+                background-color: currentColor;
+                opacity: 0.7;
+                scale: 0 1;
+                transition: scale $xn-motion-base $xn-ease-out;
+                pointer-events: none;
+            }
+
+            &:hover::after,
+            &:focus-visible::after,
+            &.show::after {
+                scale: 1 1;
+            }
+        }
+    }
+
+    // --- 5. view content fades in on action / view switch -------------------
+    // Opacity only, and fill-mode backwards so nothing lingers after the
+    // animation ends: a transform or a held opacity on .o_action would create
+    // a containing block / stacking context and break sticky list headers
+    // and fixed-position popovers inside it.
+    .o_action_manager > .o_action {
+        animation: xn_fade_in 150ms ease-out backwards;
+    }
+
+    // --- 6. kanban cards gain a shadow on hover ------------------------------
+    // Shadow only, no lift: the card's own dropdown menu is position: fixed
+    // and rendered inside the card, so any translate on the card would make
+    // the card its containing block and misplace the menu while hovered.
+    .o_kanban_renderer .o_kanban_record:not(.o_kanban_ghost):not(.o_dragged) {
+        transition: box-shadow $xn-motion-fast ease;
+
+        &:hover {
+            box-shadow: 0 2px 4px rgba(28, 37, 49, 0.08), 0 8px 18px rgba(28, 37, 49, 0.08);
+        }
+    }
+
+    // --- 7. buttons give a little on press -----------------------------------
+    // Bootstrap's own .btn transition list is repeated so it is extended,
+    // not replaced.
+    .o_web_client .btn:not(:disabled):not(.disabled) {
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+                    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out,
+                    scale 80ms ease-out;
+
+        &:active {
+            scale: 0.97;
+        }
+    }
+
+    // --- 8. search facets pop in when a filter is applied --------------------
+    // Facets are keyed by index, so only a newly added facet mounts (and
+    // animates); removing one does not replay the others.
+    .o_searchview_facet {
+        animation: xn_badge_pop 180ms $xn-ease-pop backwards;
+    }
+
+    // --- 9. systray icons respond on hover -----------------------------------
+    .o_main_navbar .o_menu_systray .dropdown-toggle {
+        > i,
+        > .fa {
+            transition: scale $xn-motion-fast $xn-ease-out;
+        }
+
+        &:hover > i,
+        &:hover > .fa {
+            scale: 1.15;
+        }
+    }
+
+    // --- 10. form save/discard buttons fade and pop in when dirty ------------
+    // The element stays mounted and Odoo toggles .invisible (visibility:
+    // hidden), so this is a transition, not an animation. visibility is
+    // interpolated by the transition, so the fade is seen both ways. Resting
+    // state has no scale (see the containing-block note at the top).
+    .o_form_status_indicator_buttons {
+        transition: opacity 160ms ease-out, scale 220ms $xn-ease-pop,
+                    visibility 160ms;
+
+        &.invisible {
+            opacity: 0;
+            scale: 0.8;
+        }
+    }
+
+    // --- 11. notebook page content fades in on tab switch --------------------
+    // The page component is keyed by the current page, so its root remounts
+    // on every switch. Bootstrap already eases the tab highlight itself
+    // ($nav-link-transition).
+    .o_notebook_content > .tab-pane > * {
+        animation: xn_fade_in 140ms ease-out backwards;
+    }
+
+    // --- 12. list row hover eases in -----------------------------------------
+    // Bootstrap paints the hover as an inset box-shadow on each cell driven
+    // by --bs-table-accent-bg, so the box-shadow is what transitions.
+    .o_list_table > tbody > tr > td {
+        transition: box-shadow 100ms ease-out;
+    }
+
+    // --- 13. statusbar: the newly current stage flashes and settles ----------
+    // The animation starts whenever .o_arrow_button_current is applied, so it
+    // plays on a stage change (and once when the form opens). filter is used
+    // because it also covers the ::before/::after arrow tips.
+    .o_statusbar_status .o_arrow_button_current {
+        animation: xn_stage_in 380ms ease-out backwards;
+    }
+}
+
+@keyframes xn_stage_in {
+    from {
+        filter: brightness(0.82);
+    }
+    to {
+        filter: brightness(1);
+    }
+}
+
+@keyframes xn_fade_in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes xn_toast_in {
+    from {
+        translate: calc(100% + 24px) 0;
+    }
+    to {
+        translate: 0 0;
+    }
+}
+
+@keyframes xn_toast_shake {
+    0%, 100% { translate: 0 0; }
+    20%      { translate: -8px 0; }
+    40%      { translate: 7px 0; }
+    60%      { translate: -5px 0; }
+    80%      { translate: 3px 0; }
+}
+
+// Only `from` is given, so it eases back to the toast's own box-shadow.
+@keyframes xn_toast_ring {
+    from {
+        box-shadow: 0 0 0 6px rgba(var(--bs-success-rgb), 0.35);
+    }
+}
+
+@keyframes xn_toast_countdown {
+    from {
+        scale: 1 1;
+    }
+    to {
+        scale: 0 1;
+    }
+}
+
+@keyframes xn_wobble {
+    0%, 100% { rotate: 0deg; }
+    15%      { rotate: -18deg; }
+    30%      { rotate: 14deg; }
+    45%      { rotate: -10deg; }
+    60%      { rotate: 6deg; }
+    75%      { rotate: -3deg; }
+}
+
+@keyframes xn_badge_pop {
+    from {
+        scale: 0.4;
+    }
+    to {
+        scale: 1;
+    }
+}
+
+@keyframes xn_menu_in {
+    from {
+        opacity: 0;
+        translate: 0 -4px;
+    }
+    to {
+        opacity: 1;
+        translate: 0 0;
+    }
+}

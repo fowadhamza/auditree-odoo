@@ -10,13 +10,15 @@
     "author": "shameem",
     "website": "https://www.xetensolutions.com",
     "depends": ["base",
-                "hr","website_hr_recruitment",
+                "hr","hr_holidays","website_hr_recruitment",
                 "project",
                 "hr_attendance",
+                "hr_timesheet",
                 "xn_user_custom","account","msr_bank_customization","msr_company_header",
                 ],
     "data": [
         "data/mail_data.xml",
+        "data/leave_allocation_mail_data.xml",
         'security/secutity.xml',
         "security/ir.model.access.csv",
         "views/hr_department_views.xml",
@@ -28,6 +30,8 @@
         'views/account_move_views.xml',
         'views/res_company_views.xml',
         'views/res_partner_bank_views.xml',
+        'views/hr_timesheet_menus.xml',
+        'views/hr_leave_type_views.xml',
         'report/report.xml',
         'report/invoice_report_template.xml',
         'report/report_payslip.xml',
@@ -36,6 +40,10 @@
     "assets": {
         "web.assets_backend": [
             "xn_auditree_erp/static/src/scss/loading_indicator.scss",
+            "xn_auditree_erp/static/src/scss/dashboard_refinements.scss",
+            "xn_auditree_erp/static/src/scss/ui_motion.scss",
+            "xn_auditree_erp/static/src/js/notification_motion.js",
+            "xn_auditree_erp/static/src/xml/notification_motion.xml",
         ],
     },
 
