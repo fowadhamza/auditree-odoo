@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_leave_form_inherit_xn_half_days" model="ir.ui.view">
+        <field name="name">hr.leave.form.inherit.xn.half.days</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[field[@name='request_unit_half']]" position="after">
+                <field name="xn_is_multi_day" invisible="1"/>
+                <field name="xn_daily_group" invisible="1"/>
+                <label for="xn_start_half" string=""
+                       invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day or xn_daily_half"/>
+                <div class="o_row o_row_readonly"
+                     invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day or xn_daily_half">
+                    <field name="xn_start_half" class="oe_inline" readonly="state not in ('draft', 'confirm')"/>
+                    <label for="xn_start_half"/>
+                    <field name="xn_end_half" class="oe_inline ms-5" readonly="state not in ('draft', 'confirm')"/>
+                    <label for="xn_end_half"/>
+                </div>
+                <label for="xn_daily_half" string=""
+                       invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day"/>
+                <div class="o_row o_row_readonly"
+                     invisible="leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day">
+                    <field name="xn_daily_half" class="oe_inline" readonly="state not in ('draft', 'confirm')"/>
+                    <label for="xn_daily_half"/>
+                    <field name="xn_daily_period" class="oe_inline ms-3"
+                           invisible="not xn_daily_half" required="xn_daily_half"
+                           readonly="state not in ('draft', 'confirm')"/>
+                </div>
+                <label for="xn_daily_period" string=""
+                       invisible="not xn_daily_half or leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day"/>
+                <div class="text-muted"
+                     invisible="not xn_daily_half or leave_type_request_unit == 'day' or request_unit_half or request_unit_hours or not xn_is_multi_day">
+                    Saved as one half-day request per working day.
+                    Approving or refusing one applies to all of them.
+                </div>
+                <field name="xn_daily_group_info" invisible="not xn_daily_group"/>
+            </xpath>
+            <!-- Before saving, a "half day on each day" request would show the
+                 full-day count of the range; show the real half-day total. -->
+            <xpath expr="//label[@for='number_of_days_display']" position="attributes">
+                <attribute name="invisible">(request_unit_half and leave_type_request_unit != 'hour') or xn_daily_half</attribute>
+            </xpath>
+            <xpath expr="//div[@name='duration_display']" position="attributes">
+                <attribute name="invisible">(request_unit_half and leave_type_request_unit != 'hour') or xn_daily_half</attribute>
+            </xpath>
+            <xpath expr="//div[@name='duration_display']" position="after">
+                <label for="xn_daily_half_total" invisible="not xn_daily_half"/>
+                <div class="o_row" invisible="not xn_daily_half">
+                    <field name="xn_daily_half_total" class="oe_inline" digits="[16, 2]"/>
+                    <span class="ms-3">Days</span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
