@@ -9,12 +9,6 @@ import uuid
 
 _logger = logging.getLogger(__name__)
 
-DAY_PARTS = [
-    ('full', 'Full Day'),
-    ('am', 'Morning Only'),
-    ('pm', 'Afternoon Only'),
-]
-
 LIMIT_PERIOD_LABELS = {
     'request': 'per request',
     'month': 'per month',
@@ -46,54 +40,31 @@ class HrLeaveType(models.Model):
 class HrLeave(models.Model):
     _inherit = 'hr.leave'
 
-    # Odoo 17 only allows a half day on a single date. These add half days to
-    # multi-day requests: a full day / morning / afternoon choice for the first
-    # and last day, and the same half of every working day in a range.
-    #
-    # "First day afternoon" and "last day morning" keep the request one
-    # continuous block, so they only move its start / end to midday. "First
-    # day morning" and "last day afternoon" leave a gap (the employee works
-    # the other half), so create() saves those as linked requests: a half day
-    # plus the full days. Linked requests share xn_daily_group and are
-    # approved / refused together.
-    xn_first_day = fields.Selection(
-        DAY_PARTS, string='First Day', default='full', required=True)
-    xn_last_day = fields.Selection(
-        DAY_PARTS, string='Last Day', default='full', required=True)
+    # Odoo 17 only allows a half day on a single date. These add the two
+    # multi-day patterns: a range that starts/ends at midday, and the same
+    # half of every working day in a range.
+    xn_start_half = fields.Boolean(string='First Day: Afternoon Only')
+    xn_end_half = fields.Boolean(string='Last Day: Morning Only')
     xn_daily_half = fields.Boolean(string='Half Day on Each Day')
     xn_daily_period = fields.Selection(
         [('am', 'Morning'), ('pm', 'Afternoon')],
         string='Which Half', default='am')
     xn_daily_group = fields.Char(copy=False, index=True, readonly=True)
     xn_daily_group_info = fields.Char(
-        string='Linked Requests', compute='_compute_xn_daily_group_info')
+        string='Series', compute='_compute_xn_daily_group_info')
     xn_is_multi_day = fields.Boolean(compute='_compute_xn_is_multi_day')
-    xn_is_split = fields.Boolean(compute='_compute_xn_is_multi_day')
-    xn_preview_total = fields.Float(
-        string='Duration', compute='_compute_xn_preview_total')
+    xn_daily_half_total = fields.Float(
+        string='Duration', compute='_compute_xn_daily_half_total')
 
-    @api.depends('xn_daily_half', 'xn_first_day', 'xn_last_day', 'employee_id',
-                 'request_date_from', 'request_date_to')
-    def _compute_xn_preview_total(self):
-        """Total days of a request that create() will split, shown before
-        saving (the stock duration only knows the unsplit range)."""
+    @api.depends('xn_daily_half', 'employee_id', 'request_date_from', 'request_date_to')
+    def _compute_xn_daily_half_total(self):
         for leave in self:
-            leave.xn_preview_total = 0.0
-            if not (leave.employee_id and leave.request_date_from
-                    and (leave.xn_daily_half or leave.xn_is_split)):
-                continue
-            date_to = leave.request_date_to or leave.request_date_from
-            work_days = self._xn_work_days(
-                leave.employee_id, leave.request_date_from, date_to)
-            if leave.xn_daily_half:
-                leave.xn_preview_total = 0.5 * len(work_days)
-                continue
-            total = float(len(work_days))
-            for day, part in ((leave.request_date_from, leave.xn_first_day),
-                              (date_to, leave.xn_last_day)):
-                if part != 'full' and day in work_days:
-                    total -= 0.5
-            leave.xn_preview_total = total
+            if leave.xn_daily_half and leave.employee_id and leave.request_date_from:
+                leave.xn_daily_half_total = 0.5 * len(self._xn_work_days(
+                    leave.employee_id, leave.request_date_from,
+                    leave.request_date_to or leave.request_date_from))
+            else:
+                leave.xn_daily_half_total = 0.0
 
     @api.model
     def _xn_work_days(self, employee, date_from, date_to):
@@ -107,17 +78,12 @@ class HrLeave(models.Model):
             if hours
         ]
 
-    @api.depends('request_date_from', 'request_date_to', 'request_unit_half',
-                 'request_unit_hours', 'xn_daily_half', 'xn_first_day', 'xn_last_day')
+    @api.depends('request_date_from', 'request_date_to')
     def _compute_xn_is_multi_day(self):
         for leave in self:
             leave.xn_is_multi_day = bool(
                 leave.request_date_from and leave.request_date_to
                 and leave.request_date_to > leave.request_date_from)
-            leave.xn_is_split = bool(
-                leave.xn_is_multi_day and not leave.xn_daily_half
-                and not leave.request_unit_half and not leave.request_unit_hours
-                and (leave.xn_first_day == 'am' or leave.xn_last_day == 'pm'))
 
     @api.depends('xn_daily_group')
     def _compute_xn_daily_group_info(self):
@@ -129,59 +95,43 @@ class HrLeave(models.Model):
                 [('xn_daily_group', '=', leave.xn_daily_group)],
                 order='request_date_from')
             leave.xn_daily_group_info = _(
-                "%(count)s requests, %(days)s days in total, %(first)s to "
-                "%(last)s. Approving or refusing one applies to all of them.",
+                "%(count)s half days, %(first)s to %(last)s. Approving or "
+                "refusing one applies to all of them.",
                 count=len(series),
-                days='%g' % sum(series.mapped('number_of_days')),
                 first=format_date(self.env, series[:1].request_date_from),
-                last=format_date(self.env, max(series.mapped('request_date_to'))),
+                last=format_date(self.env, series[-1:].request_date_from),
             )
 
     @api.depends('request_date_from_period', 'request_hour_from', 'request_hour_to',
                  'request_date_from', 'request_date_to', 'request_unit_half',
-                 'request_unit_hours', 'employee_id', 'xn_first_day', 'xn_last_day')
+                 'request_unit_hours', 'employee_id', 'xn_start_half', 'xn_end_half')
     def _compute_date_from_to(self):
-        """Move the start / end of a multi-day request to midday when the
-        first day is afternoon only / the last day is morning only."""
+        """Move the start / end of a multi-day request to midday when asked."""
         super()._compute_date_from_to()
         for leave in self:
-            starts_pm = leave.xn_first_day == 'pm'
-            ends_am = leave.xn_last_day == 'am'
             if (leave.request_unit_half or leave.request_unit_hours
-                    or not leave.xn_is_multi_day or not (starts_pm or ends_am)):
+                    or not leave.xn_is_multi_day
+                    or not (leave.xn_start_half or leave.xn_end_half)):
                 continue
             resource = leave.employee_id or leave
-            if starts_pm:
+            if leave.xn_start_half:
                 attendance, _dummy = leave._get_attendances(
                     leave.request_date_from, leave.request_date_from,
                     day_period='afternoon')
                 leave.date_from = self._to_utc(
                     leave.request_date_from, attendance.hour_from, resource)
-            if ends_am:
+            if leave.xn_end_half:
                 _dummy, attendance = leave._get_attendances(
                     leave.request_date_to, leave.request_date_to,
                     day_period='morning')
                 leave.date_to = self._to_utc(
                     leave.request_date_to, attendance.hour_to, resource)
 
-    @api.constrains('xn_first_day', 'xn_last_day', 'request_date_from', 'request_date_to')
-    def _xn_check_no_gap(self):
-        """A saved request is one block of time; a gap (first day morning /
-        last day afternoon) is only possible on a new request, which create()
-        splits into linked requests."""
-        for leave in self:
-            if leave.xn_is_multi_day and (leave.xn_first_day == 'am' or leave.xn_last_day == 'pm'):
-                raise ValidationError(_(
-                    "\"First Day: Morning Only\" and \"Last Day: Afternoon Only\" can "
-                    "only be chosen on a new request. Please create a new request "
-                    "instead of changing this one."))
-
     @api.model_create_multi
     def create(self, vals_list):
         expanded = []
         for vals in vals_list:
-            for daily_vals in self._xn_split_daily_half(vals):
-                expanded.extend(self._xn_split_first_last(daily_vals))
+            expanded.extend(self._xn_split_daily_half(vals))
         return super().create(expanded)
 
     @api.model
@@ -233,80 +183,14 @@ class HrLeave(models.Model):
                 request_unit_half=True,
                 request_date_from_period=vals.get('xn_daily_period') or 'am',
                 xn_daily_half=False,
-                xn_first_day='full',
-                xn_last_day='full',
+                xn_start_half=False,
+                xn_end_half=False,
                 xn_daily_group=group,
             )
-            result.append(self._xn_clear_computed(day_vals))
-        return result
-
-    @api.model
-    def _xn_clear_computed(self, vals):
-        """Drop values the form computed for the unsplit range, so Odoo
-        recomputes them for the new dates."""
-        for key in ('date_from', 'date_to', 'number_of_days', 'number_of_hours'):
-            vals.pop(key, None)
-        return vals
-
-    @api.model
-    def _xn_split_first_last(self, vals):
-        """Split a request whose first day is morning only and/or last day is
-        afternoon only into linked requests: those half days on their own,
-        plus the continuous block between them."""
-        first = vals.get('xn_first_day') or 'full'
-        last = vals.get('xn_last_day') or 'full'
-        if first != 'am' and last != 'pm':
-            return [vals]
-        date_from = fields.Date.to_date(vals.get('request_date_from'))
-        date_to = fields.Date.to_date(vals.get('request_date_to')) or date_from
-        if (vals.get('request_unit_half') or vals.get('request_unit_hours')
-                or not date_from or date_to <= date_from):
-            return [dict(vals, xn_first_day='full', xn_last_day='full')]
-        employee = self._xn_vals_employee(vals)
-        if len(employee) != 1:
-            raise UserError(_("A morning-only first day or afternoon-only last day "
-                              "can only be used for one employee at a time."))
-        work_days = self._xn_work_days(employee, date_from, date_to)
-
-        def half_day(day, period):
-            return self._xn_clear_computed(dict(
-                vals, request_date_from=day, request_date_to=day,
-                request_unit_half=True, request_date_from_period=period,
-                xn_first_day='full', xn_last_day='full'))
-
-        before, after = [], []
-        block_days = list(work_days)
-        if first == 'am':
-            if date_from in work_days:
-                before.append(half_day(date_from, 'am'))
-            block_days = [day for day in block_days if day != date_from]
-        if last == 'pm':
-            if date_to in work_days:
-                after.append(half_day(date_to, 'pm'))
-            block_days = [day for day in block_days if day != date_to]
-
-        block = []
-        if block_days:
-            block_from, block_to = block_days[0], block_days[-1]
-            # Keep a midday start / end only if that day is still the edge.
-            block_first = first if first == 'pm' and block_from == date_from else 'full'
-            block_last = last if last == 'am' and block_to == date_to else 'full'
-            if block_from == block_to and (block_first == 'pm' or block_last == 'am'):
-                block.append(half_day(block_from, 'pm' if block_first == 'pm' else 'am'))
-            else:
-                block.append(self._xn_clear_computed(dict(
-                    vals, request_date_from=block_from, request_date_to=block_to,
-                    xn_first_day=block_first, xn_last_day=block_last)))
-
-        result = before + block + after
-        if not result:
-            raise UserError(_("%(employee)s has no working days between %(start)s and %(end)s.",
-                              employee=employee.name,
-                              start=format_date(self.env, date_from),
-                              end=format_date(self.env, date_to)))
-        group = uuid.uuid4().hex if len(result) > 1 else False
-        for part_vals in result:
-            part_vals['xn_daily_group'] = group
+            # Let Odoo recompute these from the single day.
+            for key in ('date_from', 'date_to', 'number_of_days', 'number_of_hours'):
+                day_vals.pop(key, None)
+            result.append(day_vals)
         return result
 
     def _xn_with_daily_siblings(self):
