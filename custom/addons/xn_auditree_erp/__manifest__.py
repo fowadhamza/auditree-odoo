@@ -32,7 +32,6 @@
         'views/res_partner_bank_views.xml',
         'views/hr_timesheet_menus.xml',
         'views/hr_leave_type_views.xml',
-        'views/hr_leave_views.xml',
         'report/report.xml',
         'report/invoice_report_template.xml',
         'report/report_payslip.xml',
