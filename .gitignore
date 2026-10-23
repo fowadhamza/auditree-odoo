@@ -26,3 +26,6 @@
 # Editor/OS cruft
 .DS_Store
 Thumbs.db
+
+# Softhealer backend theme: deployed on prod, kept out of git (licence)
+custom/addons/sh_backend_base/
