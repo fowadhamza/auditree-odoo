@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_xn_account_dashboard" model="ir.actions.client">
+        <field name="name">Accounts Overview</field>
+        <field name="tag">xn_account_dashboard</field>
+    </record>
+
+    <!--
+      Sequence 0 puts it above Odoo's own journal Dashboard (sequence 1), which
+      stays where it is. Same group as that menu: anyone who can read the
+      accounting dashboard can read this one.
+    -->
+    <menuitem id="menu_xn_account_dashboard"
+              name="Overview"
+              parent="account.menu_finance"
+              action="action_xn_account_dashboard"
+              groups="account.group_account_readonly"
+              sequence="0"/>
+</odoo>

@@ -39,6 +39,13 @@ MANAGER_GROUP = "hr.group_hr_manager"
 HIRE_COLUMNS = ("joining_date",)
 EXIT_COLUMNS = ("departure_date", "resign_date")
 
+# employee_type that xn_auditree_erp gives shared mailboxes (hr@, accounts@,
+# it@...). Odoo creates an employee for every internal user, so these carry no
+# joining date, birthday, department or job, and counting them inflates
+# headcount, invents joiners and fills the data-gaps panel with non-people.
+# Without xn_auditree_erp no record has this value and the filter is a no-op.
+SYSTEM_EMPLOYEE_TYPE = "system"
+
 # Attendance older than this makes the "Today" row report staleness rather
 # than render zeros.
 ATTENDANCE_STALE_DAYS = 3
@@ -92,6 +99,27 @@ class HrEmployee(models.Model):
             start.astimezone(pytz.utc).replace(tzinfo=None),
             end.astimezone(pytz.utc).replace(tzinfo=None),
         )
+
+    @api.model
+    def _xn_people_domain(self):
+        """Active employees that are people, not shared/system accounts.
+
+        Every org-wide headcount in this file goes through this or its SQL
+        twin below, so a tile and a chart can never disagree on who counts.
+        """
+        return [
+            ("active", "=", True),
+            ("employee_type", "!=", SYSTEM_EMPLOYEE_TYPE),
+        ]
+
+    @api.model
+    def _xn_people_sql(self, alias):
+        """SQL condition excluding shared/system accounts, for `alias`.
+
+        Does not filter on active: the turnover queries need archived people.
+        The value is the module constant above, never caller input.
+        """
+        return "%s.employee_type IS DISTINCT FROM '%s'" % (alias, SYSTEM_EMPLOYEE_TYPE)
 
     @api.model
     def _xn_hire_expr(self):
@@ -262,7 +290,7 @@ class HrEmployee(models.Model):
         )
 
         return {
-            "headcount": env["hr.employee"].sudo().search_count([("active", "=", True)]),
+            "headcount": env["hr.employee"].sudo().search_count(self._xn_people_domain()),
             "present_now": counts["present_now"],
             "checked_in_today": counts["checked_in_today"],
             "late_today": counts["late_today"],
@@ -307,7 +335,7 @@ class HrEmployee(models.Model):
         """Active headcount per department, with the unassigned reported."""
         self._xn_check_manager()
         groups = self.env["hr.employee"].sudo().read_group(
-            [("active", "=", True)], ["id"], ["department_id"]
+            self._xn_people_domain(), ["id"], ["department_id"]
         )
         rows, unassigned = [], 0
         for grp in groups:
@@ -363,7 +391,7 @@ class HrEmployee(models.Model):
         self._xn_check_manager()
         today = fields.Date.context_today(self)
         calendar = self.env.company.resource_calendar_id
-        headcount = self.env["hr.employee"].sudo().search_count([("active", "=", True)])
+        headcount = self.env["hr.employee"].sudo().search_count(self._xn_people_domain())
         tz = self._xn_tz()
 
         labels, logged, capacity = [], [], []
@@ -472,17 +500,20 @@ class HrEmployee(models.Model):
             SELECT to_char(m, 'Mon YYYY') AS label,
                    m AS bucket,
                    (SELECT count(*) FROM hr_employee e
-                     WHERE date_trunc('month', {hire}) = m)      AS joined,
+                     WHERE {people}
+                       AND date_trunc('month', {hire}) = m)      AS joined,
                    (SELECT count(*) FROM hr_employee e
-                     WHERE date_trunc('month', {exit}) = m)      AS departed,
+                     WHERE {people}
+                       AND date_trunc('month', {exit}) = m)      AS departed,
                    (SELECT count(*) FROM hr_employee e
-                     WHERE {hire} <= (m + INTERVAL '1 month' - INTERVAL '1 day')::date
+                     WHERE {people}
+                       AND {hire} <= (m + INTERVAL '1 month' - INTERVAL '1 day')::date
                        AND ({exit} IS NULL
                             OR {exit} > (m + INTERVAL '1 month' - INTERVAL '1 day')::date)
                    ) AS headcount
               FROM months
           ORDER BY bucket
-        """.format(hire=hire, exit=exit_expr)
+        """.format(hire=hire, exit=exit_expr, people=self._xn_people_sql("e"))
         self.env.cr.execute(query, (months - 1,))
         rows = self.env.cr.dictfetchall()
 
@@ -516,21 +547,28 @@ class HrEmployee(models.Model):
         """Which gaps are making the other panels thin."""
         self._xn_check_manager()
         has_joining = "joining_date" in self._fields
+        people = self._xn_people_sql("e")
         self.env.cr.execute(
             """
             SELECT count(*) FILTER (WHERE active AND birthday IS NULL)      AS no_birthday,
                    count(*) FILTER (WHERE active AND department_id IS NULL) AS no_department,
                    count(*) FILTER (WHERE active AND job_id IS NULL)        AS no_job,
                    count(*) FILTER (WHERE active)                           AS active
-              FROM hr_employee
-            """
+              FROM hr_employee e
+             WHERE {people}
+            """.format(people=people)
         )
         health = self.env.cr.dictfetchone()
 
         no_hire_date = 0
         if has_joining:
+            # Active only, like the rows above. Counting archived employees
+            # here made this the one gap whose total could exceed headcount.
             self.env.cr.execute(
-                "SELECT count(*) FROM hr_employee WHERE joining_date IS NULL"
+                "SELECT count(*) FROM hr_employee e "
+                "WHERE e.active AND e.joining_date IS NULL AND {people}".format(
+                    people=people
+                )
             )
             no_hire_date = self.env.cr.fetchone()[0]
 
@@ -539,7 +577,9 @@ class HrEmployee(models.Model):
         if exit_expr:
             self.env.cr.execute(
                 "SELECT count(*) FROM hr_employee e "
-                "WHERE NOT e.active AND {exit} IS NULL".format(exit=exit_expr)
+                "WHERE NOT e.active AND {exit} IS NULL AND {people}".format(
+                    exit=exit_expr, people=people
+                )
             )
             no_exit_date = self.env.cr.fetchone()[0]
 
@@ -599,12 +639,13 @@ class HrEmployee(models.Model):
               CROSS JOIN params p
               LEFT JOIN hr_job hj ON hj.id = he.job_id
              WHERE he.active
+               AND {people}
                AND he.birthday IS NOT NULL
                AND ((to_char(he.birthday, 'DDD')::int - p.today_doy)
                      + p.total_days) %% p.total_days BETWEEN 0 AND 15
           ORDER BY dif
              LIMIT 20
-            """,
+            """.format(people=self._xn_people_sql("he")),
             {"lang": lang},
         )
         birthday = cr.fetchall()
@@ -732,6 +773,7 @@ class HrEmployee(models.Model):
                   FROM hr_employee he
                   LEFT JOIN hr_job hj ON hj.id = he.job_id
                  WHERE he.active
+                   AND {people}
                    AND he.joining_date IS NOT NULL
                    AND he.joining_date <= CURRENT_DATE
                    AND (he.company_id IS NULL OR he.company_id IN %(companies)s)
@@ -759,7 +801,7 @@ class HrEmployee(models.Model):
                     - EXTRACT(YEAR FROM joining_date))::int >= 1
           ORDER BY days_away, name
              LIMIT 20
-            """,
+            """.format(people=self._xn_people_sql("he")),
             {
                 "lang": lang,
                 "companies": tuple(self.env.companies.ids) or (0,),

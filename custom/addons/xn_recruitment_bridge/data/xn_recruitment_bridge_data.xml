@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Applications arriving through this bridge are tagged with their own
+             UTM source, so the recruitment reports can tell a WordPress
+             application apart from one typed in by HR or mailed to a job alias. -->
+        <record id="utm_source_wordpress" model="utm.source">
+            <field name="name">auditree.com Careers</field>
+        </record>
+
+    </data>
+</odoo>

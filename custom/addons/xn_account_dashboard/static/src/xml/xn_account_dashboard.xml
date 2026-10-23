@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Accounts Overview. No arithmetic here: every figure, width and height
+         is computed in xn_account_dashboard.js. -->
+    <t t-name="xn_account_dashboard.Dashboard">
+        <div class="xn_adash">
+            <div class="xn_adash_inner">
+
+                <p class="xn_muted" t-if="state.loading">Loading the accounts overview...</p>
+
+                <div class="xn_notice" t-elif="state.error">
+                    The overview could not be loaded. The journal lists under
+                    Accounting are unaffected.
+                </div>
+
+                <t t-else="">
+                    <t t-set="d" t-value="state.data"/>
+
+                    <header class="xn_head">
+                        <div>
+                            <h2><t t-esc="d.fyLabel"/></h2>
+                            <span class="xn_muted">
+                                <t t-esc="d.fyRange"/> &#183; posted entries as of <t t-esc="d.today"/>
+                            </span>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" type="button" t-on-click="refresh">
+                            <i class="fa fa-refresh me-1" aria-hidden="true"/> Refresh
+                        </button>
+                    </header>
+
+                    <!-- Headline figures -->
+                    <section class="xn_headline">
+                        <t t-foreach="d.headline" t-as="fig" t-key="fig.label">
+                            <button type="button"
+                                    t-att-class="'xn_fig' + (fig.key ? '' : ' xn_static')"
+                                    t-att-disabled="!fig.key"
+                                    t-on-click="() => this.open(fig.key)">
+                                <span class="xn_fig_label" t-esc="fig.label"/>
+                                <b t-att-class="fig.loss ? 'xn_loss' : ''" t-esc="fig.value"/>
+                                <small t-att-class="fig.warn ? 'xn_warn_text' : ''" t-esc="fig.note"/>
+                            </button>
+                        </t>
+                    </section>
+
+                    <!-- Needs attention -->
+                    <section class="xn_block" t-if="d.attention.length">
+                        <h3 class="xn_row_label">Needs attention</h3>
+                        <div class="xn_attention">
+                            <t t-foreach="d.attention" t-as="row" t-key="row.key">
+                                <button class="xn_att" type="button" t-on-click="() => this.open(row.key)">
+                                    <b t-esc="row.value"/>
+                                    <span t-esc="row.label"/>
+                                    <small t-esc="row.note"/>
+                                </button>
+                            </t>
+                        </div>
+                    </section>
+
+                    <!-- Receivables and payables -->
+                    <section class="xn_block">
+                        <h3 class="xn_row_label">Customers and vendors</h3>
+                        <div class="xn_two">
+                            <t t-foreach="[['Receivables', d.receivable, 'receivable', 'Largest customer balances'], ['Payables', d.payable, 'payable', 'Largest vendor balances']]"
+                               t-as="side" t-key="side[0]">
+                                <t t-set="blk" t-value="side[1]"/>
+                                <div class="xn_card">
+                                    <div class="xn_card_head">
+                                        <h4 t-esc="side[0]"/>
+                                        <button class="btn btn-link btn-sm p-0" type="button"
+                                                t-on-click="() => this.open(side[2])">
+                                            <t t-esc="blk.count"/> open items
+                                        </button>
+                                    </div>
+                                    <p class="xn_empty" t-if="blk.empty">Nothing outstanding.</p>
+                                    <t t-else="">
+                                        <p class="xn_sub">
+                                            <b t-esc="blk.total"/> outstanding
+                                            <t t-if="blk.hasOverdue"> &#183; <span class="xn_warn_text"><t t-esc="blk.overdue"/> overdue</span></t>
+                                        </p>
+                                        <div class="xn_bars">
+                                            <t t-foreach="blk.buckets" t-as="b" t-key="b.label">
+                                                <div t-att-class="'xn_bar_row' + (b.zero ? ' xn_zero' : '')">
+                                                    <span class="xn_name" t-esc="b.label"/>
+                                                    <span class="xn_track">
+                                                        <i t-att-class="b.late ? 'xn_late' : ''"
+                                                           t-att-style="'width: ' + b.width + '%'"/>
+                                                    </span>
+                                                    <span class="xn_val" t-esc="b.value"/>
+                                                </div>
+                                            </t>
+                                        </div>
+                                        <h5 t-esc="side[3]"/>
+                                        <div class="xn_bars">
+                                            <t t-foreach="blk.top" t-as="p" t-key="p.name">
+                                                <div class="xn_bar_row">
+                                                    <span class="xn_name" t-esc="p.name" t-att-title="p.name"/>
+                                                    <span class="xn_track">
+                                                        <i class="xn_soft" t-att-style="'width: ' + p.width + '%'"/>
+                                                    </span>
+                                                    <span class="xn_val" t-esc="p.value"/>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
+                    </section>
+
+                    <!-- Profit and loss -->
+                    <section class="xn_block">
+                        <h3 class="xn_row_label">
+                            Profit and loss by month
+                            <span class="xn_row_note">
+                                This month: income <t t-esc="d.pnl.month.income"/>,
+                                expenses <t t-esc="d.pnl.month.expense"/>,
+                                profit <span t-att-class="d.pnl.month.loss ? 'xn_loss' : ''" t-esc="d.pnl.month.profit"/>
+                            </span>
+                        </h3>
+                        <div class="xn_card">
+                            <p class="xn_empty" t-if="d.pnl.empty">
+                                No income or expenses have been posted in <t t-esc="d.fyLabel"/> yet.
+                                Opening balances are dated the last day of the previous year, so
+                                they do not appear here.
+                            </p>
+                            <t t-else="">
+                                <div class="xn_months">
+                                    <t t-foreach="d.pnl.months" t-as="m" t-key="m.key">
+                                        <div t-att-class="'xn_month' + (m.future ? ' xn_future' : '') + (m.current ? ' xn_current' : '')"
+                                             t-att-title="m.title">
+                                            <span class="xn_pair">
+                                                <i class="xn_inc" t-att-style="'height: ' + m.incomeHeight + '%'"/>
+                                                <i class="xn_exp" t-att-style="'height: ' + m.expenseHeight + '%'"/>
+                                            </span>
+                                            <span class="xn_mon" t-esc="m.label"/>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="xn_legend">
+                                    <button class="btn btn-link btn-sm p-0" type="button" t-on-click="() => this.open('income_fy')">
+                                        <i class="xn_key xn_inc"/> Income
+                                    </button>
+                                    <button class="btn btn-link btn-sm p-0" type="button" t-on-click="() => this.open('expense_fy')">
+                                        <i class="xn_key xn_exp"/> Expenses
+                                    </button>
+                                    <span class="xn_muted">Hover a month for its figures</span>
+                                </div>
+                            </t>
+                        </div>
+                    </section>
+
+                    <!-- Bank and cash -->
+                    <section class="xn_block">
+                        <h3 class="xn_row_label">Bank and cash accounts</h3>
+                        <div class="xn_card">
+                            <table class="xn_table">
+                                <thead>
+                                    <tr>
+                                        <th>Account</th>
+                                        <th>Type</th>
+                                        <th class="text-end">Balance in books</th>
+                                        <th class="text-end">Lines to match</th>
+                                        <th class="text-end">Last bank line</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="d.cash" t-as="row" t-key="row.id">
+                                        <tr t-on-click="() => this.openJournal(row.id)">
+                                            <td><t t-esc="row.name"/></td>
+                                            <td class="xn_muted"><t t-esc="row.type"/></td>
+                                            <td class="text-end xn_num"><t t-esc="row.balance"/></td>
+                                            <td class="text-end xn_num">
+                                                <span t-att-class="row.unmatched ? 'xn_warn_text' : 'xn_muted'" t-esc="row.unmatched"/>
+                                            </td>
+                                            <td class="text-end xn_muted"><t t-esc="row.lastDate"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

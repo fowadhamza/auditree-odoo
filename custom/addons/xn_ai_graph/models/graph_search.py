@@ -159,6 +159,16 @@ class GraphSearch(models.AbstractModel):
                     if not name or not link:
                         continue
 
+                    # Carry the drive and item identifiers through as one
+                    # opaque token, so read_document can address the file
+                    # later. Parsing a SharePoint webUrl back into these is
+                    # guesswork; passing them along is not.
+                    reference = resource.get('parentReference') or {}
+                    drive_id = reference.get('driveId')
+                    item_id = resource.get('id')
+                    document_id = ("%s:%s" % (drive_id, item_id)
+                                   if drive_id and item_id else None)
+
                     key = name.lower()
                     if key in seen:
                         continue
@@ -170,6 +180,7 @@ class GraphSearch(models.AbstractModel):
                         # answer, because it cannot be challenged.
                         "title": name,
                         "link": link,
+                        "document_id": document_id,
                         "location": self._location_of(resource),
                         "last_modified": (resource.get('lastModifiedDateTime')
                                           or '')[:10] or None,

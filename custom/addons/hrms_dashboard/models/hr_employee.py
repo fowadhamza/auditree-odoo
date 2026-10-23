@@ -149,14 +149,15 @@ class HrEmployee(models.Model):
 
         cr.execute("""select *,
         (to_char(dob,'ddd')::int-to_char(now(),'ddd')::int+
-        total_days)%total_days as dif
+        total_days)%%total_days as dif
         from (select he.id, he.name, to_char(he.birthday, 'Month dd') 
-        as birthday, hj.name as job_id , he.birthday as dob,
+        as birthday, coalesce(hj.name ->> %(lang)s, hj.name ->> 'en_US') as job_id , he.birthday as dob,
         (to_char((to_char(now(),'yyyy')||'-12-31')::date,'ddd')::int) as 
         total_days FROM hr_employee he
         join hr_job hj on hj.id = he.job_id) birth
         where (to_char(dob,'ddd')::int-to_char(now(),'DDD')::int+
-        total_days)%total_days between 0 and 15 order by dif;""")
+        total_days)%%total_days between 0 and 15 order by dif;""",
+                   {'lang': self.env.context.get('lang') or 'en_US'})
         birthday = cr.fetchall()
         # v16:added lang as key for fetching from jsonb;changed query :
         # retrieve the JSON object field by key

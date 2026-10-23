@@ -54,8 +54,15 @@
                             </t>
                         </div>
 
-                        <button class="xn_btn" type="button" t-on-click="toggleAttendance">
-                            <t t-if="state.employee.checkedIn">Check out</t>
+                        <button class="xn_btn" type="button" t-on-click="toggleAttendance"
+                                t-att-disabled="state.attendanceBusy"
+                                t-att-aria-busy="state.attendanceBusy ? 'true' : 'false'">
+                            <t t-if="state.attendanceBusy">
+                                <i class="fa fa-spinner fa-spin me-2" aria-hidden="true"/>
+                                <t t-if="state.employee.checkedIn">Checking out...</t>
+                                <t t-else="">Checking in...</t>
+                            </t>
+                            <t t-elif="state.employee.checkedIn">Check out</t>
                             <t t-else="">Check in</t>
                         </button>
                     </section>

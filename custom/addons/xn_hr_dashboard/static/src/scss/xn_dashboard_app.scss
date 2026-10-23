@@ -209,6 +209,17 @@
             outline: 2px solid var(--xn-brass);
             outline-offset: 2px;
         }
+
+        // In flight: the spinner and "Checking in..." carry the message, the
+        // dimming just says the button will not take a second click.
+        &:disabled {
+            opacity: 0.75;
+            cursor: progress;
+
+            &:hover {
+                background: var(--xn-accent);
+            }
+        }
     }
 
     // ---------- the day's quote ----------

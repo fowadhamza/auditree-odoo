@@ -89,6 +89,7 @@ export class XnHrDashboard extends Component {
             anniversaries: { tracked: false, window: 30, rows: [] },
             leave: null,
             org: null,
+            attendanceBusy: false,
         });
 
         onWillStart(() => this.load());
@@ -456,9 +457,23 @@ export class XnHrDashboard extends Component {
      * Check in or out. Uses this module's endpoint, not the vendor's
      * attendance_manual, which toggles the wrong employee. See
      * xn_attendance_toggle in models/hr_employee.py.
+     *
+     * The button is locked while the call is in flight. The write recomputes
+     * overtime and can take a few seconds; without the lock nothing on screen
+     * changed in that time, so people clicked again and the second click
+     * toggled them straight back out.
      */
     async toggleAttendance() {
-        const result = await this.call("xn_attendance_toggle");
+        if (this.state.attendanceBusy) {
+            return;
+        }
+        this.state.attendanceBusy = true;
+        let result;
+        try {
+            result = await this.call("xn_attendance_toggle");
+        } finally {
+            this.state.attendanceBusy = false;
+        }
         if (!result || !result.ok) {
             const reason =
                 result && result.reason === "no_employee"
