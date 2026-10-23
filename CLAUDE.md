@@ -40,7 +40,7 @@ Some of it is gitignored; some of it is not (see §3.2 — this matters).
 | Python | 3.10 (`venv/lib/python3.10`); some `.pyc` artifacts from 3.12 also exist |
 | Database | PostgreSQL, DB name `AUDITREE_LIVE_NEW` |
 | Local URL | http://localhost:8069 |
-| Production | GCP VM `auditreelive-prod` (`us-central1-a`, project `auditree-prod`), systemd unit `odoo`, port 8001 behind Nginx. A legacy DigitalOcean server also exists. |
+| Production | GCP VM `auditreelive-prod-mum` (`asia-south1-a` / Mumbai, project `auditree-prod`), systemd unit `odoo`, port 8001 behind Nginx, `workers = 2` + gevent on 8072. Served at https://odoo.auditree.com (`8.234.100.82`). Migrated from `us-central1-a` on 2026-09-17; the old VM `auditreelive-prod` is TERMINATED but retained as rollback. Staff kept working on the legacy DigitalOcean server until 2026-09-25, when its data was migrated onto GCP (`deploy/migrate_do_to_gcp.sh`) and Auditree's Odoo on DO was stopped. The DO box (`auditreeerpsvr`) is shared with other clients' Odoo instances -- never touch anything but `auditreelive` there. |
 | Modules loaded | 186 at last successful boot (2026-09-05) |
 
 ---
@@ -78,7 +78,10 @@ Auditree/
 | `xn_auditree_erp` | Main custom module: HR employee/applicant/department/payslip/project extensions, probation crons, custom reports |
 | `xn_user_custom` | Adds `is_freelancer` to `res.users`. `xn_auditree_erp` depends on it. (SUGGESTIONS #15 proposes merging the two.) |
 | `xn_hr_leave_report` | Leave balance reporting — the wide-format SQL view and the year/month extension. **Active development area** (current branch: `feature/leave-report-period-filters`). |
-| `xn_hr_dashboard` | Organisation panels for the HR dashboard, plus overrides that fix the vendor's department donut, birthday, event and announcement queries. Extends `hrms_dashboard` (Tier 2) without editing it — see its own README.md. |
+| `xn_hr_dashboard` | Organisation panels for the HR dashboard, plus overrides that fix the vendor's department donut, birthday, event and announcement queries. Extends `hrms_dashboard` (Tier 2) without editing it — see its own README.md. Shared mailboxes (hr@, accounts@, it@, admin@) carry `employee_type = 'system'` (added by `xn_auditree_erp`); every org-wide count goes through `_xn_people_domain()` / `_xn_people_sql()` to exclude them -- use those for any new panel. |
+| `xn_it_helpdesk` | IT Helpdesk app (added 2026-10-15, not yet installed anywhere). Extends OCA `helpdesk_mgmt` (Tier 3, vendored untouched from OCA/helpdesk 17.0 @ `14220ae`). Requesters = group `group_xn_helpdesk_requester` ("Raise IT Tickets"; every helpdesk_mgmt group implies it; prod trial seeds Junaid + Ayesha via `TRIAL_REQUESTER_LOGINS`, go-live = give it to all employees): create + read own tickets, **no write** -- Confirm/Reopen are sudo buttons that check the requester. IT = any `helpdesk_mgmt` group; admin = Helpdesk Manager. Stage logic keys off `helpdesk.ticket.stage.xn_state`, not stage names/ids. Internal notes ("Log note") are hidden from non-IT requesters (and only them -- other users' message searches are untouched) by a `mail.message` `_search` / `check_access_rule` override in `models/mail_message.py` -- core only hides notes from portal users. Assignable users must be members of the IT Support team (helpdesk_mgmt limits `user_id` to team members). Shared accounts (`employee_type = 'system'`) cannot see the app or raise tickets unless they are in a Helpdesk group -- it@auditree.com is, via `IT_TEAM_LOGINS` in its `post_init_hook`. helpdesk_mgmt's portal routes are overridden to redirect to the backend. |
+
+| `xn_recruitment` | Hiring process on core `hr_recruitment` (added 2026-10-23, not yet installed anywhere): hiring steps on stages (`hr.recruitment.stage.xn_round` -- key off it, not stage names), interview panels per job, a handover email with CV + previous-round feedback to the next round's interviewers, interviewer feedback, rejection email via the refuse reasons' template, hiring-status / daily-movement / source reports. Moving a candidate or refusing one sends real email -- archive the outgoing mail server before testing on a prod copy. See its README.md. |
 
 **Tier 2 — Vendor modules with local patches. Edit with care; never re-download over them.**
 
@@ -93,7 +96,8 @@ copy silently reverts real fixes:
 **Tier 3 — Untouched vendor modules (the other ~48). Do not edit.**
 
 Cybrosys/OpenHRMS/MuK/OCA modules — `base_accounting_kit`, `ohrms_*`, `muk_web_*`,
-`hr_payroll_community`, `dynamic_accounts_report`, etc. If one needs a behavior change,
+`hr_payroll_community`, `dynamic_accounts_report`, `helpdesk_mgmt` (extended by
+`xn_it_helpdesk`), etc. If one needs a behavior change,
 **write a small `xn_*` module that inherits and overrides**, rather than patching vendor
 code. Patching vendor code creates a permanent upgrade tax; do it only when inheritance
 genuinely cannot express the fix, and say so in the commit message.
@@ -278,6 +282,12 @@ custom/addons/<module>/
   actions, so the action's view file must load first.
 - A new model that isn't in `models/__init__.py` is never registered. (`lead_service.py`
   in `xn_auditree_erp` is exactly this bug — SUGGESTIONS #7/#16.)
+- `post_init_hook` takes **one argument, `env`** — `def post_init_hook(env):`. The old
+  Odoo 15/16 signature `(cr, registry)` is what most tutorials still show, and it fails at
+  install with `TypeError: post_init_hook() missing 1 required positional argument`, after
+  which the whole registry load is rolled back. `xn_asset_register/__init__.py` is the
+  local reference. Installing a brand-new module needs `-i <module>`, not the
+  `./start-local.sh upgrade` path, which only runs `-u`.
 
 ### Security
 
@@ -397,6 +407,8 @@ for fields needed only by search domains.
 8. **Commit** in the existing style: `type(scope): summary`, e.g.
    `fix(xn_hr_leave_report): correct menus XML - add Leave Balance Report menu`.
    Commit only when the user asks.
+9. **After a prod deploy**, move `main` to the deployed commit and tag it (§8 "`main` =
+   what is live on prod").
 
 ### Never do these without an explicit request
 
@@ -442,6 +454,13 @@ Production config is generated by `deploy/06_prod_config_systemd.sh` from
 behind Nginx, port 8001, systemd unit `odoo`, user `auditreelive`,
 addons at `/opt/odoo17/auditreelive/custom/addons`.
 
+Production is served at **https://odoo.auditree.com**, which points at the static IP
+`auditreelive-ip` (`34.63.212.242`). Nginx terminates TLS with a certbot-managed Let's
+Encrypt certificate and 301-redirects port 80 to 443; renewal is automatic and working.
+`web.base.url` is `https://odoo.auditree.com`. A request to the raw IP returns a stock
+nginx 404 -- nginx matches on `server_name`, so always test with the hostname, never the
+IP. `erp.auditree.com` is a *different*, unrelated DigitalOcean box serving a static page.
+
 The config lives at **`/etc/auditreelive-server.conf`** — not `/etc/odoo/odoo.conf`. Take the
 invocation from the unit rather than reconstructing it (`systemctl cat odoo`):
 
@@ -459,8 +478,116 @@ Deployment is a set of manual, numbered shell scripts in `deploy/` (`04b_deploy_
 `05_restore_db_filestore.sh`, `06_prod_config_systemd.sh`, `07_nginx_http_only.sh`) driven by
 `gcloud`. There is no CI/CD. **Do not run any of these.** Deployment is a human decision.
 
-Production still lacks `list_db = False`, `log_level = warn`, and automated backups
-(SUGGESTIONS #21, #22, #24).
+`list_db = False` **is** applied on the live box (verified against
+`/etc/auditreelive-server.conf` on 2026-09-19), resolving SUGGESTIONS #21. `log_level = warn`
+is still absent from the live config (#22 stands) though `06_prod_config_systemd.sh`
+generates it. Backups, verified 2026-09-28:
+- **Daily disk snapshots** of the boot disk `auditreelive-prod-boot` (the disk name differs
+  from the VM name) via resource policy `auditree-daily-30d`: 19:00 UTC window, kept **30 days**
+  (the older 14-day policy `auditree-daily` is detached but kept so its snapshots expire).
+  Whole-disk and crash-consistent -- they restore the entire server, not single records.
+- **Nightly `pg_dump` + filestore** (since 2026-09-28): `/opt/auditree-backup/auditree_backup.sh`
+  (source: `deploy/auditree_backup.sh`), cron `/etc/cron.d/auditree-backup` at 20:30 UTC /
+  02:00 IST, log `/var/log/auditree-backup.log`, status line in
+  `/var/backups/auditree/last_status` (`OK` / `OK_LOCAL_ONLY` / `FAILED`). Keeps 7 days on the
+  VM and uploads to `gs://auditree-prod-backups/daily/<date>/` (+ `monthly/` on the 1st);
+  bucket lifecycle deletes `daily/` after 31 days and `monthly/` after 366.
+  `deploy/verify_backup.sh <dir>` restore-tests a set locally. ~385 attachments reference
+  files that were already missing on the source (stock payment/badge images inherited from
+  DO) -- recorded as `missing_in_source` in each `info.txt`, not a backup fault.
+- Since 2026-09-28 the VM runs as `auditree-vm@auditree-prod.iam.gserviceaccount.com`, scope
+  `cloud-platform` (was the default compute account, which holds project Editor). Roles:
+  logWriter, metricWriter, and on the bucket only `storage.objectCreator` + `objectViewer` --
+  it can add and read backups but **not delete or overwrite** them (verified). `objectViewer`
+  is required: `gcloud storage cp` reads the destination first and fails 403 without it.
+  Because objects cannot be overwritten, backup folders are `<date>_<HHMM>` UTC. Changing the
+  VM's service account needs a VM stop; nginx answers 502 for the ~20 s Odoo takes to boot.
+- Do not probe the gevent port (8072) with page requests: it only serves `/websocket`, and a
+  plain `GET /web/login` there logs a `KeyError: 'REQUEST_URI'` traceback that is not a fault.
+- **Manual `pg_dump` + filestore sets** in `gs://auditree-prod-backups/` (asia-south1,
+  versioning on, no lifecycle): `2026-09-17/`, `2026-09-17-premove/`,
+  `20260925_052504-pre-do-migration/`, plus the nightly `daily/` and `monthly/` sets.
+- Everything sits in one project whose only Owner is a personal Gmail account.
+
+### 🚨 Raising `workers` moves the websocket to a different port
+
+Odoo serves the websocket/bus on `http_port` **only** in threaded mode (`workers = 0`). Set
+`workers > 0` and the bus moves to a dedicated gevent worker on `gevent_port`. nginx's
+`location /websocket` must follow it, or live chat, notifications and the bus break
+**silently** -- no error in the log, the UI just stops updating.
+
+`06_prod_config_systemd.sh` generates `workers = 2` + `gevent_port = 8072`, and
+`07_nginx_http_only.sh` points `/websocket` at 8072 to match. Change one and you must change
+the other. **This is now the live state**: verified 2026-09-19, `/etc/auditreelive-server.conf`
+has `workers = 2` / `gevent_port = 8072` and `pgrep -af odoo-bin` shows the worker set plus an
+`odoo-bin gevent` process. Do not assume threaded mode when reasoning about prod.
+
+### 🚨 An `odoo shell` write does not reach the running workers
+
+Editing a record through `odoo-bin shell` commits to the database, but the **already-running**
+server processes keep serving from their in-process caches. A QWeb/`ir.ui.view` edit made this
+way lands in the DB and the site still renders the old markup -- with no error anywhere. An
+HTTP request calls `registry.signal_changes()` at the end of the request; `odoo shell` never
+does, so the `base_cache_signaling_*` sequences are never bumped and the other processes have
+nothing to detect.
+
+Hit on 2026-09-19 fixing the `/contactus` address. Finish any shell-side data change with:
+
+```python
+env.registry.clear_cache('templates', 'assets', 'default')
+env.registry.signal_changes()
+```
+
+Each worker then picks it up in `check_signaling()` on its next request -- no `systemctl
+restart` and no downtime. With `workers = 2` there are several processes to reach, so the
+symptom is easy to misread as "the write failed". Verify by fetching the real URL, not by
+re-reading the DB: the DB will look correct either way.
+
+### 🚨 Never create a prod database whose name starts with `AUDITREE_LIVE_NEW`
+
+Prod has `dbfilter = AUDITREE_LIVE_NEW` and no `db_name`. Odoo applies the filter with
+`re.match` (`odoo/http.py`), which anchors only at the start, and lists every database owned
+by `auditreelive`. A second database such as `AUDITREE_LIVE_NEW_backup` therefore also
+matches, Odoo loses its single-database mode, and **every request 303-redirects to
+`/web/database/selector`** -- which `list_db = False` then refuses. The site is down with no
+error in the log. Hit on 2026-09-25 during the DO migration (caught by its health check and
+rolled back). Name backups with a different prefix -- `bak_pre_do_<ts>_AUDITREE_LIVE_NEW` is
+the convention -- or anchor the filter (`^AUDITREE_LIVE_NEW$`). Locally this never shows,
+because local runs pass an anchored `--db-filter` or a single `-d`.
+
+### 🚨 The venv's `zope.*` packages are invisible to `pkg_resources`
+
+Hit on 2026-09-17 when `workers` was first raised above 0. The gevent worker crash-looped
+silently -- nothing in the Odoo log, because it died inside `gevent.monkey.patch_all()` before
+logging existed. The real error only appears in `journalctl -u odoo`:
+
+```
+pkg_resources.DistributionNotFound: The 'zope.event' distribution was not found
+and is required by the application
+```
+
+`zope.event` and `zope.interface` were not in the venv at all. `importlib.metadata` and `pip`
+both reported them present because they leak in from the system Python, so
+`pip install zope.event` answers "Requirement already satisfied" and changes nothing.
+`pkg_resources` -- which gevent's entry-point hook uses -- correctly refused to resolve them.
+
+Fixed with `--ignore-installed`, pinned to the era of the rest of the stack:
+
+```bash
+sudo -u auditreelive /opt/odoo17/auditreelive/venv/bin/pip install   --no-deps --ignore-installed 'zope.event==4.6' 'zope.interface==5.5.2'
+```
+
+Two lessons: **a gevent worker that dies leaves no trace in the Odoo log -- check
+`journalctl -u odoo`**, and **"Requirement already satisfied" does not mean the package is in
+this venv.** Verify with `ls venv/lib/python3.10/site-packages/<pkg>*`, not with pip.
+
+### 🚨 `07_nginx_http_only.sh` would strip TLS off the live server
+
+That script writes an HTTP-only vhost; certbot then rewrites it in place to add `listen 443`,
+the cert paths and the 80->443 redirect. Re-running it on the live box would therefore undo
+TLS. It now checks for an existing `ssl_certificate` and refuses unless you pass
+`FORCE_OVERWRITE_TLS=1`, after which you must immediately re-run
+`sudo certbot --nginx -d odoo.auditree.com`.
 
 ### What `04b_deploy_code_fresh.sh` actually does
 
@@ -505,6 +632,54 @@ sudo tail -n +$((MARK + 1)) /var/log/auditreelive/auditreelive-server.log \
   | grep -iE "ERROR|CRITICAL|Traceback|Modules loaded"
 ```
 
+### `main` = what is live on prod
+
+`main` tracks the code running on odoo.auditree.com -- nothing more, nothing less. Feature
+work lives on branches until it is deployed. Each deploy is tagged `prod-YYYY-MM-DD[b|c|d]`;
+the latest tag is the prod state (as of 2026-10-23: `prod-2026-10-20` = `bdd1838`). The
+fingerprint check on 2026-10-19 found one gap: 4 `xn_hr_dashboard` files on prod that match
+no commit (listed in the `prod-2026-10-19` tag message).
+
+**`sh_backend_base` is deployed but not in git** (licence). It is gitignored since commit
+"chore: stop tracking sh_backend_base"; older history still contains it. Two traps:
+- Pulling that commit into a working tree where the module was tracked **deletes it from
+  disk**. Put it back right away (it stays untracked and ignored):
+  `git restore --source=<commit>~1 --worktree custom/addons/sh_backend_base`
+- `04b` does `rm -rf custom` on the VM and ships the working tree. If the module is
+  missing locally, **the deploy removes an installed module from prod** and Odoo fails to
+  load. Check `ls custom/addons/sh_backend_base/__manifest__.py` before any `04b` run.
+GitHub history was rewritten once (2026-10-18) to purge it; a machine restored from an
+older backup merged the old history straight back. Do not try another purge unless every
+clone is re-synced first.
+
+Rules:
+- **Deploy only committed code.** `04b` and the one-module tar both copy the working tree,
+  so commit first and ship from a clean checkout of that commit. Deploying uncommitted
+  files is how prod drifted from every commit in Sept 2026.
+- **After the deploy, fast-forward `main` and tag it** (from WSL):
+  ```bash
+  git fetch . $(git rev-parse <deployed-commit>):refs/heads/main   # fast-forward only;
+                                            # needs the FULL sha -- a short id fails
+  git tag -a prod-YYYY-MM-DD <deployed-commit> -m "what was deployed"
+  git push origin main prod-YYYY-MM-DD
+  ```
+- If a deploy contains several branches, merge them into one branch first and deploy that.
+
+**Checking what prod actually runs.** Per-module fingerprint on the VM (read-only):
+
+```bash
+cd /opt/odoo17/auditreelive/custom/addons && sudo LC_ALL=C bash -c 'for m in */; do m=${m%/}
+  echo "$m $(cd "$m" && find . -type f ! -path "*/__pycache__/*" ! -name "*.pyc" -print0 \
+    | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-12)"; done'
+```
+
+Two traps when comparing those hashes from the Windows side: Git for Windows sets
+`core.autocrlf=true` system-wide, so `git archive` / checkout rewrite line endings (pass
+`-c core.autocrlf=false`), and its `sha256sum` prints `hash *./file` (binary marker) where
+Linux prints `hash  ./file`. Separately, many files in the WSL working tree carry CRLF while
+git stores LF, and deploys ship the working tree -- so prod files are often CRLF and never
+byte-match a commit. Compare with CRs stripped, or against the working tree.
+
 ### Shipping one module instead of the whole tree
 
 `04b` uploads ~670 MB (2.0 GB core + 238 MB custom) and rebuilds the venv. For a change
@@ -513,8 +688,8 @@ has actually broken prod. Ship just the module:
 
 ```bash
 tar czf x.tar.gz -C custom/addons --exclude=__pycache__ --exclude='*.pyc' <module>
-gcloud compute scp x.tar.gz auditreelive-prod:/tmp/ --tunnel-through-iap \
-  --project=auditree-prod --zone=us-central1-a
+gcloud compute scp x.tar.gz auditreelive-prod-mum:/tmp/ --tunnel-through-iap \
+  --project=auditree-prod --zone=asia-south1-a
 # on the VM: back the module up OUTSIDE custom/addons (Odoo scans that directory),
 # untar, chown -R auditreelive:auditreelive, then stop / -u / start.
 ```
