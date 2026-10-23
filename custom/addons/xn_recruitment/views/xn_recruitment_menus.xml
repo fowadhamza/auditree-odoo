@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_xn_position_report" name="Hiring Status"
+              parent="hr_recruitment.report_hr_recruitment"
+              action="action_xn_position_report" sequence="10"/>
+    <menuitem id="menu_xn_stage_log_report" name="Daily Movement"
+              parent="hr_recruitment.report_hr_recruitment"
+              action="action_xn_stage_log_report" sequence="20"/>
+    <menuitem id="menu_xn_feedback_report" name="Interviews"
+              parent="hr_recruitment.report_hr_recruitment"
+              action="action_xn_applicant_feedback_report" sequence="30"/>
+    <menuitem id="menu_xn_source_report" name="Source Performance"
+              parent="hr_recruitment.report_hr_recruitment"
+              action="action_xn_source_report" sequence="40"/>
+
+    <menuitem id="menu_xn_recruitment_panel" name="Interview Panels"
+              parent="hr_recruitment.menu_hr_recruitment_config_applications"
+              action="action_xn_recruitment_panel" sequence="5"/>
+    <menuitem id="menu_xn_recruitment_agencies" name="Recruitment Agencies"
+              parent="hr_recruitment.menu_hr_recruitment_config_applications"
+              action="action_xn_recruitment_agencies" sequence="6"/>
+</odoo>

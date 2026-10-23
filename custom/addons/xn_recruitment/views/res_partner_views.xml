@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_xn_recruitment_agency" model="ir.ui.view">
+        <field name="name">res.partner.form.xn.recruitment.agency</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Recruitment" name="xn_recruitment_agency"
+                      groups="hr_recruitment.group_hr_recruitment_user">
+                    <group>
+                        <group>
+                            <field name="xn_is_recruitment_agency"/>
+                            <field name="xn_agency_fee_type" invisible="not xn_is_recruitment_agency"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_xn_recruitment_agencies" model="ir.actions.act_window">
+        <field name="name">Recruitment Agencies</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('xn_is_recruitment_agency', '=', True)]</field>
+        <field name="context">{'default_xn_is_recruitment_agency': True, 'default_is_company': True}</field>
+    </record>
+</odoo>

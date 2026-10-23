@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Settings (Settings > Technical > System Parameters). -->
+        <record id="ir_config_hr_email" model="ir.config_parameter">
+            <field name="key">xn_recruitment.hr_email</field>
+            <field name="value">hr@auditree.com</field>
+        </record>
+        <record id="ir_config_daily_report_emails" model="ir.config_parameter">
+            <field name="key">xn_recruitment.daily_report_emails</field>
+            <field name="value">hr@auditree.com</field>
+        </record>
+
+        <!--
+            Rejection reasons HR listed. Each sends the rejection email.
+            The stock Odoo reasons are archived by the post_init_hook so this
+            is the list HR picks from.
+        -->
+        <record id="refuse_reason_not_suitable" model="hr.applicant.refuse.reason">
+            <field name="name">Not suitable for the role</field>
+            <field name="sequence">10</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_experience" model="hr.applicant.refuse.reason">
+            <field name="name">Relevant experience missing</field>
+            <field name="sequence">20</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_communication" model="hr.applicant.refuse.reason">
+            <field name="name">Communication challenges</field>
+            <field name="sequence">30</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_ctc" model="hr.applicant.refuse.reason">
+            <field name="name">CTC expectation above budget</field>
+            <field name="sequence">40</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_joining" model="hr.applicant.refuse.reason">
+            <field name="name">Joining date too late</field>
+            <field name="sequence">50</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_background" model="hr.applicant.refuse.reason">
+            <field name="name">Unclear background (reason for leaving, career gaps)</field>
+            <field name="sequence">60</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_wfh" model="hr.applicant.refuse.reason">
+            <field name="name">Work-from-home requirement mismatch</field>
+            <field name="sequence">70</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+        <record id="refuse_reason_culture" model="hr.applicant.refuse.reason">
+            <field name="name">Cultural fit</field>
+            <field name="sequence">80</field>
+            <field name="template_id" ref="mail_template_candidate_rejection"/>
+        </record>
+
+        <!--
+            Interview panels from HR's answers. Interviewers are filled in by
+            the post_init_hook (matched by first name to existing users) and
+            are edited under Recruitment > Configuration > Interview Panels.
+        -->
+        <record id="panel_technical" model="xn.recruitment.panel">
+            <field name="name">Technical</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="panel_technical_round1" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_technical"/>
+            <field name="round">round1</field>
+        </record>
+        <record id="panel_technical_round2" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_technical"/>
+            <field name="round">round2</field>
+        </record>
+        <record id="panel_technical_final" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_technical"/>
+            <field name="round">final</field>
+        </record>
+        <record id="panel_technical_decision" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_technical"/>
+            <field name="round">decision</field>
+        </record>
+
+        <record id="panel_non_technical" model="xn.recruitment.panel">
+            <field name="name">Non-Technical</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="panel_non_technical_round1" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_non_technical"/>
+            <field name="round">round1</field>
+        </record>
+        <record id="panel_non_technical_round2" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_non_technical"/>
+            <field name="round">round2</field>
+        </record>
+        <record id="panel_non_technical_final" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_non_technical"/>
+            <field name="round">final</field>
+        </record>
+        <record id="panel_non_technical_decision" model="xn.recruitment.panel.line">
+            <field name="panel_id" ref="panel_non_technical"/>
+            <field name="round">decision</field>
+        </record>
+    </data>
+</odoo>

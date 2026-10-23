@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Hiring Status: one row per position, the funnel management asks about. -->
+    <record id="view_xn_position_report_tree" model="ir.ui.view">
+        <field name="name">xn.recruitment.position.report.tree</field>
+        <field name="model">xn.recruitment.position.report</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="job_id"/>
+                <field name="department_id" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="to_hire" sum="Total"/>
+                <field name="cv_count" sum="Total"/>
+                <field name="shortlisted_count" sum="Total"/>
+                <field name="round1_count" sum="Total"/>
+                <field name="round2_count" sum="Total"/>
+                <field name="final_count" sum="Total"/>
+                <field name="decision_count" sum="Total"/>
+                <field name="offer_count" sum="Total"/>
+                <field name="joined_count" sum="Total"/>
+                <field name="pipeline_count" sum="Total" optional="show"/>
+                <field name="hold_count" sum="Total" optional="show"/>
+                <field name="refused_count" sum="Total" optional="hide"/>
+                <field name="opened_on" optional="hide"/>
+                <field name="deadline" optional="show"/>
+                <field name="days_open" optional="show"/>
+                <field name="days_to_close" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_position_report_pivot" model="ir.ui.view">
+        <field name="name">xn.recruitment.position.report.pivot</field>
+        <field name="model">xn.recruitment.position.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Hiring Status">
+                <field name="department_id" type="row"/>
+                <field name="cv_count" type="measure"/>
+                <field name="round1_count" type="measure"/>
+                <field name="offer_count" type="measure"/>
+                <field name="joined_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_position_report_search" model="ir.ui.view">
+        <field name="name">xn.recruitment.position.report.search</field>
+        <field name="model">xn.recruitment.position.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="job_id"/>
+                <field name="department_id"/>
+                <field name="user_id"/>
+                <filter name="open" string="Open Positions"
+                        domain="['|', ('to_hire', '&gt;', 0), ('pipeline_count', '&gt;', 0)]"/>
+                <filter name="overdue" string="Past Deadline"
+                        domain="[('deadline', '&lt;', context_today().strftime('%Y-%m-%d')), ('to_hire', '&gt;', 0)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_recruiter" string="Recruiter" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_position_report" model="ir.actions.act_window">
+        <field name="name">Hiring Status</field>
+        <field name="res_model">xn.recruitment.position.report</field>
+        <field name="view_mode">tree,pivot</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No open positions</p>
+            <p>Positions with people still to hire, or candidates in the pipeline, show here.</p>
+        </field>
+    </record>
+
+    <!-- Daily movement: who progressed to which round, from the stage log. -->
+    <record id="view_xn_stage_log_tree" model="ir.ui.view">
+        <field name="name">xn.applicant.stage.log.tree</field>
+        <field name="model">xn.applicant.stage.log</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="applicant_id"/>
+                <field name="job_id"/>
+                <field name="from_stage_id"/>
+                <field name="to_stage_id"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_stage_log_pivot" model="ir.ui.view">
+        <field name="name">xn.applicant.stage.log.pivot</field>
+        <field name="model">xn.applicant.stage.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Progressed To" sample="1">
+                <field name="job_id" type="row"/>
+                <field name="to_round" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_stage_log_search" model="ir.ui.view">
+        <field name="name">xn.applicant.stage.log.search</field>
+        <field name="model">xn.applicant.stage.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="applicant_id"/>
+                <field name="job_id"/>
+                <filter name="yesterday" string="Yesterday"
+                        domain="[('log_date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="today" string="Today"
+                        domain="[('log_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="last_7" string="Last 7 Days"
+                        domain="[('log_date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="interview_rounds" string="Into Interview Rounds"
+                        domain="[('to_round', 'in', ['round1', 'round2', 'final', 'decision'])]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_job" string="Job Position" context="{'group_by': 'job_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_round" string="Moved To Step" context="{'group_by': 'to_round'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_stage_log_report" model="ir.actions.act_window">
+        <field name="name">Daily Movement</field>
+        <field name="res_model">xn.applicant.stage.log</field>
+        <field name="view_mode">pivot,tree</field>
+        <field name="context">{'search_default_yesterday': 1}</field>
+    </record>
+
+    <!-- Source performance: which channels and agencies produce hires. -->
+    <record id="view_xn_source_report_pivot" model="ir.ui.view">
+        <field name="name">xn.recruitment.source.report.pivot</field>
+        <field name="model">xn.recruitment.source.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Source Performance">
+                <field name="source_id" type="row"/>
+                <field name="cv_count" type="measure"/>
+                <field name="shortlisted_count" type="measure"/>
+                <field name="interviewed_count" type="measure"/>
+                <field name="offer_count" type="measure"/>
+                <field name="joined_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_source_report_tree" model="ir.ui.view">
+        <field name="name">xn.recruitment.source.report.tree</field>
+        <field name="model">xn.recruitment.source.report</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false">
+                <field name="source_id"/>
+                <field name="agency_id"/>
+                <field name="job_id"/>
+                <field name="cv_count" sum="Total"/>
+                <field name="shortlisted_count" sum="Total"/>
+                <field name="interviewed_count" sum="Total"/>
+                <field name="offer_count" sum="Total"/>
+                <field name="joined_count" sum="Total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_source_report_search" model="ir.ui.view">
+        <field name="name">xn.recruitment.source.report.search</field>
+        <field name="model">xn.recruitment.source.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="source_id"/>
+                <field name="agency_id"/>
+                <field name="job_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_source" string="Source" context="{'group_by': 'source_id'}"/>
+                    <filter name="group_agency" string="Agency" context="{'group_by': 'agency_id'}"/>
+                    <filter name="group_job" string="Job Position" context="{'group_by': 'job_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_source_report" model="ir.actions.act_window">
+        <field name="name">Source Performance</field>
+        <field name="res_model">xn.recruitment.source.report</field>
+        <field name="view_mode">pivot,tree</field>
+    </record>
+</odoo>

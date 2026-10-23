@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_job_form_xn_requisition" model="ir.ui.view">
+        <field name="name">hr.job.form.xn.requisition</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='recruitment_page']" position="after">
+                <page string="Requisition" name="xn_requisition">
+                    <group>
+                        <group string="Requirement">
+                            <field name="xn_requested_by_id" widget="many2one_avatar_user"/>
+                            <field name="xn_request_reason"/>
+                            <field name="xn_opened_on"/>
+                            <field name="xn_deadline"/>
+                            <field name="xn_joining_requirement"/>
+                        </group>
+                        <group string="Candidate Profile">
+                            <field name="xn_experience"/>
+                            <field name="xn_qualification"/>
+                            <label for="xn_ctc_min" string="CTC Band (annual, INR)"
+                                   groups="hr_recruitment.group_hr_recruitment_user"/>
+                            <div class="o_row" groups="hr_recruitment.group_hr_recruitment_user">
+                                <field name="xn_ctc_min" nolabel="1"/>
+                                <span>to</span>
+                                <field name="xn_ctc_max" nolabel="1"/>
+                            </div>
+                        </group>
+                        <group string="Interviews">
+                            <field name="xn_panel_id"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

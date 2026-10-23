@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Email bodies rendered in Python (ir.qweb._render), not mail.template
+        records: the handover email needs the previous round's feedback and
+        the CV files, which a template on hr.applicant cannot select.
+        No salary figures in either: interviewers must not see them.
+    -->
+    <template id="mail_body_next_interviewer">
+        <div style="font-family: Arial, sans-serif; font-size: 13px; color: #222;">
+            <p>Hello,</p>
+            <p><b t-out="applicant.partner_name or applicant.name"/> has been moved to
+                <b t-out="round_label"/> for <b t-out="applicant.job_id.name or '-'"/>.
+                <t t-if="cv_count">The CV is attached.</t>
+                <t t-else="">No CV file is attached to the application yet.</t></p>
+            <table style="border-collapse: collapse; margin: 8px 0;">
+                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Qualification</td>
+                    <td t-out="applicant.xn_qualification or '-'"/></tr>
+                <tr><td style="padding: 2px 12px 2px 0; color: #666;">CA / ACCA papers passed</td>
+                    <td t-out="applicant.xn_papers_passed or '-'"/></tr>
+                <tr><td style="padding: 2px 12px 2px 0; color: #666;">CA Final attempts</td>
+                    <td t-out="applicant.xn_ca_final_attempts or '-'"/></tr>
+                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Experience</td>
+                    <td><t t-out="applicant.xn_total_experience or 0"/> years total,
+                        <t t-out="applicant.xn_relevant_experience or 0"/> relevant</td></tr>
+                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Notice period</td>
+                    <td><t t-out="applicant.xn_notice_days"/> days</td></tr>
+                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Location</td>
+                    <td t-out="applicant.xn_location or '-'"/></tr>
+            </table>
+            <t t-if="feedback">
+                <p style="margin-top: 16px;"><b>Feedback from <t t-out="previous_stage.name"/></b></p>
+                <t t-foreach="feedback" t-as="note">
+                    <div style="border-left: 3px solid #875A7B; padding: 4px 10px; margin: 6px 0;">
+                        <div style="color: #666;"><t t-out="note.interviewer_id.name"/>,
+                            <t t-out="note.date"/>:
+                            <b t-out="recommendations.get(note.recommendation)"/></div>
+                        <div style="white-space: pre-wrap;" t-out="note.comments"/>
+                    </div>
+                </t>
+            </t>
+            <t t-elif="previous_stage">
+                <p style="color: #666;">No feedback was recorded for <t t-out="previous_stage.name"/>.</p>
+            </t>
+            <p style="margin-top: 16px;">After the interview, please record your feedback within
+                24 hours using <b>Give Feedback</b> on the application:</p>
+            <p><a t-att-href="url"
+                  style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">Open the application</a></p>
+            <p>Thanks,<br/>HR Team, Auditree</p>
+        </div>
+    </template>
+
+    <template id="mail_body_daily_report">
+        <div style="font-family: Arial, sans-serif; font-size: 13px; color: #222;">
+            <t t-set="th" t-value="'border: 1px solid #ccc; padding: 4px 8px; background: #f3f3f3; text-align: left;'"/>
+            <t t-set="td" t-value="'border: 1px solid #ccc; padding: 4px 8px; text-align: center;'"/>
+            <t t-set="tdl" t-value="'border: 1px solid #ccc; padding: 4px 8px; text-align: left;'"/>
+
+            <p><b>Interviews on <t t-out="day.strftime('%d %b %Y')"/></b> (feedback recorded)</p>
+            <t t-if="interviews">
+                <table style="border-collapse: collapse;">
+                    <tr><th t-att-style="th">Position</th>
+                        <th t-foreach="rounds" t-as="r" t-att-style="th" t-out="r[1]"/></tr>
+                    <tr t-foreach="interviews" t-as="row">
+                        <td t-att-style="tdl" t-out="row[0]"/>
+                        <td t-foreach="rounds" t-as="r" t-att-style="td" t-out="row[1][r[0]] or '-'"/>
+                    </tr>
+                </table>
+            </t>
+            <p t-else="" style="color: #666;">None.</p>
+
+            <p style="margin-top: 16px;"><b>Progressed on <t t-out="day.strftime('%d %b %Y')"/></b></p>
+            <t t-if="progressed">
+                <table style="border-collapse: collapse;">
+                    <tr><th t-att-style="th">Position</th>
+                        <th t-foreach="rounds" t-as="r" t-att-style="th" t-out="r[1]"/></tr>
+                    <tr t-foreach="progressed" t-as="row">
+                        <td t-att-style="tdl" t-out="row[0]"/>
+                        <td t-foreach="rounds" t-as="r" t-att-style="td" t-out="row[1][r[0]] or '-'"/>
+                    </tr>
+                </table>
+            </t>
+            <p t-else="" style="color: #666;">None.</p>
+
+            <p style="margin-top: 16px;"><b>Open positions</b></p>
+            <t t-if="positions">
+                <table style="border-collapse: collapse;">
+                    <tr><th t-att-style="th">Position</th><th t-att-style="th">To hire</th>
+                        <th t-att-style="th">CVs</th><th t-att-style="th">Shortlisted</th>
+                        <th t-att-style="th">R1</th><th t-att-style="th">R2</th>
+                        <th t-att-style="th">Final</th><th t-att-style="th">Decision</th>
+                        <th t-att-style="th">Offers</th><th t-att-style="th">Joined</th>
+                        <th t-att-style="th">On hold</th><th t-att-style="th">Days open</th></tr>
+                    <tr t-foreach="positions" t-as="p">
+                        <td t-att-style="tdl" t-out="p.job_id.display_name"/>
+                        <td t-att-style="td" t-out="p.to_hire"/>
+                        <td t-att-style="td" t-out="p.cv_count"/>
+                        <td t-att-style="td" t-out="p.shortlisted_count"/>
+                        <td t-att-style="td" t-out="p.round1_count"/>
+                        <td t-att-style="td" t-out="p.round2_count"/>
+                        <td t-att-style="td" t-out="p.final_count"/>
+                        <td t-att-style="td" t-out="p.decision_count"/>
+                        <td t-att-style="td" t-out="p.offer_count"/>
+                        <td t-att-style="td" t-out="p.joined_count"/>
+                        <td t-att-style="td" t-out="p.hold_count"/>
+                        <td t-att-style="td" t-out="p.days_open"/>
+                    </tr>
+                </table>
+            </t>
+            <p t-else="" style="color: #666;">None.</p>
+            <p style="margin-top: 16px; color: #666;">Recruitment > Reporting > Hiring Status has the live figures.</p>
+        </div>
+    </template>
+</odoo>

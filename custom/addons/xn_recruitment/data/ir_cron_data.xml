@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Daily hiring report email. Installed INACTIVE on purpose: a local copy
+        of the production database still has the real outgoing mail server,
+        so an active cron would email HR from a developer laptop. Turn it on
+        in Settings > Technical > Scheduled Actions on production; set the
+        next execution to 08:00 IST.
+    -->
+    <data noupdate="1">
+        <record id="ir_cron_daily_hiring_report" model="ir.cron">
+            <field name="name">Recruitment: daily hiring report email</field>
+            <field name="model_id" ref="model_xn_recruitment_position_report"/>
+            <field name="state">code</field>
+            <field name="code">model._xn_cron_daily_report()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="False"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Candidate rejection email. Every refuse reason below carries it, and
+        the core Refuse wizard sends a reason's template automatically, so
+        marking a candidate refused at any stage emails them.
+        noupdate so HR can reword it without -u putting it back.
+        The sender only stays hr@auditree.com if an outgoing mail server
+        accepts that address (see README); otherwise Odoo rewrites it.
+    -->
+    <data noupdate="1">
+        <record id="mail_template_candidate_rejection" model="mail.template">
+            <field name="name">Recruitment: Candidate Rejection (Auditree)</field>
+            <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+            <field name="subject">Your application for {{ object.job_id.name or 'the position' }} at Auditree</field>
+            <field name="email_from">Auditree HR &lt;hr@auditree.com&gt;</field>
+            <field name="reply_to">hr@auditree.com</field>
+            <field name="partner_to">{{ object.partner_id.id or '' }}</field>
+            <field name="email_to">{{ (not object.partner_id and object.email_from) or '' }}</field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div style="font-size: 13px; margin: 0px; padding: 0px;">
+                    <p>Dear <t t-out="object.partner_name or 'Candidate'"/>,</p>
+                    <p>Thank you for your interest in the
+                        <b t-out="object.job_id.name or 'open'"/> position at Auditree and for the
+                        time you have given us during the selection process.</p>
+                    <p>After careful consideration, we have decided not to take your application
+                        further at this time. This was not an easy decision, and it is not a
+                        reflection of your abilities.</p>
+                    <p>We will keep your details on file and may get in touch if a suitable
+                        opening comes up in the future.</p>
+                    <p>We wish you every success in your career.</p>
+                    <p>Warm regards,<br/>HR Team<br/>Auditree</p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

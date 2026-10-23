@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_recruitment_panel_tree" model="ir.ui.view">
+        <field name="name">xn.recruitment.panel.tree</field>
+        <field name="model">xn.recruitment.panel</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="job_ids" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_recruitment_panel_form" model="ir.ui.view">
+        <field name="name">xn.recruitment.panel.form</field>
+        <field name="model">xn.recruitment.panel</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Technical"/></h1>
+                    </div>
+                    <p class="text-muted">
+                        When a candidate on a job using this panel is moved into a round, that
+                        round's interviewers are emailed the CV and the previous round's feedback,
+                        get access to the candidate and a to-do for their feedback.
+                    </p>
+                    <field name="line_ids">
+                        <tree editable="bottom">
+                            <field name="round"/>
+                            <field name="user_ids" widget="many2many_avatar_user"
+                                   options="{'no_create': True}"/>
+                        </tree>
+                    </field>
+                    <group string="Used by">
+                        <field name="job_ids" widget="many2many_tags" readonly="1" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_xn_recruitment_panel" model="ir.actions.act_window">
+        <field name="name">Interview Panels</field>
+        <field name="res_model">xn.recruitment.panel</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

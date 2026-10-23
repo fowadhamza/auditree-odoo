@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Applied to the core applicant form, and so also to the Interviewer
+        form (a primary view inheriting it). The interviewer form removes the
+        whole recruitment_contract group, which is where the CTC fields sit,
+        and the salary fields carry groups= as well.
+    -->
+    <record id="hr_applicant_view_form_xn" model="ir.ui.view">
+        <field name="name">hr.applicant.form.xn</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='archive_applicant']" position="before">
+                <button string="Give Feedback" name="action_xn_give_feedback" type="object"
+                        class="btn-primary" invisible="not active or not id"
+                        groups="hr_recruitment.group_hr_recruitment_interviewer"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" icon="fa-comments-o" type="object"
+                        name="action_xn_open_feedback" invisible="not xn_feedback_count">
+                    <field name="xn_feedback_count" widget="statinfo" string="Feedback"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert" invisible="not xn_reapplied_early">
+                    This candidate was refused less than 6 months ago. See Previously Refused
+                    Application under Status.
+                </div>
+                <div class="alert alert-info mb-0" role="alert" invisible="not xn_on_hold">
+                    This candidate is on hold.
+                </div>
+            </xpath>
+
+            <field name="medium_id" position="after">
+                <field name="xn_agency_id" options="{'no_create': True}"/>
+                <field name="xn_referrer_id" options="{'no_create': True}"/>
+            </field>
+            <field name="availability" position="after">
+                <field name="xn_notice_days"/>
+            </field>
+
+            <xpath expr="//label[@for='salary_expected']" position="before">
+                <field name="xn_current_ctc"/>
+            </xpath>
+            <xpath expr="//group[@name='recruitment_contract']" position="inside">
+                <field name="xn_agency_fee" invisible="not xn_agency_fee"/>
+            </xpath>
+
+            <field name="applicant_properties" position="before">
+                <group name="xn_candidate">
+                    <group string="Qualification &amp; Experience">
+                        <field name="xn_qualification"/>
+                        <field name="xn_papers_passed"/>
+                        <field name="xn_ca_final_attempts"/>
+                        <field name="xn_articleship_done"/>
+                        <field name="xn_total_experience"/>
+                        <field name="xn_relevant_experience"/>
+                        <field name="xn_location"/>
+                    </group>
+                    <group string="Status">
+                        <field name="xn_round" readonly="1"/>
+                        <field name="xn_on_hold"/>
+                        <field name="xn_hold_reason" invisible="not xn_on_hold" required="xn_on_hold"/>
+                        <field name="xn_reapplied_early" invisible="1"/>
+                        <field name="xn_previous_application_id" invisible="not xn_previous_application_id"/>
+                    </group>
+                </group>
+            </field>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Interview Feedback" name="xn_feedback">
+                    <field name="xn_feedback_ids" readonly="1">
+                        <tree>
+                            <field name="date"/>
+                            <field name="stage_id"/>
+                            <field name="interviewer_id" widget="many2one_avatar_user"/>
+                            <field name="recommendation" widget="badge"
+                                   decoration-success="recommendation == 'next'"
+                                   decoration-warning="recommendation == 'hold'"
+                                   decoration-danger="recommendation == 'reject'"/>
+                            <field name="comments"/>
+                        </tree>
+                    </field>
+                </page>
+                <page string="Offer &amp; Joining" name="xn_offer"
+                      groups="hr_recruitment.group_hr_recruitment_user">
+                    <group>
+                        <group string="Offer">
+                            <field name="xn_bond_required"/>
+                            <field name="xn_bond_months" invisible="not xn_bond_required"/>
+                        </group>
+                        <group string="Joining">
+                            <field name="xn_no_show"/>
+                            <field name="xn_no_show_reason" invisible="not xn_no_show"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_case_tree_view_job_xn" model="ir.ui.view">
+        <field name="name">hr.applicant.tree.xn</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.crm_case_tree_view_job"/>
+        <field name="arch" type="xml">
+            <field name="job_id" position="after">
+                <field name="xn_on_hold" optional="show" widget="boolean"/>
+                <field name="xn_notice_days" optional="hide"/>
+                <field name="xn_total_experience" optional="hide"/>
+                <field name="xn_qualification" optional="hide"/>
+                <field name="xn_agency_id" optional="hide"/>
+                <field name="xn_location" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="hr_applicant_view_search_bis_xn" model="ir.ui.view">
+        <field name="name">hr.applicant.search.xn</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_search_bis"/>
+        <field name="arch" type="xml">
+            <field name="job_id" position="after">
+                <field name="xn_agency_id"/>
+                <field name="xn_referrer_id"/>
+            </field>
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="xn_on_hold" string="On Hold" domain="[('xn_on_hold', '=', True)]"/>
+                <filter name="xn_reapplied_early" string="Reapplied Within 6 Months"
+                        domain="[('xn_reapplied_early', '=', True)]"/>
+                <filter name="xn_no_show" string="Did Not Join" domain="[('xn_no_show', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_xn_round" string="Hiring Step" context="{'group_by': 'xn_round'}"/>
+                    <filter name="group_xn_agency" string="Agency" context="{'group_by': 'xn_agency_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

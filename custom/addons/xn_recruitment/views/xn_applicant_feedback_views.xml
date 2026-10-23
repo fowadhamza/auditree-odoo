@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_applicant_feedback_form" model="ir.ui.view">
+        <field name="name">xn.applicant.feedback.form</field>
+        <field name="model">xn.applicant.feedback</field>
+        <field name="arch" type="xml">
+            <form string="Interview Feedback">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="applicant_id" readonly="1" force_save="1"
+                                   options="{'no_open': True}"/>
+                            <field name="job_id"/>
+                            <field name="stage_id" options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="interviewer_id" readonly="1" force_save="1"
+                                   options="{'no_open': True}"/>
+                            <field name="date"/>
+                            <field name="recommendation" widget="radio"/>
+                        </group>
+                    </group>
+                    <field name="comments" placeholder="Technical knowledge, communication, attitude, anything the next interviewer should probe..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_xn_applicant_feedback_tree" model="ir.ui.view">
+        <field name="name">xn.applicant.feedback.tree</field>
+        <field name="model">xn.applicant.feedback</field>
+        <field name="arch" type="xml">
+            <tree create="false">
+                <field name="date"/>
+                <field name="applicant_id"/>
+                <field name="job_id" optional="show"/>
+                <field name="stage_id"/>
+                <field name="interviewer_id" widget="many2one_avatar_user"/>
+                <field name="recommendation" widget="badge"
+                       decoration-success="recommendation == 'next'"
+                       decoration-warning="recommendation == 'hold'"
+                       decoration-danger="recommendation == 'reject'"/>
+                <field name="comments" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_applicant_feedback_pivot" model="ir.ui.view">
+        <field name="name">xn.applicant.feedback.pivot</field>
+        <field name="model">xn.applicant.feedback</field>
+        <field name="arch" type="xml">
+            <pivot string="Interviews" sample="1">
+                <field name="job_id" type="row"/>
+                <field name="xn_round" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_applicant_feedback_search" model="ir.ui.view">
+        <field name="name">xn.applicant.feedback.search</field>
+        <field name="model">xn.applicant.feedback</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="applicant_id"/>
+                <field name="job_id"/>
+                <field name="interviewer_id"/>
+                <filter name="yesterday" string="Yesterday"
+                        domain="[('date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="today" string="Today"
+                        domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="this_week" string="Last 7 Days"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="mine" string="My Feedback" domain="[('interviewer_id', '=', uid)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_job" string="Job Position" context="{'group_by': 'job_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_round" string="Hiring Step" context="{'group_by': 'xn_round'}"/>
+                    <filter name="group_interviewer" string="Interviewer" context="{'group_by': 'interviewer_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_applicant_feedback_report" model="ir.actions.act_window">
+        <field name="name">Interviews</field>
+        <field name="res_model">xn.applicant.feedback</field>
+        <field name="view_mode">pivot,tree</field>
+        <field name="context">{'search_default_yesterday': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No interview feedback for this period</p>
+            <p>Interviews are counted from the feedback interviewers submit.</p>
+        </field>
+    </record>
+</odoo>

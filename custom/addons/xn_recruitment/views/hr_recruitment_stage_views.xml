@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_recruitment_stage_form_xn" model="ir.ui.view">
+        <field name="name">hr.recruitment.stage.form.xn</field>
+        <field name="model">hr.recruitment.stage</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_recruitment_stage_form"/>
+        <field name="arch" type="xml">
+            <field name="template_id" position="after">
+                <field name="xn_round"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="hr_recruitment_stage_tree_xn" model="ir.ui.view">
+        <field name="name">hr.recruitment.stage.tree.xn</field>
+        <field name="model">hr.recruitment.stage</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_recruitment_stage_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="xn_round" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Access follows the core Recruitment groups:
+
+        * Recruitment Officer / Administrator: HR, the Operations Manager and
+          the Partners. Every candidate, salary figures included.
+        * Interviewer: sees only candidates they are an interviewer on (core
+          rule hr_applicant_interviewer_rule), never salary fields (core
+          groups= on salary_*, and on xn_current_ctc / xn_agency_fee here).
+          Moving a candidate into a round adds that round's panel as
+          interviewers, which is what opens the candidate to them.
+
+        Feedback below: interviewers read the feedback on candidates they can
+        see (the previous round's included) and write only their own.
+    -->
+    <data noupdate="1">
+        <record id="xn_feedback_rule_interviewer_read" model="ir.rule">
+            <field name="name">Interview feedback: interviewers see their candidates</field>
+            <field name="model_id" ref="model_xn_applicant_feedback"/>
+            <field name="domain_force">['|', '|',
+                ('interviewer_id', '=', user.id),
+                ('applicant_id.interviewer_ids', 'in', user.id),
+                ('applicant_id.job_id.interviewer_ids', 'in', user.id)]</field>
+            <field name="groups" eval="[(4, ref('hr_recruitment.group_hr_recruitment_interviewer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="xn_feedback_rule_interviewer_own" model="ir.rule">
+            <field name="name">Interview feedback: interviewers write their own</field>
+            <field name="model_id" ref="model_xn_applicant_feedback"/>
+            <field name="domain_force">[('interviewer_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('hr_recruitment.group_hr_recruitment_interviewer'))]"/>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="xn_feedback_rule_officer" model="ir.rule">
+            <field name="name">Interview feedback: recruitment officers see all</field>
+            <field name="model_id" ref="model_xn_applicant_feedback"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('hr_recruitment.group_hr_recruitment_user'))]"/>
+        </record>
+
+        <record id="xn_feedback_rule_company" model="ir.rule">
+            <field name="name">Interview feedback: multi-company</field>
+            <field name="model_id" ref="model_xn_applicant_feedback"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="xn_stage_log_rule_company" model="ir.rule">
+            <field name="name">Applicant stage log: multi-company</field>
+            <field name="model_id" ref="model_xn_applicant_stage_log"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="xn_position_report_rule_company" model="ir.rule">
+            <field name="name">Hiring status: multi-company</field>
+            <field name="model_id" ref="model_xn_recruitment_position_report"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="xn_source_report_rule_company" model="ir.rule">
+            <field name="name">Source performance: multi-company</field>
+            <field name="model_id" ref="model_xn_recruitment_source_report"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>
