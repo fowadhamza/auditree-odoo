@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherits the xn_recruitment form extension, whose fields it anchors on. -->
+    <record id="hr_applicant_view_form_xn_cv" model="ir.ui.view">
+        <field name="name">hr.applicant.form.xn.cv</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="xn_recruitment.hr_applicant_view_form_xn"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='archive_applicant']" position="before">
+                <button string="Read CV" name="action_xn_read_cv" type="object"
+                        invisible="not active or not id"
+                        groups="hr_recruitment.group_hr_recruitment_user"
+                        help="Fill the empty candidate fields from the attached CV"/>
+            </xpath>
+            <field name="xn_location" position="after">
+                <field name="xn_current_employer"/>
+                <field name="xn_current_designation"/>
+            </field>
+            <xpath expr="//page[@name='xn_feedback']" position="before">
+                <page string="CV Summary" name="xn_cv_summary">
+                    <field name="xn_cv_summary" placeholder="Filled in by Read CV"/>
+                    <group groups="hr_recruitment.group_hr_recruitment_user">
+                        <field name="xn_cv_state"/>
+                        <field name="xn_cv_read_on" invisible="not xn_cv_read_on"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_case_tree_view_job_xn_cv" model="ir.ui.view">
+        <field name="name">hr.applicant.tree.xn.cv</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="xn_recruitment.crm_case_tree_view_job_xn"/>
+        <field name="arch" type="xml">
+            <field name="xn_location" position="after">
+                <field name="xn_current_employer" optional="hide"/>
+                <field name="xn_cv_state" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="hr_applicant_view_search_bis_xn_cv" model="ir.ui.view">
+        <field name="name">hr.applicant.search.xn.cv</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="xn_recruitment.hr_applicant_view_search_bis_xn"/>
+        <field name="arch" type="xml">
+            <filter name="xn_no_show" position="after">
+                <filter name="xn_cv_needs_hand" string="CV Not Read"
+                        domain="[('xn_cv_state', 'in', ('no_file', 'no_text', 'failed'))]"/>
+            </filter>
+        </field>
+    </record>
+</odoo>

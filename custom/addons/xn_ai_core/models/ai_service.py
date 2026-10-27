@@ -117,13 +117,16 @@ class AiService(models.AbstractModel):
 
     @api.model
     def call(self, messages, purpose, tools=None, max_tokens=None,
-             res_model=None, res_id=None):
+             res_model=None, res_id=None, json_output=False):
         """Send `messages` to the configured provider and return the reply.
 
         :param messages: list of {"role": ..., "content": ...} dicts
         :param purpose: short slug naming the calling feature, for the log
         :param tools: optional list of tool definitions
         :param max_tokens: output ceiling; falls back to the configured default
+        :param json_output: ask the provider for a single JSON object as the
+            reply content. The prompt must still say so -- Azure rejects
+            JSON mode when no message mentions JSON.
         :return: dict with keys `content`, `tool_calls`, `log_id`
 
         Raises UserError when the call is refused or the provider fails. The
@@ -170,7 +173,7 @@ class AiService(models.AbstractModel):
             max_tokens = int(self._param('max_tokens_default', 2048))
 
         try:
-            result = self._dispatch(messages, tools, max_tokens)
+            result = self._dispatch(messages, tools, max_tokens, json_output)
         except Exception as exc:  # noqa: BLE001 - logged, then re-raised as UserError
             log_values.update({
                 'state': 'error',
@@ -213,14 +216,14 @@ class AiService(models.AbstractModel):
     # ------------------------------------------------------------------
 
     @api.model
-    def _dispatch(self, messages, tools, max_tokens):
+    def _dispatch(self, messages, tools, max_tokens, json_output=False):
         provider = self._param('provider', 'azure')
         if provider == 'azure':
-            return self._call_azure(messages, tools, max_tokens)
+            return self._call_azure(messages, tools, max_tokens, json_output)
         raise UserError(_("Unknown AI provider configured: %s", provider))
 
     @api.model
-    def _call_azure(self, messages, tools, max_tokens):
+    def _call_azure(self, messages, tools, max_tokens, json_output=False):
         endpoint = (self._param('azure_endpoint') or '').rstrip('/')
         deployment = self._param('azure_deployment')
         api_version = self._param('azure_api_version', DEFAULT_API_VERSION)
@@ -240,6 +243,8 @@ class AiService(models.AbstractModel):
         if tools:
             body['tools'] = tools
             body['tool_choice'] = 'auto'
+        if json_output:
+            body['response_format'] = {'type': 'json_object'}
 
         response = requests.post(
             url,
