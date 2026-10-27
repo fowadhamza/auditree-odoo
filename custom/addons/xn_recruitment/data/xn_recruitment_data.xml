@@ -7,7 +7,7 @@
             <field name="value">hr@auditree.com</field>
         </record>
         <!-- Copied on every interviewer handover email; Nishath is added by the
-             install hook / 17.0.1.1.0 migration once her user is found. -->
+             install hook / 17.0.1.2.0 migration once her user is found. -->
         <record id="ir_config_handover_cc" model="ir.config_parameter">
             <field name="key">xn_recruitment.handover_cc</field>
             <field name="value">hr@auditree.com</field>

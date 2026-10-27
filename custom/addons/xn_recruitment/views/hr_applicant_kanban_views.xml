@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Pipeline card: what HR triages on without opening the candidate.
+        Tags (hold, reapplied, agency, referral), a facts line and the latest
+        interview feedback. No salary figures: interviewers see these cards.
+    -->
+    <record id="hr_kanban_view_applicant_xn" model="ir.ui.view">
+        <field name="name">hr.applicant.kanban.xn</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_kanban_view_applicant"/>
+        <field name="arch" type="xml">
+            <field name="application_status" position="after">
+                <field name="xn_on_hold"/>
+                <field name="xn_reapplied_early"/>
+                <field name="xn_agency_id"/>
+                <field name="xn_referrer_id"/>
+                <field name="xn_qualification"/>
+                <field name="xn_total_experience"/>
+                <field name="xn_notice_days"/>
+                <field name="xn_last_recommendation"/>
+                <field name="xn_last_feedback_user_id"/>
+            </field>
+
+            <field name="categ_ids" position="before">
+                <div class="o_xn_card_tags d-flex flex-wrap gap-1 mt-1">
+                    <span class="badge rounded-pill text-bg-warning" invisible="not xn_on_hold">On Hold</span>
+                    <span class="badge rounded-pill text-bg-danger" invisible="not xn_reapplied_early"
+                          title="Refused less than 6 months ago">Reapplied</span>
+                    <span class="badge rounded-pill text-bg-light border" invisible="not xn_agency_id"
+                          title="Recruitment agency">
+                        <i class="fa fa-building-o me-1" role="img" aria-label="Agency"/><field name="xn_agency_id"/>
+                    </span>
+                    <span class="badge rounded-pill text-bg-light border" invisible="not xn_referrer_id"
+                          title="Employee referral">
+                        <i class="fa fa-user-plus me-1" role="img" aria-label="Referral"/><field name="xn_referrer_id"/>
+                    </span>
+                </div>
+
+                <t t-set="xn_facts" t-value="[
+                    record.xn_qualification.raw_value,
+                    record.xn_total_experience.raw_value ? record.xn_total_experience.raw_value + (record.xn_total_experience.raw_value === 1 ? ' yr' : ' yrs') : false,
+                    record.xn_notice_days.raw_value ? record.xn_notice_days.raw_value + 'd notice' : false,
+                ].filter(fact => fact)"/>
+                <div class="o_xn_card_facts small text-muted mt-1" t-if="xn_facts.length">
+                    <t t-esc="xn_facts.join(' &#183; ')"/>
+                </div>
+
+                <div class="o_xn_card_feedback small mt-1" t-if="record.xn_last_recommendation.raw_value">
+                    <i t-if="record.xn_last_recommendation.raw_value === 'next'"
+                       class="fa fa-thumbs-up text-success me-1" role="img" aria-label="Shortlisted"/>
+                    <i t-if="record.xn_last_recommendation.raw_value === 'hold'"
+                       class="fa fa-pause-circle text-warning me-1" role="img" aria-label="Hold"/>
+                    <i t-if="record.xn_last_recommendation.raw_value === 'reject'"
+                       class="fa fa-thumbs-down text-danger me-1" role="img" aria-label="Reject"/>
+                    <t t-esc="record.xn_last_recommendation.value"/>
+                    <span class="text-muted" t-if="record.xn_last_feedback_user_id.raw_value">
+                        (<t t-esc="record.xn_last_feedback_user_id.value"/>)
+                    </span>
+                </div>
+            </field>
+        </field>
+    </record>
+</odoo>

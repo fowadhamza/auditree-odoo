@@ -68,6 +68,13 @@ class HrApplicant(models.Model):
     xn_feedback_ids = fields.One2many(
         'xn.applicant.feedback', 'applicant_id', string='Interview Feedback')
     xn_feedback_count = fields.Integer(compute='_compute_xn_feedback_count')
+    # Latest feedback, stored so the pipeline cards can show it.
+    xn_last_recommendation = fields.Selection(
+        RECOMMENDATIONS, string='Latest Recommendation',
+        compute='_compute_xn_last_feedback', store=True)
+    xn_last_feedback_user_id = fields.Many2one(
+        'res.users', string='Latest Feedback By',
+        compute='_compute_xn_last_feedback', store=True)
     xn_refused_on = fields.Date(string='Refused On', readonly=True, copy=False)
     xn_previous_application_id = fields.Many2one(
         'hr.applicant', string='Previously Refused Application', readonly=True, copy=False)
@@ -96,6 +103,15 @@ class HrApplicant(models.Model):
     def _compute_xn_feedback_count(self):
         for applicant in self:
             applicant.xn_feedback_count = len(applicant.xn_feedback_ids)
+
+    @api.depends('xn_feedback_ids.recommendation', 'xn_feedback_ids.date',
+                 'xn_feedback_ids.interviewer_id')
+    def _compute_xn_last_feedback(self):
+        for applicant in self:
+            # Feedback is ordered newest first (date desc, id desc).
+            latest = applicant.xn_feedback_ids[:1]
+            applicant.xn_last_recommendation = latest.recommendation
+            applicant.xn_last_feedback_user_id = latest.interviewer_id
 
     # ------------------------------------------------------------------
     # ORM

@@ -24,14 +24,14 @@
                 </button>
             </xpath>
 
-            <xpath expr="//sheet" position="before">
-                <div class="alert alert-warning mb-0" role="alert" invisible="not xn_reapplied_early">
-                    This candidate was refused less than 6 months ago. See Previously Refused
-                    Application under Status.
-                </div>
-                <div class="alert alert-info mb-0" role="alert" invisible="not xn_on_hold">
-                    This candidate is on hold.
-                </div>
+            <!-- Corner ribbons, one at a time; the core Refused/Hired ribbons
+                 show on inactive or hired candidates, so these stay off then. -->
+            <xpath expr="//div[@name='button_box']" position="before">
+                <widget name="web_ribbon" title="On Hold" bg_color="text-bg-warning"
+                        invisible="not xn_on_hold or not active or date_closed"/>
+                <widget name="web_ribbon" title="Reapplied" bg_color="text-bg-danger"
+                        tooltip="Refused less than 6 months ago, see Previously Refused Application"
+                        invisible="not xn_reapplied_early or xn_on_hold or not active or date_closed"/>
             </xpath>
 
             <field name="medium_id" position="after">
@@ -72,17 +72,36 @@
 
             <xpath expr="//notebook" position="inside">
                 <page string="Interview Feedback" name="xn_feedback">
-                    <field name="xn_feedback_ids" readonly="1">
-                        <tree>
+                    <field name="xn_feedback_ids" readonly="1" mode="kanban">
+                        <kanban class="o_xn_feedback_cards">
                             <field name="date"/>
                             <field name="stage_id"/>
-                            <field name="interviewer_id" widget="many2one_avatar_user"/>
-                            <field name="recommendation" widget="badge"
-                                   decoration-success="recommendation == 'next'"
-                                   decoration-warning="recommendation == 'hold'"
-                                   decoration-danger="recommendation == 'reject'"/>
+                            <field name="interviewer_id"/>
+                            <field name="recommendation"/>
                             <field name="comments"/>
-                        </tree>
+                            <templates>
+                                <t t-name="kanban-box">
+                                    <div class="oe_kanban_card oe_kanban_global_click">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <field name="interviewer_id" widget="many2one_avatar_user"/>
+                                            <div class="flex-grow-1 lh-sm">
+                                                <strong><t t-esc="record.interviewer_id.value"/></strong>
+                                                <div class="small text-muted">
+                                                    <t t-esc="record.stage_id.value"/> - <t t-esc="record.date.value"/>
+                                                </div>
+                                            </div>
+                                            <field name="recommendation" widget="badge"
+                                                   decoration-success="recommendation == 'next'"
+                                                   decoration-warning="recommendation == 'hold'"
+                                                   decoration-danger="recommendation == 'reject'"/>
+                                        </div>
+                                        <div class="mt-2 text-break" style="white-space: pre-line;">
+                                            <t t-esc="record.comments.value"/>
+                                        </div>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
                     </field>
                 </page>
                 <page string="Offer &amp; Joining" name="xn_offer"

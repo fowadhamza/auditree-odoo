@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Auditree Recruitment",
-    "version": "17.0.1.1.0",
+    "version": "17.0.1.2.0",
     "category": "Human Resources/Recruitment",
     "summary": "Auditree's hiring process on Odoo Recruitment: interview rounds and "
                "panels, interviewer feedback, automatic emails, daily hiring reports.",
@@ -65,6 +65,7 @@ Reports (Recruitment > Reporting)
         "views/hr_recruitment_stage_views.xml",
         "views/hr_job_views.xml",
         "views/hr_applicant_views.xml",
+        "views/hr_applicant_kanban_views.xml",
         "views/res_partner_views.xml",
         "views/xn_recruitment_report_views.xml",
         "views/xn_recruitment_menus.xml",
