@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Auditree Recruitment",
-    "version": "17.0.1.0.0",
+    "version": "17.0.1.1.0",
     "category": "Human Resources/Recruitment",
     "summary": "Auditree's hiring process on Odoo Recruitment: interview rounds and "
                "panels, interviewer feedback, automatic emails, daily hiring reports.",

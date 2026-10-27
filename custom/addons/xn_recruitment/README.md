@@ -9,7 +9,7 @@ the October 2026 questionnaire. Tier 1 (in-house): edit freely.
 |---|---|
 | Hiring steps | `hr.recruitment.stage.xn_round` (`models/hr_recruitment_stage.py`). Logic keys off the step, never stage names or ids. `ROUNDS` defines the order. |
 | Interview panels | `xn.recruitment.panel` + `.line` (round -> users); `hr.job.xn_panel_id`. |
-| Handover email | `hr.applicant._xn_handover_to_interviewers`, called from `write()` when a candidate moves **forward** into `round1`/`round2`/`final`/`decision`. Adds the panel as `interviewer_ids` (that is what gives Interviewer-only users access), emails them from HR with the CV files and the previous round's feedback, schedules a 1-day to-do. Body: `views/mail_templates.xml`. |
+| Handover email | `hr.applicant._xn_handover_to_interviewers`, called from `write()` when a candidate moves **forward** into `round1`/`round2`/`final`/`decision`. Adds the panel as `interviewer_ids` (that is what gives Interviewer-only users access), sends each interviewer HR's "CV \|\| job \|\| candidate" email with the CV files and the previous round's feedback, Cc system parameter `xn_recruitment.handover_cc` (hr@ + Nishath, filled by the hook / 17.0.1.1.0 migration), and schedules a 1-day to-do without its own "assigned to you" email. Body and HR signature: `views/mail_templates.xml`. |
 | Feedback | `xn.applicant.feedback`; "Give Feedback" button on the applicant. Rules in `security/xn_recruitment_security.xml`. |
 | Rejection email | Not code: every refuse reason (`data/xn_recruitment_data.xml`) carries `mail_template_candidate_rejection`, and the core Refuse wizard sends a reason's template. Stock reasons are archived by the hook. |
 | Reapplication | `_xn_check_reapplication` on create (skip with context `xn_skip_reapply_check`, e.g. for imports). |
@@ -44,9 +44,16 @@ auditree.com (Microsoft 365: `smtp.office365.com`, port 587, STARTTLS, a mailbox
 ## Moving candidates
 
 `xn_auditree_erp` makes the stage bar read-only and moves candidates with "Approve And
-Move To Next", which goes to the stage whose sequence is current + 1. The hook numbers
-HR's stages 1..9 consecutively so that button walks the rounds in order; keep the
-sequences consecutive if stages are added.
+Move To Next" / "Revert", which go to the next / previous active stage by sequence
+(gaps are fine). The hook numbers HR's stages 1..9.
+
+## Retiring a stage
+
+Stages can't be deleted once a candidate has moved through them (`xn.applicant.stage.log`
+references them), so `xn_recruitment` adds `active` to `hr.recruitment.stage`. Archive
+from Configuration > Stages (developer mode): select > Action > Archive. Archiving is
+refused while active candidates still sit in the stage. Archived stages leave the board
+and the move buttons; their movement history and reports are kept.
 
 ## Not done yet (phase 2)
 

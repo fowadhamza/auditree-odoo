@@ -51,14 +51,11 @@ class HRApplicant(models.Model):
                  ('job_ids', '=', False),
                  ('job_ids', '=', rec.job_id.id),
 
-             ], order='sequence asc')
-             sequences=stage_ids.mapped('sequence')
-             next_sequence=rec.stage_id.sequence+1
-             print("next_sequence",next_sequence,sequences)
-             if next_sequence in sequences:
-                 next_stage=stage_ids.filtered(lambda r: r.sequence == next_sequence)
-                 print("next_stage",next_stage.name)
-                 rec.update({'stage_id':next_stage.id})
+             ], order='sequence asc, id asc')
+             # Next stage by sequence, so gaps left by archived stages are skipped.
+             next_stage = stage_ids.filtered(lambda r: r.sequence > rec.stage_id.sequence)[:1]
+             if next_stage:
+                 rec.update({'stage_id': next_stage.id})
 
     def revert_and_move_back(self):
         for rec in self:
@@ -67,9 +64,7 @@ class HRApplicant(models.Model):
                 ('job_ids', '=', False),
                 ('job_ids', '=', rec.job_id.id),
 
-            ], order='sequence asc')
-            sequences = stage_ids.mapped('sequence')
-            next_sequence = rec.stage_id.sequence - 1
-            if next_sequence in sequences:
-                next_stage = stage_ids.filtered(lambda r: r.sequence == next_sequence)
-                rec.update({'stage_id': next_stage.id})
+            ], order='sequence asc, id asc')
+            previous_stage = stage_ids.filtered(lambda r: r.sequence < rec.stage_id.sequence)[-1:]
+            if previous_stage:
+                rec.update({'stage_id': previous_stage.id})

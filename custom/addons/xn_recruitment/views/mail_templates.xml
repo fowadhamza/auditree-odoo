@@ -6,47 +6,46 @@
         the CV files, which a template on hr.applicant cannot select.
         No salary figures in either: interviewers must not see them.
     -->
+    <!-- Matches the "CV ||" email HR used to send by hand, signature included. -->
     <template id="mail_body_next_interviewer">
-        <div style="font-family: Arial, sans-serif; font-size: 13px; color: #222;">
-            <p>Hello,</p>
-            <p><b t-out="applicant.partner_name or applicant.name"/> has been moved to
-                <b t-out="round_label"/> for <b t-out="applicant.job_id.name or '-'"/>.
-                <t t-if="cv_count">The CV is attached.</t>
-                <t t-else="">No CV file is attached to the application yet.</t></p>
-            <table style="border-collapse: collapse; margin: 8px 0;">
-                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Qualification</td>
-                    <td t-out="applicant.xn_qualification or '-'"/></tr>
-                <tr><td style="padding: 2px 12px 2px 0; color: #666;">CA / ACCA papers passed</td>
-                    <td t-out="applicant.xn_papers_passed or '-'"/></tr>
-                <tr><td style="padding: 2px 12px 2px 0; color: #666;">CA Final attempts</td>
-                    <td t-out="applicant.xn_ca_final_attempts or '-'"/></tr>
-                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Experience</td>
-                    <td><t t-out="applicant.xn_total_experience or 0"/> years total,
-                        <t t-out="applicant.xn_relevant_experience or 0"/> relevant</td></tr>
-                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Notice period</td>
-                    <td><t t-out="applicant.xn_notice_days"/> days</td></tr>
-                <tr><td style="padding: 2px 12px 2px 0; color: #666;">Location</td>
-                    <td t-out="applicant.xn_location or '-'"/></tr>
-            </table>
+        <div style="font-family: Calibri, Arial, sans-serif; font-size: 15px; color: #222;">
+            <p>Dear <t t-out="first_name"/>,</p>
+            <p t-if="has_cv">Please find attached the CV of <b t-out="candidate"/> for the
+                position for which you will be conducting the interview.</p>
+            <p t-else="">You will be conducting the interview of <b t-out="candidate"/>;
+                the CV will follow separately.</p>
             <t t-if="feedback">
                 <p style="margin-top: 16px;"><b>Feedback from <t t-out="previous_stage.name"/></b></p>
                 <t t-foreach="feedback" t-as="note">
-                    <div style="border-left: 3px solid #875A7B; padding: 4px 10px; margin: 6px 0;">
-                        <div style="color: #666;"><t t-out="note.interviewer_id.name"/>,
-                            <t t-out="note.date"/>:
+                    <div style="border-left: 3px solid #3bb8c3; padding: 4px 10px; margin: 6px 0;">
+                        <div style="color: #666;"><t t-out="note.interviewer_id.name"/>:
                             <b t-out="recommendations.get(note.recommendation)"/></div>
                         <div style="white-space: pre-wrap;" t-out="note.comments"/>
                     </div>
                 </t>
             </t>
-            <t t-elif="previous_stage">
-                <p style="color: #666;">No feedback was recorded for <t t-out="previous_stage.name"/>.</p>
-            </t>
-            <p style="margin-top: 16px;">After the interview, please record your feedback within
-                24 hours using <b>Give Feedback</b> on the application:</p>
-            <p><a t-att-href="url"
-                  style="background-color: #875A7B; padding: 8px 16px; color: #ffffff; text-decoration: none; border-radius: 5px;">Open the application</a></p>
-            <p>Thanks,<br/>HR Team, Auditree</p>
+
+            <p style="margin-top: 24px; font-family: Georgia, serif; font-size: 16px; color: #444;">Thanks &amp; Regards,</p>
+            <table style="border-collapse: collapse; font-family: Georgia, serif; font-size: 13px; border-bottom: 1px solid #c8b98a;">
+                <tr>
+                    <td style="vertical-align: top; padding: 0 40px 8px 0;">
+                        <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">HR</div>
+                        <img t-att-src="logo_url" alt="Auditree" style="height: 45px;"/>
+                    </td>
+                    <td style="vertical-align: top; padding: 0 0 8px 0; width: 260px;">
+                        <div><b>E:</b> <a t-att-href="'mailto:%s' % hr_email" style="color: #222;" t-out="hr_email"/></div>
+                        <div><b>A:</b> AudiTree, 35/2588A3, Pearl Building, Ponekkara Road,
+                            Meenchira AIMS P.O, Edappally, 682041, India</div>
+                    </td>
+                </tr>
+            </table>
+            <p style="margin: 12px 0 2px 0;"><a href="https://www.auditree.com"
+                style="color: #222; font-weight: bold; font-size: 13px;">www.auditree.com</a></p>
+            <p style="font-size: 10px; color: #444; margin: 0;">The content of this email is
+                confidential and intended for the recipient specified in the message only. It is
+                strictly forbidden to share any part of this message with any third party without
+                written consent from the sender. If you received this message by mistake, please
+                reply and delete the message to prevent similar errors in the future.</p>
         </div>
     </template>
 

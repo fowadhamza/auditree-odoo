@@ -152,9 +152,10 @@ class HrApplicant(models.Model):
         """Give the candidate to the new round's interviewers.
 
         They become interviewers on the applicant (which is what grants an
-        Interviewer-only user access to it), get an email from HR with the CV
-        attached and the feedback from the round just finished, and a to-do
-        to send their own feedback within a day.
+        Interviewer-only user access to it), each get HR's "CV ||" email with
+        the CV attached and the feedback from the round just finished (Cc the
+        xn_recruitment.handover_cc addresses), and a to-do to send their own
+        feedback within a day. The to-do sends no email of its own.
         """
         self.ensure_one()
         round_label = ROUND_LABELS.get(new_stage.xn_round, new_stage.name)
@@ -178,29 +179,35 @@ class HrApplicant(models.Model):
             previous_feedback = self.sudo().xn_feedback_ids.filtered(
                 lambda feedback: feedback.stage_id == old_stage)
         cvs = self._xn_cv_attachments()
-        body = self.env['ir.qweb']._render('xn_recruitment.mail_body_next_interviewer', {
-            'applicant': self.sudo(),
-            'round_label': round_label,
-            'previous_stage': old_stage,
-            'feedback': previous_feedback,
-            'recommendations': dict(RECOMMENDATIONS),
-            'cv_count': len(cvs),
-            'url': '%s/web#id=%s&model=hr.applicant&view_type=form' % (
-                self.get_base_url(), self.id),
-        })
         hr_email = self._xn_hr_email()
-        self.env['mail.mail'].sudo().create({
-            'subject': _("Interview %(round)s: %(candidate)s for %(job)s",
-                         round=round_label,
-                         candidate=self.partner_name or self.name,
-                         job=self.job_id.name or '-'),
-            'email_from': formataddr((_('Auditree HR'), hr_email)),
-            'reply_to': hr_email,
-            'recipient_ids': [(6, 0, users.partner_id.ids)],
-            'body_html': body,
-            'attachment_ids': [(6, 0, cvs.ids)],
-            'auto_delete': True,
-        })
+        cc_emails = self._xn_handover_cc()
+        candidate = self.partner_name or self.name
+        # One email per interviewer so each is greeted by name, as HR does by hand.
+        for user in users:
+            body = self.env['ir.qweb']._render('xn_recruitment.mail_body_next_interviewer', {
+                'applicant': self.sudo(),
+                'first_name': (user.name or '').split()[0] if user.name else '',
+                'candidate': candidate,
+                'previous_stage': old_stage,
+                'feedback': previous_feedback,
+                'recommendations': dict(RECOMMENDATIONS),
+                'has_cv': bool(cvs),
+                'hr_email': hr_email,
+                'logo_url': '%s/logo.png?company=%s' % (
+                    self.get_base_url(), self.company_id.id or self.env.company.id),
+            })
+            user_email = (user.email or '').lower()
+            self.env['mail.mail'].sudo().create({
+                'subject': "CV || %s || %s" % (self.job_id.name or '-', candidate),
+                'email_from': formataddr((_('Auditree HR'), hr_email)),
+                'reply_to': hr_email,
+                'recipient_ids': [(6, 0, user.partner_id.ids)],
+                'email_cc': ', '.join(email for email in cc_emails
+                                      if email.lower() != user_email),
+                'body_html': body,
+                'attachment_ids': [(6, 0, cvs.ids)],
+                'auto_delete': True,
+            })
         self.message_post(
             body=Markup(_("Sent to %(people)s for <b>%(round)s</b> with %(count)s CV file(s) "
                           "and %(feedback)s feedback note(s) from the previous round.")) % {
@@ -211,8 +218,9 @@ class HrApplicant(models.Model):
             },
             subtype_xmlid='mail.mt_note')
         deadline = fields.Date.context_today(self) + timedelta(days=FEEDBACK_DUE_DAYS)
+        # quick_update: no "assigned to you" email on top of the one above.
         for user in users:
-            self.sudo().activity_schedule(
+            self.sudo().with_context(mail_activity_quick_update=True).activity_schedule(
                 'mail.mail_activity_data_todo',
                 date_deadline=deadline,
                 summary=_("Interview and feedback: %s", round_label),
@@ -231,6 +239,13 @@ class HrApplicant(models.Model):
     def _xn_hr_email(self):
         return self.env['ir.config_parameter'].sudo().get_param(
             'xn_recruitment.hr_email', 'hr@auditree.com')
+
+    @api.model
+    def _xn_handover_cc(self):
+        """Addresses copied on every handover email (comma-separated parameter)."""
+        value = self.env['ir.config_parameter'].sudo().get_param(
+            'xn_recruitment.handover_cc', self._xn_hr_email())
+        return [email.strip() for email in value.split(',') if email.strip()]
 
     # ------------------------------------------------------------------
     # Reapplication check

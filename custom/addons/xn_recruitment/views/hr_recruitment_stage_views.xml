@@ -5,6 +5,10 @@
         <field name="model">hr.recruitment.stage</field>
         <field name="inherit_id" ref="hr_recruitment.hr_recruitment_stage_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//sheet/group[@name='stage_definition']" position="before">
+                <field name="active" invisible="1"/>
+                <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+            </xpath>
             <field name="template_id" position="after">
                 <field name="xn_round"/>
             </field>
@@ -18,7 +22,21 @@
         <field name="arch" type="xml">
             <field name="name" position="after">
                 <field name="xn_round" optional="show"/>
+                <field name="active" column_invisible="1"/>
             </field>
+        </field>
+    </record>
+
+    <!-- Core has no search view for stages; this one adds the Archived filter. -->
+    <record id="hr_recruitment_stage_search_xn" model="ir.ui.view">
+        <field name="name">hr.recruitment.stage.search.xn</field>
+        <field name="model">hr.recruitment.stage</field>
+        <field name="arch" type="xml">
+            <search string="Stages">
+                <field name="name"/>
+                <field name="xn_round"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
         </field>
     </record>
 </odoo>

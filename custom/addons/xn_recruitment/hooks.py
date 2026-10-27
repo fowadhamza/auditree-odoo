@@ -30,6 +30,9 @@ PANEL_INTERVIEWERS = {
     'xn_recruitment.panel_non_technical_decision': ['Sharook', 'Fowad'],
 }
 
+# Copied on every interviewer handover email besides hr@ (first names, internal users).
+HANDOVER_CC_NAMES = ['Nishath']
+
 # Channels HR uses. Existing sources with the same name are reused
 # (utm.source names are unique).
 SOURCES = [
@@ -46,6 +49,7 @@ STOCK_REFUSE_REASONS = ['hr_recruitment.refuse_reason_%d' % index for index in r
 def post_init_hook(env):
     _setup_stages(env)
     _setup_panels(env)
+    _setup_handover_cc(env)
     _setup_jobs(env)
     _setup_sources_and_agencies(env)
     _setup_refuse_reasons(env)
@@ -101,6 +105,23 @@ def _setup_panels(env):
         if users:
             line.write({'user_ids': [(4, user.id) for user in users]})
             interviewer_group.write({'users': [(4, user.id) for user in users]})
+
+
+def _setup_handover_cc(env):
+    """Add HANDOVER_CC_NAMES' emails to xn_recruitment.handover_cc; skip ambiguous names."""
+    Param = env['ir.config_parameter'].sudo()
+    emails = env['hr.applicant']._xn_handover_cc()
+    known = {email.lower() for email in emails}
+    for first_name in HANDOVER_CC_NAMES:
+        matches = env['res.users'].search([('share', '=', False), ('name', '=ilike', first_name + '%')])
+        if len(matches) != 1 or not matches.email:
+            _logger.warning("xn_recruitment: %d users match '%s' for the handover Cc; add the "
+                            "address to xn_recruitment.handover_cc by hand", len(matches), first_name)
+            continue
+        if matches.email.lower() not in known:
+            emails.append(matches.email)
+            known.add(matches.email.lower())
+    Param.set_param('xn_recruitment.handover_cc', ', '.join(emails))
 
 
 def _setup_jobs(env):
