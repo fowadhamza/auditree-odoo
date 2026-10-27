@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_form_xn_approval" model="ir.ui.view">
+        <field name="name">purchase.order.form.xn.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Rule-governed orders are approved on the review page, which
+                 works for approvers without Purchase rights. -->
+            <xpath expr="//header/button[@name='button_approve']" position="attributes">
+                <attribute name="invisible">state != 'to approve' or xn_approver_id</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='button_approve']" position="after">
+                <button name="xn_action_open_review" type="object"
+                        string="Review and Approve" class="oe_highlight"
+                        invisible="state != 'to approve' or not xn_is_approver"/>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <div class="alert alert-warning" role="alert"
+                     invisible="not xn_rejection_reason or state != 'draft'">
+                    <strong>Rejected:</strong>
+                    <field name="xn_rejection_reason" class="d-inline"/>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='partner_ref']" position="after">
+                <field name="commercial_partner_id" invisible="1"/>
+                <field name="xn_paid_by_card"
+                       readonly="state not in ('draft', 'sent')"/>
+                <label for="xn_vendor_bank_id" invisible="xn_paid_by_card"/>
+                <div class="o_row" invisible="xn_paid_by_card">
+                    <field name="xn_vendor_bank_id"
+                           readonly="state not in ('draft', 'sent')"
+                           context="{'default_partner_id': commercial_partner_id}"/>
+                    <span class="badge text-bg-success"
+                          invisible="not xn_vendor_bank_id or not xn_vendor_bank_trusted">Trusted</span>
+                    <span class="badge text-bg-danger"
+                          invisible="not xn_vendor_bank_id or xn_vendor_bank_trusted">Not trusted</span>
+                </div>
+                <field name="xn_requested_by_id"
+                       readonly="state not in ('draft', 'sent')"/>
+                <field name="xn_employee_id"
+                       readonly="state not in ('draft', 'sent')"/>
+                <field name="xn_approver_id" invisible="not xn_approver_id"/>
+                <field name="xn_is_approver" invisible="1"/>
+                <field name="xn_vendor_bank_trusted" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="before">
+                <field name="xn_monthly_price" optional="show"/>
+                <field name="xn_period_start" optional="show"/>
+                <field name="xn_period_end" optional="show"/>
+                <field name="xn_period_days" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_purchase_order_filter_xn_approval" model="ir.ui.view">
+        <field name="name">purchase.order.search.xn.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[1]" position="before">
+                <filter name="xn_my_approvals" string="Waiting for My Approval"
+                        domain="[('state', '=', 'to approve'), ('xn_approver_id', '=', uid)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_purchase_order_rfq_filter_xn_approval" model="ir.ui.view">
+        <field name="name">purchase.order.rfq.search.xn.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[1]" position="before">
+                <filter name="xn_my_approvals" string="Waiting for My Approval"
+                        domain="[('state', '=', 'to approve'), ('xn_approver_id', '=', uid)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

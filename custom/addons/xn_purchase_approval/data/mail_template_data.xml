@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="mail_template_approval_request" model="mail.template">
+            <field name="name">Purchase: Approval Request</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Approval needed: {{ object.name }} - {{ object.partner_id.commercial_partner_id.name }} - {{ format_amount(object.amount_total, object.currency_id) }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
+            <field name="email_to">{{ object.xn_approver_id.email_formatted }}</field>
+            <field name="email_cc">{{ object.xn_requested_by_id.email_formatted or '' }}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-size: 13px;">
+    <p>Hi <t t-out="object.xn_approver_id.name or ''">Approver</t>,</p>
+    <p><t t-out="object.xn_requested_by_id.name or ''">Someone</t> has raised a purchase that needs your approval.</p>
+    <table style="border-collapse: collapse; margin: 12px 0;">
+        <tr>
+            <td style="padding: 4px 12px 4px 0; color: #666;">Order</td>
+            <td style="padding: 4px 0;"><strong t-out="object.name or ''">P00001</strong></td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 12px 4px 0; color: #666;">Vendor</td>
+            <td style="padding: 4px 0;" t-out="object.partner_id.commercial_partner_id.name or ''">Vendor</td>
+        </tr>
+        <tr t-if="object.xn_employee_id">
+            <td style="padding: 4px 12px 4px 0; color: #666;">For employee</td>
+            <td style="padding: 4px 0;" t-out="object.xn_employee_id.name or ''">Employee</td>
+        </tr>
+        <tr t-foreach="object.order_line.filtered(lambda l: not l.display_type)" t-as="line">
+            <td style="padding: 4px 12px 4px 0; color: #666;">Item</td>
+            <td style="padding: 4px 0;">
+                <t t-out="line.product_id.display_name or line.name or ''">Item</t>
+                x <t t-out="line.product_qty">1</t>
+                <t t-if="line.xn_period_start and line.xn_period_end">
+                    (<t t-out="format_date(line.xn_period_start)">start</t> to
+                    <t t-out="format_date(line.xn_period_end)">end</t>,
+                    <t t-out="line.xn_period_days">0</t> days)
+                </t>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 12px 4px 0; color: #666;">Total</td>
+            <td style="padding: 4px 0;"><strong t-out="format_amount(object.amount_total, object.currency_id)">0.00</strong></td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 12px 4px 0; color: #666;">Payment to</td>
+            <td style="padding: 4px 0;">
+                <t t-if="object.xn_paid_by_card">Company card</t>
+                <t t-else="">
+                    <t t-out="object.xn_vendor_bank_id.bank_id.name or ''">Bank</t>
+                    <t t-out="object.xn_vendor_bank_id.acc_number or ''">Account</t>
+                </t>
+            </td>
+        </tr>
+    </table>
+    <p style="margin: 20px 0;">
+        <a t-att-href="object.xn_review_url"
+           style="background-color: #714B67; padding: 10px 18px; color: #fff; text-decoration: none; border-radius: 4px;">
+            Review and approve
+        </a>
+    </p>
+    <p style="color: #666;">The link opens Odoo, where you can see the attached
+        documents and approve or reject the order.</p>
+</div>
+            </field>
+        </record>
+    </data>
+</odoo>

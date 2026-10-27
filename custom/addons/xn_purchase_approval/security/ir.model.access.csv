@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_xn_purchase_approval_rule_manager,xn_purchase_approval_rule_manager,model_xn_purchase_approval_rule,purchase.group_purchase_manager,1,1,1,1
+access_xn_purchase_approval_rule_user,xn_purchase_approval_rule_user,model_xn_purchase_approval_rule,purchase.group_purchase_user,1,0,0,0
