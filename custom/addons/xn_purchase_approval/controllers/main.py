@@ -40,12 +40,12 @@ class XnPurchaseReview(http.Controller):
         })
 
     @http.route('/xn_purchase/review/<int:order_id>', type='http',
-                auth='user', methods=['GET'])
+                auth='user', methods=['GET'], website=True)
     def review(self, order_id, token=None, **kw):
         return self._xn_render(self._xn_get_order(order_id, token), token)
 
     @http.route('/xn_purchase/review/<int:order_id>/approve', type='http',
-                auth='user', methods=['POST'])
+                auth='user', methods=['POST'], website=True)
     def approve(self, order_id, token=None, **kw):
         order = self._xn_get_order(order_id, token)
         if order.state == 'to approve':
@@ -53,7 +53,7 @@ class XnPurchaseReview(http.Controller):
         return self._xn_render(order, token)
 
     @http.route('/xn_purchase/review/<int:order_id>/reject', type='http',
-                auth='user', methods=['POST'])
+                auth='user', methods=['POST'], website=True)
     def reject(self, order_id, token=None, reason=None, **kw):
         order = self._xn_get_order(order_id, token)
         reason = (reason or '').strip()
@@ -73,7 +73,7 @@ class XnPurchaseReview(http.Controller):
         })
 
     @http.route('/xn_purchase/review/<int:order_id>/attachment/<int:att_id>',
-                type='http', auth='user', methods=['GET'])
+                type='http', auth='user', methods=['GET'], website=True)
     def attachment(self, order_id, att_id, token=None, **kw):
         order = self._xn_get_order(order_id, token)
         att = self._xn_attachments(order).filtered(lambda a: a.id == att_id)
