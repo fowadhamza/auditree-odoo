@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_jl_checklist_tree" model="ir.ui.view">
+        <field name="name">xn.jl.checklist.tree</field>
+        <field name="model">xn.jl.checklist</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="state != 'running'" decoration-danger="late_count">
+                <field name="employee_id"/>
+                <field name="process"/>
+                <field name="date"/>
+                <field name="exit_type" optional="show"/>
+                <field name="manager_id" optional="hide"/>
+                <field name="open_count"/>
+                <field name="late_count"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'running'"
+                       decoration-success="state == 'done'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_jl_checklist_form" model="ir.ui.view">
+        <field name="name">xn.jl.checklist.form</field>
+        <field name="model">xn.jl.checklist</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_cancel" type="object" string="Cancel Checklist"
+                            invisible="not id or state != 'running'"
+                            confirm="Cancel this checklist and all its open steps? Use this when the joiner does not join or the resignation is withdrawn."/>
+                    <field name="state" widget="statusbar" invisible="not id"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object" class="oe_stat_button"
+                                icon="fa-tasks" invisible="not id">
+                            <field name="open_count" widget="statinfo" string="Open Steps"/>
+                        </button>
+                    </div>
+                    <div class="oe_title" invisible="not id">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id" readonly="id"/>
+                            <field name="process" invisible="1"/>
+                            <label for="date" string="Joining Date" invisible="process != 'join'"/>
+                            <label for="date" string="Last Working Day" invisible="process != 'leave'"/>
+                            <div>
+                                <field name="date" readonly="state != 'running'"/>
+                            </div>
+                            <field name="exit_type" invisible="process != 'leave'"
+                                   required="process == 'leave'" readonly="id"/>
+                            <field name="bond_required" invisible="process != 'join'" readonly="id"/>
+                        </group>
+                        <group>
+                            <field name="manager_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="late_count" invisible="not id"/>
+                        </group>
+                    </group>
+                    <div class="text-muted" invisible="id or process != 'join'">
+                        Start this once the BGV report is green and the joining date is fixed.
+                        Saving creates the steps for HR, IT, Admin and Accounts.
+                    </div>
+                    <div class="text-muted" invisible="id or process != 'leave'">
+                        Saving creates the exit steps. For an immediate termination every
+                        step is due today and IT is alerted to disable access this evening.
+                    </div>
+                    <notebook invisible="not id">
+                        <page name="steps" string="Steps">
+                            <field name="task_ids" readonly="1">
+                                <tree decoration-muted="state in ['1_done', '1_canceled']"
+                                      decoration-danger="state not in ['1_done', '1_canceled'] and xn_jl_due_date and xn_jl_due_date &lt; current_date"
+                                      default_order="xn_jl_due_date, id">
+                                    <field name="xn_jl_due_date"/>
+                                    <field name="name"/>
+                                    <field name="user_ids" widget="many2many_avatar_user"/>
+                                    <field name="xn_jl_has_proof" string="Proof"/>
+                                    <field name="xn_jl_escalated"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="note" string="Notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_xn_jl_checklist_search" model="ir.ui.view">
+        <field name="name">xn.jl.checklist.search</field>
+        <field name="model">xn.jl.checklist</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <filter name="running" string="In Progress" domain="[('state', '=', 'running')]"/>
+                <filter name="join" string="Joining" domain="[('process', '=', 'join')]"/>
+                <filter name="leave" string="Leaving" domain="[('process', '=', 'leave')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_process" string="Process" context="{'group_by': 'process'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_jl_checklist" model="ir.actions.act_window">
+        <field name="name">Checklists</field>
+        <field name="res_model">xn.jl.checklist</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_running': 1, 'create': False}</field>
+    </record>
+
+    <record id="action_xn_jl_checklist_join" model="ir.actions.act_window">
+        <field name="name">Start Joining Checklist</field>
+        <field name="res_model">xn.jl.checklist</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_process': 'join'}</field>
+    </record>
+
+    <record id="action_xn_jl_checklist_leave" model="ir.actions.act_window">
+        <field name="name">Start Exit Checklist</field>
+        <field name="res_model">xn.jl.checklist</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_process': 'leave'}</field>
+    </record>
+</odoo>

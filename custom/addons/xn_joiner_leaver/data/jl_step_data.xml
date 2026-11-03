@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Steps from HR's answers (Danyal, Oct/Nov 2026) and, for IT, Admin and
+     Accounts, from the KRA register until they confirm theirs. See
+     docs/joiner-leaver-answers.md. Configuration: edit in the UI after
+     install, this file does not overwrite changes (noupdate). -->
+<odoo noupdate="1">
+
+    <!-- Joining. The checklist starts when the BGV report is green and the
+         date of joining (DOJ) is fixed. Offer, documents and BGV happen
+         before that, on the applicant. -->
+
+    <record id="step_join_letters" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">10</field>
+        <field name="name">Send the Engagement Letter and Employee Handbook for signature</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">1</field>
+    </record>
+    <record id="step_join_bond" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">11</field>
+        <field name="name">Send the Bond Agreement for signature</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">1</field>
+        <field name="condition">bond</field>
+    </record>
+    <record id="step_join_letters_signed" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">12</field>
+        <field name="name">Collect the signed Engagement Letter, Handbook and Bond</field>
+        <field name="role">hr</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_letters"/>
+        <field name="days">3</field>
+        <field name="external" eval="True"/>
+        <field name="proof_required">Signed scans</field>
+    </record>
+    <record id="step_join_doj" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">13</field>
+        <field name="name">Send the DOJ confirmation to the joiner</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">1</field>
+    </record>
+    <record id="step_join_manager_email" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">14</field>
+        <field name="name">Email the reporting manager the New Joinee Information</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">1</field>
+    </record>
+    <record id="step_join_it_request" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">15</field>
+        <field name="name">Raise the IT ticket for the asset handover and company ID</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">1</field>
+        <field name="escalate_after">1</field>
+    </record>
+    <record id="step_join_personal_bank" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">16</field>
+        <field name="name">Record the personal information and bank details in Odoo; share the bank details with Accounts</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">2</field>
+    </record>
+    <record id="step_join_salary_accounts" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">17</field>
+        <field name="name">Send the salary details to Accounts</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">-1</field>
+    </record>
+
+    <record id="step_join_it_accounts" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">20</field>
+        <field name="code">IT-006</field>
+        <field name="name">Create the Microsoft 365 and Odoo accounts and assign the licence</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_it_request"/>
+        <field name="days">1</field>
+        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
+    </record>
+    <record id="step_join_laptop_setup" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">21</field>
+        <field name="name">Set up the laptop</field>
+        <field name="role">it</field>
+        <field name="anchor">date</field>
+        <field name="days">-2</field>
+        <field name="escalate_after">0</field>
+        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
+    </record>
+    <record id="step_join_laptop_handover" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">22</field>
+        <field name="name">Hand over or courier the laptop; get the custody form signed</field>
+        <field name="role">admin</field>
+        <field name="anchor">date</field>
+        <field name="days">-1</field>
+        <field name="escalate_after">0</field>
+        <field name="proof_required">Signed custody form or courier receipt</field>
+        <field name="note">The DOJ cannot slip, so this escalates on the first day late. Deadline to confirm with Admin and IT.</field>
+    </record>
+    <record id="step_join_logins" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">23</field>
+        <field name="name">Send the login details to the joiner</field>
+        <field name="role">it</field>
+        <field name="anchor">date</field>
+        <field name="days">0</field>
+        <field name="escalate_after">0</field>
+    </record>
+    <record id="step_join_asset_forms" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">24</field>
+        <field name="name">Get the signed Asset Handover Form and Asset Declaration Form from the joiner</field>
+        <field name="role">hr</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_laptop_handover"/>
+        <field name="days">2</field>
+        <field name="external" eval="True"/>
+        <field name="proof_required">Signed asset forms</field>
+    </record>
+    <record id="step_join_inventory" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">25</field>
+        <field name="name">Update the user inventory and asset tracker; share the handover details with Accounts, Admin and HR</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_laptop_handover"/>
+        <field name="days">1</field>
+        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
+    </record>
+    <record id="step_join_courier_bill" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">26</field>
+        <field name="name">Send the courier bill to Accounts and IT (couriered laptops)</field>
+        <field name="role">admin</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_laptop_handover"/>
+        <field name="days">2</field>
+        <field name="note">No deadline in the KRA register; to confirm with Admin. Mark cancelled if the laptop was handed over in person.</field>
+    </record>
+
+    <record id="step_join_induction" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">30</field>
+        <field name="name">Induction</field>
+        <field name="role">hr</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_laptop_handover"/>
+        <field name="days">1</field>
+    </record>
+    <record id="step_join_cv_format" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">31</field>
+        <field name="name">Share the Auditree CV format</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">2</field>
+    </record>
+    <record id="step_join_mdb" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">32</field>
+        <field name="name">Update the MDB</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">5</field>
+    </record>
+    <record id="step_join_trainings" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">33</field>
+        <field name="name">Cyber security, PoSH and ISO trainings completed; certificates saved</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">10</field>
+        <field name="external" eval="True"/>
+        <field name="proof_required">Training certificates</field>
+        <field name="note">Deadline to confirm with HR.</field>
+    </record>
+    <record id="step_join_nsr" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">34</field>
+        <field name="name">Register the joiner with NASSCOM (NSR)</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">10</field>
+        <field name="proof_required">NSR registration confirmation</field>
+        <field name="note">15 calendar days of joining in the KRA register.</field>
+    </record>
+    <record id="step_join_nsr_payment_request" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">35</field>
+        <field name="name">Ask Accounts to pay the NSR registration</field>
+        <field name="role">hr</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_nsr"/>
+        <field name="days">1</field>
+    </record>
+    <record id="step_join_nsr_payment" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">36</field>
+        <field name="name">Pay the NSR registration fee</field>
+        <field name="role">accounts</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_nsr_payment_request"/>
+        <field name="days">7</field>
+        <field name="proof_required">Payment receipt</field>
+        <field name="note">Deadline from the KRA register; to confirm with Accounts.</field>
+    </record>
+    <record id="step_join_nsr_link" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">37</field>
+        <field name="name">Link the joiner's NSR profile to the Auditree dashboard</field>
+        <field name="role">accounts</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_join_nsr_payment"/>
+        <field name="days">5</field>
+        <field name="note">Needs the ITPIN. Deadline from the KRA register; to confirm with Accounts.</field>
+    </record>
+    <record id="step_join_salary_breakup" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">38</field>
+        <field name="name">Get the salary break-up and tax calculation from the outsourced partner</field>
+        <field name="role">accounts</field>
+        <field name="anchor">date</field>
+        <field name="days">5</field>
+        <field name="note">KRA register: before the 20th of the joining month. To confirm with Accounts.</field>
+    </record>
+
+    <!-- Leaving. The checklist starts when the resignation or termination
+         arrives; the date is the last working day (LWD). -->
+
+    <record id="step_leave_lwd" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">10</field>
+        <field name="name">Agree the LWD with the reporting manager and HR Head; email it to the employee</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">2</field>
+    </record>
+    <record id="step_leave_notify" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">11</field>
+        <field name="name">Tell IT and Admin about the exit</field>
+        <field name="role">hr</field>
+        <field name="anchor">start</field>
+        <field name="days">1</field>
+        <field name="escalate_after">1</field>
+    </record>
+    <record id="step_leave_interview" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">12</field>
+        <field name="name">Exit interview</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">-3</field>
+        <field name="exit_types">resignation</field>
+    </record>
+    <record id="step_leave_handover" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">13</field>
+        <field name="name">Knowledge transfer and handover complete; confirm to HR</field>
+        <field name="role">manager</field>
+        <field name="anchor">date</field>
+        <field name="days">0</field>
+        <field name="escalate_after">1</field>
+    </record>
+    <record id="step_leave_release_letter" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">14</field>
+        <field name="name">Issue the Initial Release Letter (first half of the LWD)</field>
+        <field name="role">hr</field>
+        <field name="anchor">date</field>
+        <field name="days">0</field>
+        <field name="proof_required">Initial Release Letter</field>
+    </record>
+    <record id="step_leave_access" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">15</field>
+        <field name="name">Disable all access (company ID, Microsoft 365, Odoo, VPN, certificates) at close of office hours</field>
+        <field name="role">it</field>
+        <field name="anchor">date</field>
+        <field name="days">0</field>
+        <field name="escalate_after">0</field>
+        <field name="urgent" eval="True"/>
+    </record>
+    <record id="step_leave_return_start" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">16</field>
+        <field name="name">Send the leaver the address for returning the assets</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_notify"/>
+        <field name="days">1</field>
+    </record>
+    <record id="step_leave_return_dispatch" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">17</field>
+        <field name="name">Leaver dispatches the assets; tracking ID and courier invoice received</field>
+        <field name="role">it</field>
+        <field name="anchor">date</field>
+        <field name="days">2</field>
+        <field name="external" eval="True"/>
+        <field name="proof_required">Tracking ID and courier invoice</field>
+    </record>
+    <record id="step_leave_unboxing" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">18</field>
+        <field name="name">Receive the returned assets; record the unboxing video and send it to IT</field>
+        <field name="role">admin</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_return_dispatch"/>
+        <field name="days">3</field>
+        <field name="proof_required">Unboxing video</field>
+        <field name="note">Deadline to confirm with Admin.</field>
+    </record>
+    <record id="step_leave_inspect" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">19</field>
+        <field name="name">Check the returned assets against what was issued; confirm to HR</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_unboxing"/>
+        <field name="days">1</field>
+    </record>
+    <record id="step_leave_files" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">20</field>
+        <field name="name">Keep the leaver's business files</field>
+        <field name="role">it</field>
+        <field name="anchor">date</field>
+        <field name="days">5</field>
+        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
+    </record>
+    <record id="step_leave_wipe" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">21</field>
+        <field name="name">Wipe the returned device</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_inspect"/>
+        <field name="days">3</field>
+    </record>
+    <record id="step_leave_asset_status" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">22</field>
+        <field name="name">Update the asset status</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_wipe"/>
+        <field name="days">1</field>
+    </record>
+
+    <!-- Exit checklist: starts once IT confirms the assets; each approver
+         signs off in turn, 2 working days each. -->
+    <record id="step_leave_cl_manager" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">30</field>
+        <field name="name">Exit checklist sign-off: reporting manager</field>
+        <field name="role">manager</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_inspect"/>
+        <field name="days">2</field>
+    </record>
+    <record id="step_leave_cl_admin" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">31</field>
+        <field name="name">Exit checklist sign-off: Admin</field>
+        <field name="role">admin</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_cl_manager"/>
+        <field name="days">2</field>
+    </record>
+    <record id="step_leave_cl_it" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">32</field>
+        <field name="name">Exit checklist sign-off: IT</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_cl_admin"/>
+        <field name="days">2</field>
+    </record>
+    <record id="step_leave_cl_accounts" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">33</field>
+        <field name="name">Exit checklist sign-off: Accounts</field>
+        <field name="role">accounts</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_cl_it"/>
+        <field name="days">2</field>
+    </record>
+    <record id="step_leave_cl_hr" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">34</field>
+        <field name="name">Exit checklist sign-off: HR</field>
+        <field name="role">hr</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_cl_accounts"/>
+        <field name="days">2</field>
+    </record>
+    <record id="step_leave_cl_ops" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">35</field>
+        <field name="name">Exit checklist final review: Operations Manager</field>
+        <field name="role">ops</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_cl_hr"/>
+        <field name="days">2</field>
+    </record>
+
+    <record id="step_leave_fnf" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">40</field>
+        <field name="name">Full and final settlement (pending dues, reimbursements, incentives, recoveries)</field>
+        <field name="role">accounts</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_cl_ops"/>
+        <field name="days">3</field>
+        <field name="proof_required">F and F computation</field>
+        <field name="note">KRA register: within 15 days of the LWD, or a week before the next payroll. To confirm with Accounts.</field>
+    </record>
+    <record id="step_leave_relieving" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">41</field>
+        <field name="name">Issue the Relieving Letter and F and F Statement</field>
+        <field name="role">hr</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="step_leave_fnf"/>
+        <field name="days">1</field>
+        <field name="proof_required">Relieving Letter and F and F Statement</field>
+    </record>
+    <record id="step_leave_nsr" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">42</field>
+        <field name="name">Update the leaver's status on the NSR dashboard</field>
+        <field name="role">accounts</field>
+        <field name="anchor">date</field>
+        <field name="days">5</field>
+        <field name="note">Deadline from the KRA register; to confirm with Accounts.</field>
+    </record>
+</odoo>

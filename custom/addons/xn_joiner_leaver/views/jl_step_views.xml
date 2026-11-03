@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_jl_step_tree" model="ir.ui.view">
+        <field name="name">xn.jl.step.tree</field>
+        <field name="model">xn.jl.step</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="process"/>
+                <field name="name"/>
+                <field name="role"/>
+                <field name="anchor"/>
+                <field name="days"/>
+                <field name="after_step_id" optional="show"/>
+                <field name="escalate_after" optional="show"/>
+                <field name="external" optional="show"/>
+                <field name="urgent" optional="hide"/>
+                <field name="proof_required" optional="show"/>
+                <field name="exit_types" optional="hide"/>
+                <field name="condition" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_jl_step_form" model="ir.ui.view">
+        <field name="name">xn.jl.step.form</field>
+        <field name="model">xn.jl.step</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="process"/>
+                            <field name="role"/>
+                            <field name="code"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="anchor"/>
+                            <field name="after_step_id" invisible="anchor != 'after'" required="anchor == 'after'"/>
+                            <field name="days"/>
+                            <field name="escalate_after"/>
+                            <field name="external"/>
+                            <field name="urgent"/>
+                        </group>
+                        <group>
+                            <field name="proof_required"/>
+                            <field name="exit_types" invisible="process != 'leave'"/>
+                            <field name="condition"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Shown on the task"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_xn_jl_step_search" model="ir.ui.view">
+        <field name="name">xn.jl.step.search</field>
+        <field name="model">xn.jl.step</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="join" string="Joining" domain="[('process', '=', 'join')]"/>
+                <filter name="leave" string="Leaving" domain="[('process', '=', 'leave')]"/>
+                <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_process" string="Process" context="{'group_by': 'process'}"/>
+                    <filter name="group_role" string="Role" context="{'group_by': 'role'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_jl_step" model="ir.actions.act_window">
+        <field name="name">Checklist Steps</field>
+        <field name="res_model">xn.jl.step</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_process': 1}</field>
+    </record>
+
+    <record id="view_xn_jl_role_tree" model="ir.ui.view">
+        <field name="name">xn.jl.role.tree</field>
+        <field name="model">xn.jl.role</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" create="false" delete="false">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code" readonly="1"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_xn_jl_role" model="ir.actions.act_window">
+        <field name="name">Who Does What</field>
+        <field name="res_model">xn.jl.role</field>
+        <field name="view_mode">tree</field>
+    </record>
+</odoo>

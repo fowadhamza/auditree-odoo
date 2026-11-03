@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_xn_jl_role_manager,xn_jl_role_manager,model_xn_jl_role,hr.group_hr_manager,1,1,1,1
+access_xn_jl_role_user,xn_jl_role_user,model_xn_jl_role,project.group_project_user,1,0,0,0
+access_xn_jl_role_hr,xn_jl_role_hr,model_xn_jl_role,hr.group_hr_user,1,0,0,0
+access_xn_jl_step_manager,xn_jl_step_manager,model_xn_jl_step,hr.group_hr_manager,1,1,1,1
+access_xn_jl_step_user,xn_jl_step_user,model_xn_jl_step,project.group_project_user,1,0,0,0
+access_xn_jl_step_hr,xn_jl_step_hr,model_xn_jl_step,hr.group_hr_user,1,0,0,0
+access_xn_jl_checklist_hr,xn_jl_checklist_hr,model_xn_jl_checklist,hr.group_hr_user,1,1,1,1
+access_xn_jl_checklist_user,xn_jl_checklist_user,model_xn_jl_checklist,project.group_project_user,1,0,0,0

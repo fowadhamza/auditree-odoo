@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_xn_jl_root"
+              name="Joiners and Leavers"
+              web_icon="hr,static/description/icon.png"
+              groups="project.group_project_user,hr.group_hr_user"
+              sequence="56"/>
+
+    <menuitem id="menu_xn_jl_my_steps"
+              name="My Steps"
+              parent="menu_xn_jl_root"
+              action="action_xn_jl_my_tasks"
+              sequence="10"/>
+
+    <menuitem id="menu_xn_jl_steps"
+              name="All Steps"
+              parent="menu_xn_jl_root"
+              action="action_xn_jl_tasks"
+              sequence="20"/>
+
+    <menuitem id="menu_xn_jl_checklists"
+              name="Checklists"
+              parent="menu_xn_jl_root"
+              groups="hr.group_hr_user"
+              sequence="30"/>
+
+    <menuitem id="menu_xn_jl_checklist_list"
+              name="All Checklists"
+              parent="menu_xn_jl_checklists"
+              action="action_xn_jl_checklist"
+              sequence="10"/>
+
+    <menuitem id="menu_xn_jl_checklist_join"
+              name="Start Joining Checklist"
+              parent="menu_xn_jl_checklists"
+              action="action_xn_jl_checklist_join"
+              sequence="20"/>
+
+    <menuitem id="menu_xn_jl_checklist_leave"
+              name="Start Exit Checklist"
+              parent="menu_xn_jl_checklists"
+              action="action_xn_jl_checklist_leave"
+              sequence="30"/>
+
+    <menuitem id="menu_xn_jl_config"
+              name="Configuration"
+              parent="menu_xn_jl_root"
+              groups="hr.group_hr_manager"
+              sequence="90"/>
+
+    <menuitem id="menu_xn_jl_config_steps"
+              name="Checklist Steps"
+              parent="menu_xn_jl_config"
+              action="action_xn_jl_step"
+              sequence="10"/>
+
+    <menuitem id="menu_xn_jl_config_roles"
+              name="Who Does What"
+              parent="menu_xn_jl_config"
+              action="action_xn_jl_role"
+              sequence="20"/>
+</odoo>

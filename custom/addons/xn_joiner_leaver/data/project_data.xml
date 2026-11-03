@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="stage_jl_todo" model="project.task.type">
+        <field name="name">To Do</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="stage_jl_waiting" model="project.task.type">
+        <field name="name">Waiting</field>
+        <field name="sequence">2</field>
+    </record>
+    <record id="stage_jl_done" model="project.task.type">
+        <field name="name">Done</field>
+        <field name="sequence">3</field>
+        <field name="fold" eval="True"/>
+    </record>
+
+    <!-- Private: owners see their own steps; HR, the HR Head and the
+         Operations Manager follow the project and see all of them. -->
+    <record id="project_joiner_leaver" model="project.project">
+        <field name="name">Joiners and Leavers</field>
+        <field name="privacy_visibility">followers</field>
+        <field name="type_ids" eval="[(6, 0, [
+            ref('stage_jl_todo'),
+            ref('stage_jl_waiting'),
+            ref('stage_jl_done'),
+        ])]"/>
+    </record>
+
+    <record id="param_email_from" model="ir.config_parameter">
+        <field name="key">xn_joiner_leaver.email_from</field>
+        <field name="value">hr@auditree.com</field>
+    </record>
+</odoo>

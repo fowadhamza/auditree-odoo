@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- 03:45 UTC = 09:15 IST: morning digest and escalation. -->
+    <record id="ir_cron_xn_jl_digest" model="ir.cron">
+        <field name="name">Joiners and Leavers: daily digest and escalation</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="state">code</field>
+        <field name="code">model._xn_cron_jl_digest()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 03:45:00')"/>
+    </record>
+
+    <!-- 13:30 UTC = 19:00 IST: urgent steps (disabling access) still open. -->
+    <record id="ir_cron_xn_jl_urgent" model="ir.cron">
+        <field name="name">Joiners and Leavers: evening alert for urgent steps</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="state">code</field>
+        <field name="code">model._xn_cron_jl_urgent()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="doall" eval="False"/>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 13:30:00')"/>
+    </record>
+</odoo>

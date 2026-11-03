@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="mail_body_rows">
+        <table style="border-collapse: collapse; font-size: 13px;">
+            <tr style="background: #f2f2f2;">
+                <th style="text-align: left; padding: 4px 8px;">Step</th>
+                <th style="text-align: left; padding: 4px 8px;" t-if="show_owner">Owner</th>
+                <th style="text-align: left; padding: 4px 8px;">Due</th>
+                <th style="text-align: left; padding: 4px 8px;">Working days late</th>
+            </tr>
+            <tr t-foreach="rows" t-as="row">
+                <td style="padding: 4px 8px;">
+                    <a t-att-href="'%s/web#id=%s&amp;model=project.task&amp;view_type=form' % (base_url, row['task'].id)"
+                       t-out="row['task'].name"/>
+                </td>
+                <td style="padding: 4px 8px;" t-if="show_owner" t-out="row['owners']"/>
+                <td style="padding: 4px 8px;" t-out="row['due'].strftime('%d %b %Y')"/>
+                <td t-attf-style="padding: 4px 8px; #{'color: #c0392b; font-weight: bold;' if row['late'] else ''}"
+                    t-out="row['late'] or 'Due today'"/>
+            </tr>
+        </table>
+    </template>
+
+    <template id="mail_body_digest">
+        <div style="font-family: Arial, sans-serif; font-size: 13px;">
+            <p>Hi <t t-out="user.name"/>,</p>
+            <p t-if="not escalation">These joiner/leaver steps are yours and due
+                today or late. Mark each one done in Odoo when it is finished,
+                with the proof attached where asked.</p>
+            <p t-if="escalation">These joiner/leaver steps are late past their
+                escalation point. Each stays on this list until it is done.</p>
+            <t t-call="xn_joiner_leaver.mail_body_rows">
+                <t t-set="show_owner" t-value="escalation"/>
+            </t>
+        </div>
+    </template>
+
+    <template id="mail_body_urgent">
+        <div style="font-family: Arial, sans-serif; font-size: 13px;">
+            <p>This step was due today and is still open:</p>
+            <t t-call="xn_joiner_leaver.mail_body_rows">
+                <t t-set="show_owner" t-value="True"/>
+            </t>
+            <p>If it has been done, mark it done in Odoo.</p>
+        </div>
+    </template>
+</odoo>
