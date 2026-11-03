@@ -114,11 +114,44 @@ Others wait on HR:
 | Induction | On the joining date | After assets are delivered |
 | Access cutoff | At the agreed cutoff | Close of office hours on the LWD |
 
-### Follow-up questions for Danyal
+### Follow-up answers (Danyal, Nov 2026)
 
-- Who are the HR Head and the Operations Manager?
-- How many days does each Exit Checklist approver get?
-- What happens on an amber or red BGV, or if BGV is not back by the DOJ?
-- When does the Bond Agreement apply?
-- Is the Initial Release Letter a separate document from the Relieving Letter?
-- How often should reminders repeat, and when should they escalate to Nishath?
+| Question | Answer |
+|---|---|
+| Who are the HR Head and the Operations Manager? | HR Head: Sharook. Operations Manager: Nishath. |
+| How long does each Exit Checklist approver get? | 2 working days. |
+| Amber or red BGV; BGV not back by the DOJ? | Red: the candidate does not go ahead. No DOJ is fixed until the green report arrives. |
+| When does the Bond Agreement apply? | By default, unless Management confirms it is not required. |
+| Initial Release Letter vs Relieving Letter? | Separate. Initial Release Letter on the LWD; Relieving Letter after F&F is settled. |
+| Reminder repeat and escalation to Nishath? | Danyal asked which process and circumstances. See the proposed rule below. |
+
+Design consequences:
+- BGV green is a hard gate: the Engagement Letter, DOJ confirmation and every joiner task
+  dated from the DOJ wait for it. A red report ends the joiner flow.
+- The Bond Agreement is a default-on step that Management can waive, not an optional one.
+- Exit Checklist: one task per approver, each due 2 working days after the previous approver
+  signs off. Nishath, as Operations Manager, gives the final review.
+
+### Proposed reminder rule (to confirm with Danyal)
+
+One rule for every task instead of a per-process table:
+
+- Every task has an owner and a due date.
+- Each working morning, everyone with open tasks gets one digest email: due today and overdue.
+  No per-task emails.
+- A task 2 working days overdue is escalated to Nishath, who gets one daily digest of escalated
+  items grouped by owner.
+- Tasks waiting on outside parties (candidate, BGV consultant, courier) are never escalated to
+  Nishath; the reminder goes to Danyal to chase.
+
+Exceptions:
+- Access not disabled by close of office hours on the LWD: IT and Nishath alerted the same
+  evening.
+- Immediate termination: the access task is due at once and escalates at once.
+- Laptop or ID not ready the day before the DOJ: escalated a day early, since the DOJ cannot
+  slip.
+
+### Still open
+
+- Amber BGV: what happens? (Only red was answered.)
+- Danyal to confirm the reminder rule above.
