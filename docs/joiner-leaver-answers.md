@@ -132,7 +132,7 @@ Design consequences:
 - Exit Checklist: one task per approver, each due 2 working days after the previous approver
   signs off. Nishath, as Operations Manager, gives the final review.
 
-### Proposed reminder rule (to confirm with Danyal)
+### Reminder rule (confirmed by Fowad, Nov 2026)
 
 One rule for every task instead of a per-process table:
 
@@ -151,7 +151,27 @@ Exceptions:
 - Laptop or ID not ready the day before the DOJ: escalated a day early, since the DOJ cannot
   slip.
 
+---
+
+## Decisions (Fowad, 5 Nov 2026)
+
+| Question | Decision |
+|---|---|
+| Who gets IT's steps? | it@auditree.com |
+| Who gets Admin's steps? | mohammed.junaid@auditree.com |
+| Amber BGV | Management decides. Belongs with recruitment, before the checklist starts. |
+| Reminder rule | As above. |
+| Resignations | All are entered in Odoo; approving one starts the exit checklist. |
+| Trainings deadline | 10 working days after joining. |
+| IT, Admin and Accounts deadlines | KRA-register deadlines confirmed as seeded. |
+| IT notice before a DOJ | 10 working days; HR is warned when a DOJ is closer. |
+| IT request | Raises an IT Helpdesk ticket automatically. |
+| Escalations | All to Nishath. |
+| Sharook (HR Head) | Follows only the "agree the LWD" step, not every step. |
+| Rollout | Test on a local copy of the database before prod. |
+
 ### Still open
 
-- Amber BGV: what happens? (Only red was answered.)
-- Danyal to confirm the reminder rule above.
+- When the joining checklist starts: BGV green (as built) or applicant hired.
+- Full and final settlement inputs and who gives each (Ayesha).
+- Whether every type of person gets the same checklist (Danyal says yes; unconfirmed).

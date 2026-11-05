@@ -5,14 +5,14 @@ from . import models
 
 _logger = logging.getLogger(__name__)
 
-# Who does each role's steps, matched by login. IT and Admin are left empty
-# until they confirm which account their steps should go to; their steps go
-# to the HR role until then.
+# Who does each role's steps, matched by login.
 ROLE_LOGINS = {
     'hr': 'shaik.danyal@auditree.com',
     'hr_head': 'sharook.mohamed@auditree.com',
     'ops': 'ghazala.nishath@auditree.com',
     'accounts': 'ayesha.siddiqua@auditree.com',
+    'it': 'it@auditree.com',
+    'admin': 'mohammed.junaid@auditree.com',
 }
 
 
@@ -43,9 +43,9 @@ def post_init_hook(env):
         missing.write({'groups_id': [(4, group.id)]})
         _logger.info("xn_joiner_leaver: granted Project User to %s",
                      ', '.join(missing.mapped('login')))
-    # HR, the HR Head and the Operations Manager follow the project, so they
-    # see every step, not only their own.
+    # HR and the Operations Manager follow the project, so they see every
+    # step, not only their own. The HR Head only follows the LWD step.
     project = env.ref('xn_joiner_leaver.project_joiner_leaver')
-    watchers = roles.filtered(lambda r: r.code in ('hr', 'hr_head', 'ops')).user_id
+    watchers = roles.filtered(lambda r: r.code in ('hr', 'ops')).user_id
     if watchers:
         project.message_subscribe(partner_ids=watchers.partner_id.ids)

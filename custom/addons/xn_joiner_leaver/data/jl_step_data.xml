@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Steps from HR's answers (Danyal, Oct/Nov 2026) and, for IT, Admin and
-     Accounts, from the KRA register until they confirm theirs. See
+<!-- Steps from HR's answers (Danyal, Oct/Nov 2026); IT, Admin and Accounts
+     deadlines from the KRA register, confirmed Nov 2026. See
      docs/joiner-leaver-answers.md. Configuration: edit in the UI after
      install, this file does not overwrite changes (noupdate). -->
 <odoo noupdate="1">
@@ -88,7 +88,6 @@
         <field name="anchor">after</field>
         <field name="after_step_id" ref="step_join_it_request"/>
         <field name="days">1</field>
-        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
     </record>
     <record id="step_join_laptop_setup" model="xn.jl.step">
         <field name="process">join</field>
@@ -98,7 +97,6 @@
         <field name="anchor">date</field>
         <field name="days">-2</field>
         <field name="escalate_after">0</field>
-        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
     </record>
     <record id="step_join_laptop_handover" model="xn.jl.step">
         <field name="process">join</field>
@@ -109,7 +107,7 @@
         <field name="days">-1</field>
         <field name="escalate_after">0</field>
         <field name="proof_required">Signed custody form or courier receipt</field>
-        <field name="note">The DOJ cannot slip, so this escalates on the first day late. Deadline to confirm with Admin and IT.</field>
+        <field name="note">The DOJ cannot slip, so this escalates on the first day late.</field>
     </record>
     <record id="step_join_logins" model="xn.jl.step">
         <field name="process">join</field>
@@ -139,7 +137,6 @@
         <field name="anchor">after</field>
         <field name="after_step_id" ref="step_join_laptop_handover"/>
         <field name="days">1</field>
-        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
     </record>
     <record id="step_join_courier_bill" model="xn.jl.step">
         <field name="process">join</field>
@@ -149,7 +146,7 @@
         <field name="anchor">after</field>
         <field name="after_step_id" ref="step_join_laptop_handover"/>
         <field name="days">2</field>
-        <field name="note">No deadline in the KRA register; to confirm with Admin. Mark cancelled if the laptop was handed over in person.</field>
+        <field name="note">Mark cancelled if the laptop was handed over in person.</field>
     </record>
 
     <record id="step_join_induction" model="xn.jl.step">
@@ -186,7 +183,6 @@
         <field name="days">10</field>
         <field name="external" eval="True"/>
         <field name="proof_required">Training certificates</field>
-        <field name="note">Deadline to confirm with HR.</field>
     </record>
     <record id="step_join_nsr" model="xn.jl.step">
         <field name="process">join</field>
@@ -216,7 +212,6 @@
         <field name="after_step_id" ref="step_join_nsr_payment_request"/>
         <field name="days">7</field>
         <field name="proof_required">Payment receipt</field>
-        <field name="note">Deadline from the KRA register; to confirm with Accounts.</field>
     </record>
     <record id="step_join_nsr_link" model="xn.jl.step">
         <field name="process">join</field>
@@ -226,7 +221,7 @@
         <field name="anchor">after</field>
         <field name="after_step_id" ref="step_join_nsr_payment"/>
         <field name="days">5</field>
-        <field name="note">Needs the ITPIN. Deadline from the KRA register; to confirm with Accounts.</field>
+        <field name="note">Needs the ITPIN.</field>
     </record>
     <record id="step_join_salary_breakup" model="xn.jl.step">
         <field name="process">join</field>
@@ -235,7 +230,7 @@
         <field name="role">accounts</field>
         <field name="anchor">date</field>
         <field name="days">5</field>
-        <field name="note">KRA register: before the 20th of the joining month. To confirm with Accounts.</field>
+        <field name="note">KRA register: before the 20th of the joining month.</field>
     </record>
 
     <!-- Leaving. The checklist starts when the resignation or termination
@@ -246,6 +241,7 @@
         <field name="sequence">10</field>
         <field name="name">Agree the LWD with the reporting manager and HR Head; email it to the employee</field>
         <field name="role">hr</field>
+        <field name="follower_role">hr_head</field>
         <field name="anchor">start</field>
         <field name="days">2</field>
     </record>
@@ -323,7 +319,6 @@
         <field name="after_step_id" ref="step_leave_return_dispatch"/>
         <field name="days">3</field>
         <field name="proof_required">Unboxing video</field>
-        <field name="note">Deadline to confirm with Admin.</field>
     </record>
     <record id="step_leave_inspect" model="xn.jl.step">
         <field name="process">leave</field>
@@ -341,7 +336,6 @@
         <field name="role">it</field>
         <field name="anchor">date</field>
         <field name="days">5</field>
-        <field name="note">Deadline from the KRA register; to confirm with IT.</field>
     </record>
     <record id="step_leave_wipe" model="xn.jl.step">
         <field name="process">leave</field>
@@ -428,7 +422,7 @@
         <field name="after_step_id" ref="step_leave_cl_ops"/>
         <field name="days">3</field>
         <field name="proof_required">F and F computation</field>
-        <field name="note">KRA register: within 15 days of the LWD, or a week before the next payroll. To confirm with Accounts.</field>
+        <field name="note">KRA register: within 15 days of the LWD, or a week before the next payroll.</field>
     </record>
     <record id="step_leave_relieving" model="xn.jl.step">
         <field name="process">leave</field>
@@ -447,6 +441,5 @@
         <field name="role">accounts</field>
         <field name="anchor">date</field>
         <field name="days">5</field>
-        <field name="note">Deadline from the KRA register; to confirm with Accounts.</field>
     </record>
 </odoo>

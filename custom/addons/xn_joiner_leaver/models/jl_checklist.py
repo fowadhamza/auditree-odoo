@@ -13,6 +13,8 @@ TZ = 'Asia/Kolkata'
 DONE = '1_done'
 CANCELLED = '1_canceled'
 CLOSED = (DONE, CANCELLED)
+# Working days of notice IT needs before a joining date.
+JOIN_NOTICE_DAYS = 10
 
 
 class WorkingDays:
@@ -152,6 +154,23 @@ class XnJlChecklist(models.Model):
                 raise ValidationError(_("Choose whether the exit is a resignation "
                                         "or a termination."))
 
+    @api.onchange('date', 'process')
+    def _onchange_xn_notice(self):
+        """Warn when IT gets less than JOIN_NOTICE_DAYS to prepare a joiner."""
+        if self.process != 'join' or not self.date:
+            return
+        today = self._xn_today()
+        notice = self._xn_working_days().between(today, self.date)
+        if notice < JOIN_NOTICE_DAYS:
+            return {'warning': {
+                'title': _("Short notice"),
+                'message': _(
+                    "The joining date is %(days)s working days away. IT needs "
+                    "%(need)s working days to prepare the laptop and accounts; "
+                    "agree the date with IT before saving.",
+                    days=notice, need=JOIN_NOTICE_DAYS),
+            }}
+
     # -- Dates ------------------------------------------------------------
 
     @api.model
@@ -197,13 +216,14 @@ class XnJlChecklist(models.Model):
             steps = steps.filtered(lambda s: s.condition != 'bond')
         return steps
 
+    def _xn_role_user(self, role):
+        if role == 'manager':
+            return self.employee_id.parent_id.user_id
+        return self.env['xn.jl.role']._xn_user(role)
+
     def _xn_owner(self, step):
-        Role = self.env['xn.jl.role']
-        if step.role == 'manager':
-            user = self.employee_id.parent_id.user_id
-        else:
-            user = Role._xn_user(step.role)
-        return user or Role._xn_user('hr') or self.env.user
+        return (self._xn_role_user(step.role)
+                or self.env['xn.jl.role']._xn_user('hr') or self.env.user)
 
     def _xn_task_vals(self, step, due):
         description = ''
@@ -246,7 +266,14 @@ class XnJlChecklist(models.Model):
                     due = rec._xn_due(step, today, wd)
                 vals_list.append(rec._xn_task_vals(step, due))
             tasks = Task.create(vals_list)
-            rec._xn_grant_project_access(tasks.user_ids)
+            followers = self.env['res.users']
+            for task in tasks.filtered('xn_jl_step_id.follower_role'):
+                user = rec._xn_role_user(task.xn_jl_step_id.follower_role)
+                if user:
+                    task.message_subscribe(partner_ids=user.partner_id.ids)
+                    followers |= user
+            rec._xn_grant_project_access(tasks.user_ids | followers)
+            tasks._xn_jl_after_create()
             _logger.info("xn_joiner_leaver: %s steps created for %s",
                          len(tasks), rec.name)
 

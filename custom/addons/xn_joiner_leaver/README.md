@@ -5,7 +5,8 @@ with one daily reminder email per person and escalation to the Operations Manage
 the email chasing described in `docs/joiner-leaver-answers.md` (feature 1 of
 `docs/odoo-features-from-kra-register.md`).
 
-Depends only on core `hr`, `project`, `mail` and `resource`.
+Depends on core `hr`, `project`, `mail`, `resource` and on `hr_resignation` (installed on prod).
+`xn_joiner_leaver_helpdesk` installs itself alongside `xn_it_helpdesk` and raises the IT tickets.
 
 ## How it works
 
@@ -15,7 +16,11 @@ Depends only on core `hr`, `project`, `mail` and `resource`.
     documents and BGV stay on the applicant (`xn_recruitment`). The date defaults to the
     employee's `joining_date` when `xn_auditree_erp` provides one.
   - Exit: when the resignation or termination arrives; the date is the last working day
-    (LWD). Exit type: resignation, termination, or immediate termination.
+    (LWD). Exit type: resignation, termination, or immediate termination. **Approving a
+    resignation** (*Resignation* menu) starts it automatically, with the approved LWD
+    (confirmation date plus the contract notice days), unless one is already running.
+  - A joining date fewer than 10 working days away (`JOIN_NOTICE_DAYS`) warns HR on the
+    form: IT needs that much notice.
 - **Steps** (`xn.jl.step`, *Configuration > Checklist Steps*) become one `project.task`
   each in the private *Joiners and Leavers* project. A step is dated:
   - from the start (`start`, N working days after the checklist is created),
@@ -29,7 +34,8 @@ Depends only on core `hr`, `project`, `mail` and `resource`.
 - **Owners** come from the step's role. *Configuration > Who Does What* (`xn.jl.role`)
   maps HR, HR Head, Operations Manager, IT, Admin and Accounts to users. Reporting Manager
   is the employee's manager. An empty role, or a manager without a user, falls back to HR.
-  Owners without Project > User get it when their first step is created (logged on the
+  A step can also have *Also Visible To*: that role follows the step (the HR Head on
+  agreeing the LWD) and is notified about it.  Owners without Project > User get it when their first step is created (logged on the
   checklist).
 - **Working days** use the company's working-hours calendar (weekdays plus its public
   holidays).
@@ -53,18 +59,25 @@ the outgoing mail server before testing on a prod copy.
 
 ## Install notes
 
-- `post_init_hook` fills HR, HR Head, Operations Manager and Accounts from `ROLE_LOGINS` in
-  `__init__.py`. It gives those users Project > User and makes HR, the HR Head and the
-  Operations Manager followers of the project, so they see every step. IT and Admin are left
-  empty until they confirm which account their steps go to (two Junaid logins; `it@` is a
-  shared mailbox), so their steps go to HR until then.
-- Seeded steps (`data/jl_step_data.xml`, `noupdate`) are HR's confirmed process. The IT,
-  Admin and Accounts steps use KRA-register deadlines and say "to confirm" on the task.
+- `post_init_hook` fills every role from `ROLE_LOGINS` in `__init__.py` (IT = `it@`, Admin =
+  mohammed.junaid@), gives those users Project > User, and makes HR and the Operations
+  Manager followers of the project so they see every step. Project Administrators (on prod:
+  Sharook and `it@`) see every step regardless.
+- Seeded steps (`data/jl_step_data.xml`, `noupdate`): HR's process, plus KRA-register
+  deadlines for IT, Admin and Accounts (confirmed Nov 2026).
   Edit them in the UI; an upgrade does not overwrite them.
 - Tasks key off `project.task.xn_jl_checklist_id` / `xn_jl_step_id`, not names or stages.
 
+## IT tickets (`xn_joiner_leaver_helpdesk`)
+
+Steps with *Raises an IT Ticket* (HR's IT request for a joiner, the exit notice for a
+leaver) create an IT Helpdesk ticket in HR's name when the checklist starts (category
+Access Request; High for an immediate termination) and are marked done, which dates IT's
+follow-on steps. The ticket sends the usual helpdesk emails.
+
 ## Not done yet
 
-- No automatic start from `hr_resignation` approval or from the applicant being hired.
-- The IT step does not raise a ticket in `xn_it_helpdesk`.
-- Amber BGV handling is still open with HR.
+- No automatic start when an applicant is hired (still open: start at BGV green or at hire).
+- Amber BGV (Management decides) belongs in recruitment, before the checklist.
+- Rejecting or cancelling an approved resignation does not cancel the exit checklist; HR
+  cancels it.

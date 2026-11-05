@@ -24,7 +24,7 @@ reporting manager, each with a due date.
 The steps and who does them are configuration (Joiners & Leavers >
 Configuration).
     """,
-    "version": "17.0.1.0.0",
+    "version": "17.0.1.1.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",
@@ -33,6 +33,7 @@ Configuration).
         "project",
         "mail",
         "resource",
+        "hr_resignation",
     ],
     "data": [
         "security/ir.model.access.csv",

@@ -33,6 +33,10 @@ class XnJlStep(models.Model):
         string='Working Days',
         help="Working days after the anchor; negative for before (e.g. -1 = "
              "the working day before the joining date).")
+    follower_role = fields.Selection(
+        ROLES, string='Also Visible To',
+        help="This role follows the step: they see it, though it is not "
+             "theirs (e.g. the HR Head on agreeing the last working day).")
     after_step_id = fields.Many2one(
         'xn.jl.step', string='After Step', ondelete='restrict',
         domain="[('process', '=', process), ('id', '!=', id)]")

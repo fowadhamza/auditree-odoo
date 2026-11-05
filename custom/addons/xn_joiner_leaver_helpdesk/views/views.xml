@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_jl_step_form_helpdesk" model="ir.ui.view">
+        <field name="name">xn.jl.step.form.helpdesk</field>
+        <field name="model">xn.jl.step</field>
+        <field name="inherit_id" ref="xn_joiner_leaver.view_xn_jl_step_form"/>
+        <field name="arch" type="xml">
+            <field name="urgent" position="after">
+                <field name="xn_raise_ticket"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_task_form_xn_jl_helpdesk" model="ir.ui.view">
+        <field name="name">project.task.form.xn.jl.helpdesk</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="xn_joiner_leaver.view_task_form_xn_jl"/>
+        <field name="arch" type="xml">
+            <field name="xn_jl_escalated" position="after">
+                <field name="xn_jl_ticket_id" invisible="not xn_jl_ticket_id"/>
+            </field>
+        </field>
+    </record>
+</odoo>

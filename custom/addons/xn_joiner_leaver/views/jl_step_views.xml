@@ -34,6 +34,7 @@
                             <field name="name"/>
                             <field name="process"/>
                             <field name="role"/>
+                            <field name="follower_role"/>
                             <field name="code"/>
                             <field name="active" invisible="1"/>
                         </group>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="xn_joiner_leaver.step_join_it_request" model="xn.jl.step">
+        <field name="xn_raise_ticket" eval="True"/>
+    </record>
+    <record id="xn_joiner_leaver.step_leave_notify" model="xn.jl.step">
+        <field name="xn_raise_ticket" eval="True"/>
+    </record>
+</odoo>

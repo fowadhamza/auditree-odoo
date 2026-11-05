@@ -22,7 +22,7 @@ class ProjectTask(models.Model):
     xn_jl_step_id = fields.Many2one(
         'xn.jl.step', string='Checklist Step', ondelete='restrict', copy=False)
     xn_jl_employee_id = fields.Many2one(
-        'hr.employee', string='Employee', related='xn_jl_checklist_id.employee_id',
+        'hr.employee', string='Joiner/Leaver', related='xn_jl_checklist_id.employee_id',
         store=True)
     xn_jl_process = fields.Selection(related='xn_jl_checklist_id.process', store=True)
     xn_jl_due_date = fields.Date(
@@ -43,6 +43,10 @@ class ProjectTask(models.Model):
         with_proof = {res_id for (res_id,) in rows}
         for task in self:
             task.xn_jl_has_proof = task.id in with_proof
+
+    def _xn_jl_after_create(self):
+        """Hook for modules acting on new checklist steps (helpdesk ticket)."""
+        return True
 
     # -- Closing ----------------------------------------------------------
 
