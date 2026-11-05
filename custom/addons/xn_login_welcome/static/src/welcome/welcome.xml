@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="xn_login_welcome.Welcome">
+        <div t-if="state.visible"
+             class="xn_welcome"
+             t-att-class="{ 'xn_welcome_leaving': state.leaving }"
+             role="status"
+             t-on-click="dismiss">
+            <div class="xn_welcome_card">
+                <div class="xn_welcome_badge">
+                    <svg class="xn_welcome_ring" viewBox="0 0 120 120" aria-hidden="true">
+                        <circle class="xn_welcome_ring_track" cx="60" cy="60" r="54"/>
+                        <circle class="xn_welcome_ring_draw" cx="60" cy="60" r="54"/>
+                    </svg>
+                    <img t-if="logoUrl" class="xn_welcome_logo" t-att-src="logoUrl" t-att-alt="companyName"/>
+                    <div t-else="" class="xn_welcome_logo xn_welcome_initial" t-esc="initial"/>
+                </div>
+                <div class="xn_welcome_greeting" t-esc="greeting"/>
+                <div class="xn_welcome_date" t-esc="dateLine"/>
+                <div class="xn_welcome_bar"><span/></div>
+            </div>
+        </div>
+    </t>
+</templates>
