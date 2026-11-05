@@ -104,7 +104,8 @@ class ProjectTask(models.Model):
     def _xn_jl_send(self, partners, subject, template, values):
         if not partners:
             return
-        values = dict(values, base_url=self.get_base_url())
+        values = dict(values, base_url=self.get_base_url(),
+                      action_id=self.env.ref('xn_joiner_leaver.action_xn_jl_my_tasks').id)
         body = self.env['ir.qweb']._render(template, values)
         self.env['mail.mail'].sudo().create({
             'subject': subject,

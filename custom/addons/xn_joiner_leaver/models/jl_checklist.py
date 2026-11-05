@@ -113,6 +113,7 @@ class XnJlChecklist(models.Model):
         ('cancelled', 'Cancelled'),
     ], default='running', required=True, tracking=True)
     note = fields.Text()
+    notice_warning = fields.Char(compute='_compute_notice_warning')
     task_ids = fields.One2many('project.task', 'xn_jl_checklist_id', string='Steps')
     task_count = fields.Integer(compute='_compute_counts')
     open_count = fields.Integer(string='Open Steps', compute='_compute_counts')
@@ -154,22 +155,27 @@ class XnJlChecklist(models.Model):
                 raise ValidationError(_("Choose whether the exit is a resignation "
                                         "or a termination."))
 
-    @api.onchange('date', 'process')
-    def _onchange_xn_notice(self):
-        """Warn when IT gets less than JOIN_NOTICE_DAYS to prepare a joiner."""
-        if self.process != 'join' or not self.date:
-            return
+    @api.depends('date', 'process', 'state')
+    def _compute_notice_warning(self):
+        """Warn when IT gets less than JOIN_NOTICE_DAYS to prepare a joiner.
+
+        Shown as a banner on the form, not an onchange warning: a warning
+        raised while the "Start Joining Checklist" dialog loads stops the
+        dialog from opening at all.
+        """
         today = self._xn_today()
-        notice = self._xn_working_days().between(today, self.date)
-        if notice < JOIN_NOTICE_DAYS:
-            return {'warning': {
-                'title': _("Short notice"),
-                'message': _(
-                    "The joining date is %(days)s working days away. IT needs "
-                    "%(need)s working days to prepare the laptop and accounts; "
-                    "agree the date with IT before saving.",
-                    days=notice, need=JOIN_NOTICE_DAYS),
-            }}
+        for rec in self:
+            rec.notice_warning = False
+            if (rec.process != 'join' or rec.state != 'running' or not rec.date
+                    or rec.date < today):
+                continue
+            notice = rec._xn_working_days().between(today, rec.date)
+            if notice < JOIN_NOTICE_DAYS:
+                rec.notice_warning = _(
+                    "Short notice: the joining date is %(days)s working days away. "
+                    "IT needs %(need)s working days to prepare the laptop and "
+                    "accounts; agree the date with IT.",
+                    days=notice, need=JOIN_NOTICE_DAYS)
 
     # -- Dates ------------------------------------------------------------
 

@@ -25,8 +25,10 @@ class HrEmployee(models.Model):
             'default_process': process,
         }
         if process == 'join':
+            # Only a future joining date: an existing employee's is their
+            # original hire date.
             joining = self._fields.get('joining_date') and self.joining_date
-            if joining:
+            if joining and joining >= fields.Date.context_today(self):
                 context['default_date'] = joining
         return {
             'type': 'ir.actions.act_window',
@@ -34,6 +36,8 @@ class HrEmployee(models.Model):
             else _('Start Exit Checklist'),
             'res_model': 'xn.jl.checklist',
             'view_mode': 'form',
+            # The web client needs 'views'; without it the button does nothing.
+            'views': [(False, 'form')],
             'target': 'new',
             'context': context,
         }

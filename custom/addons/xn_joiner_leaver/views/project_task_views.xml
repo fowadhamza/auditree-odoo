@@ -26,6 +26,50 @@
         </field>
     </record>
 
+    <!-- Own form for checklist steps. The standard task form carries
+         bi_crm_task's invoice totals, which raise an Access Error for
+         anyone without accounting rights (IT, Admin). -->
+    <record id="view_task_form_xn_jl_step" model="ir.ui.view">
+        <field name="name">project.task.form.xn.jl.step</field>
+        <field name="model">project.task</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Checklist Step" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1 class="d-flex flex-row align-items-center">
+                            <field name="state" widget="project_task_state_selection" class="me-2"/>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="xn_jl_employee_id"/>
+                            <field name="xn_jl_checklist_id" readonly="1"/>
+                            <field name="user_ids" widget="many2many_avatar_user" string="Owner" readonly="1"/>
+                            <field name="xn_jl_due_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="xn_jl_proof_required" invisible="not xn_jl_proof_required"/>
+                            <field name="xn_jl_has_proof" invisible="not xn_jl_proof_required"/>
+                            <field name="xn_jl_external" readonly="1"/>
+                            <field name="xn_jl_escalated" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="description" readonly="1"/>
+                    <field name="project_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="xn_jl_step_id" invisible="1"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
     <record id="view_task_tree_xn_jl" model="ir.ui.view">
         <field name="name">project.task.tree.xn.jl</field>
         <field name="model">project.task</field>
@@ -77,26 +121,24 @@
     <record id="action_xn_jl_tasks" model="ir.actions.act_window">
         <field name="name">Steps</field>
         <field name="res_model">project.task</field>
-        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_mode">tree,form</field>
         <field name="domain">[('xn_jl_checklist_id', '!=', False)]</field>
         <field name="context">{'search_default_open': 1, 'create': False}</field>
         <field name="search_view_id" ref="view_task_search_xn_jl"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('view_task_tree_xn_jl')}),
-            (0, 0, {'view_mode': 'kanban'}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('project.view_task_form2')})]"/>
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_task_form_xn_jl_step')})]"/>
     </record>
 
     <record id="action_xn_jl_my_tasks" model="ir.actions.act_window">
         <field name="name">My Steps</field>
         <field name="res_model">project.task</field>
-        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_mode">tree,form</field>
         <field name="domain">[('xn_jl_checklist_id', '!=', False)]</field>
         <field name="context">{'search_default_open': 1, 'search_default_mine': 1, 'create': False}</field>
         <field name="search_view_id" ref="view_task_search_xn_jl"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('view_task_tree_xn_jl')}),
-            (0, 0, {'view_mode': 'kanban'}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('project.view_task_form2')})]"/>
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_task_form_xn_jl_step')})]"/>
     </record>
 </odoo>

@@ -11,6 +11,17 @@
         </field>
     </record>
 
+    <record id="view_task_form_xn_jl_step_helpdesk" model="ir.ui.view">
+        <field name="name">project.task.form.xn.jl.step.helpdesk</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="xn_joiner_leaver.view_task_form_xn_jl_step"/>
+        <field name="arch" type="xml">
+            <field name="xn_jl_escalated" position="after">
+                <field name="xn_jl_ticket_id" invisible="not xn_jl_ticket_id"/>
+            </field>
+        </field>
+    </record>
+
     <record id="view_task_form_xn_jl_helpdesk" model="ir.ui.view">
         <field name="name">project.task.form.xn.jl.helpdesk</field>
         <field name="model">project.task</field>

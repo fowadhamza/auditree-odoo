@@ -31,8 +31,10 @@ class HrResignation(models.Model):
                 'employee_id': resignation.employee_id.id,
                 'process': 'leave',
                 'date': lwd,
-                'exit_type': ('resignation' if resignation.resignation_type == 'resigned'
-                              else 'termination'),
+                # Only "Fired by the company" is a termination; a blank type
+                # in the Resignation menu is a resignation.
+                'exit_type': ('termination' if resignation.resignation_type == 'fired'
+                              else 'resignation'),
             })
             resignation.message_post(body=_(
                 "Exit checklist started: %s steps, last working day %s.",

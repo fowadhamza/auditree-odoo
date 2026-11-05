@@ -67,6 +67,11 @@ the outgoing mail server before testing on a prod copy.
   deadlines for IT, Admin and Accounts (confirmed Nov 2026).
   Edit them in the UI; an upgrade does not overwrite them.
 - Tasks key off `project.task.xn_jl_checklist_id` / `xn_jl_step_id`, not names or stages.
+- Steps open in their own form (`view_task_form_xn_jl_step`), also from the email links.
+  The standard task form carries `bi_crm_task`'s invoice totals, which raise an Access
+  Error for anyone without accounting rights (IT, Admin) -- on any task, not only these.
+- The short-notice warning is a banner on the form, not an onchange warning: a warning
+  raised while the Start Joining Checklist dialog loads stops the dialog opening.
 
 ## IT tickets (`xn_joiner_leaver_helpdesk`)
 
