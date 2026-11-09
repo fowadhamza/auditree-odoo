@@ -54,11 +54,17 @@ fail() { printf '\nSTOPPED: %s\n' "$*"; exit 1; }
 sql()  { sudo -u postgres psql -d "$DB" -tAc "$1"; }
 fingerprint() {
     # One line per file: sha256 of the content with CRs stripped, then path.
-    (cd "$1" && sudo find . -type f ! -path '*/__pycache__/*' ! -name '*.pyc' -print0 \
-        | LC_ALL=C sort -z \
-        | while IFS= read -r -d '' f; do
-              printf '%s  %s\n' "$(sudo cat "$f" | tr -d '\r' | sha256sum | cut -c1-64)" "$f"
-          done)
+    # All of it as root: the addons tree is not readable by login users, so
+    # even the cd must be inside sudo. Fails loudly if the directory is
+    # unreadable instead of printing an empty list.
+    sudo bash -c '
+        set -o pipefail
+        cd "$1" || exit 1
+        find . -type f ! -path "*/__pycache__/*" ! -name "*.pyc" -print0 \
+            | LC_ALL=C sort -z \
+            | while IFS= read -r -d "" f; do
+                  printf "%s  %s\n" "$(tr -d "\r" < "$f" | sha256sum | cut -c1-64)" "$f"
+              done' _ "$1"
 }
 
 # ---------------------------------------------------------------------------
@@ -81,7 +87,10 @@ echo "$MODULE: state '$state', version '$version'"
 [ "$version" = "17.0.1.1.0" ] || fail "$MODULE is at '$version', expected 17.0.1.1.0"
 
 echo "Drift check against the base commit..."
-if ! diff <(fingerprint "$ADDONS/$MODULE") "$BASE_SHA" > /tmp/it_helpdesk_drift.txt; then
+prod_fp=$(fingerprint "$ADDONS/$MODULE") || fail "could not fingerprint $ADDONS/$MODULE"
+[ -n "$prod_fp" ] || fail "fingerprint of $ADDONS/$MODULE is empty"
+echo "Prod files: $(wc -l <<< "$prod_fp")"
+if ! diff <(printf '%s\n' "$prod_fp") "$BASE_SHA" > /tmp/it_helpdesk_drift.txt; then
     cat /tmp/it_helpdesk_drift.txt
     fail "prod's $MODULE differs from the base commit (diff above, < = prod, > = git). Nothing changed. Reconcile first."
 fi
