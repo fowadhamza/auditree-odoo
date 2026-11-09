@@ -48,6 +48,15 @@
                 <filter string="Reopened" name="reopened"
                         domain="[('xn_reopen_count', '&gt;', 0)]"/>
                 <separator/>
+                <filter string="Awaiting Approval" name="awaiting_approval"
+                        domain="[('xn_approval_state', '=', 'pending')]"/>
+                <filter string="Awaiting My Approval" name="awaiting_my_approval"
+                        domain="[('xn_approver_id', '=', uid)]"/>
+                <filter string="Approved" name="approval_approved"
+                        domain="[('xn_approval_state', '=', 'approved')]"/>
+                <filter string="Not Approved" name="approval_rejected"
+                        domain="[('xn_approval_state', '=', 'rejected')]"/>
+                <separator/>
                 <filter string="Submitted On" name="filter_create_date" date="create_date"/>
                 <filter string="Resolved On" name="filter_resolved_date" date="xn_resolved_date"/>
                 <separator/>
@@ -59,6 +68,7 @@
                     <filter string="Assigned To" name="group_user" context="{'group_by': 'user_id'}"/>
                     <filter string="Employee" name="group_employee" context="{'group_by': 'xn_employee_id'}"/>
                     <filter string="Department" name="group_department" context="{'group_by': 'xn_department_id'}"/>
+                    <filter string="Approval" name="group_approval" context="{'group_by': 'xn_approval_state'}"/>
                     <filter string="Submitted On" name="group_create_date" context="{'group_by': 'create_date:month'}"/>
                 </group>
             </search>
@@ -83,11 +93,16 @@
                 <field name="create_date" string="Submitted On" optional="show"/>
                 <field name="xn_resolved_date" optional="hide"/>
                 <field name="xn_resolution_hours" widget="float_time" optional="hide"/>
+                <field name="xn_approval_state" optional="hide" widget="badge"
+                       decoration-warning="xn_approval_state == 'pending'"
+                       decoration-success="xn_approval_state == 'approved'"
+                       decoration-danger="xn_approval_state == 'rejected'"/>
+                <field name="xn_approver_id" optional="hide"/>
                 <field name="xn_stage_state" column_invisible="1"/>
                 <field name="stage_id" string="Status" widget="badge"
                        decoration-info="xn_stage_state == 'new'"
                        decoration-primary="xn_stage_state == 'in_progress'"
-                       decoration-warning="xn_stage_state == 'on_hold'"
+                       decoration-warning="xn_stage_state in ('on_hold', 'pending_approval')"
                        decoration-success="xn_stage_state == 'resolved'"
                        decoration-muted="xn_stage_state == 'closed'"/>
             </tree>
@@ -102,6 +117,8 @@
             <form string="IT Ticket">
                 <field name="xn_is_it_user" invisible="1"/>
                 <field name="xn_is_requester" invisible="1"/>
+                <field name="xn_is_approver" invisible="1"/>
+                <field name="xn_approval_state" invisible="1"/>
                 <field name="xn_stage_state" invisible="1"/>
                 <field name="active" invisible="1"/>
                 <field name="user_ids" invisible="1"/>
@@ -123,6 +140,17 @@
                     <button name="action_xn_reopen" string="Reopen" type="object"
                             confirm="Reopen this ticket? Add a reply below explaining what still does not work."
                             invisible="not id or not (xn_is_requester or xn_is_it_user) or xn_stage_state not in ('resolved', 'closed')"/>
+                    <button name="action_xn_approve" string="Approve" type="object"
+                            class="btn-success"
+                            invisible="not id or not xn_is_approver"/>
+                    <button name="action_xn_reject" string="Reject" type="object"
+                            class="btn-danger"
+                            invisible="not id or not xn_is_approver"/>
+                    <button name="action_xn_request_approval" string="Request Approval" type="object"
+                            invisible="not id or not xn_is_it_user or xn_approval_state == 'pending' or xn_stage_state in ('resolved', 'closed')"/>
+                    <button name="action_xn_withdraw_approval" string="Withdraw Approval Request" type="object"
+                            confirm="Withdraw the approval request? The approver is told it is no longer needed."
+                            invisible="not id or not xn_is_it_user or xn_approval_state != 'pending'"/>
                     <button name="assign_to_me" string="Assign to Me" type="object"
                             invisible="not id or not xn_is_it_user or user_id"/>
                     <field name="stage_id" widget="statusbar"
@@ -132,6 +160,23 @@
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
                             invisible="active"/>
+                    <widget name="web_ribbon" title="Awaiting Approval" bg_color="text-bg-warning"
+                            invisible="not active or xn_approval_state != 'pending'"/>
+                    <widget name="web_ribbon" title="Approved" bg_color="text-bg-success"
+                            invisible="not active or xn_approval_state != 'approved'"/>
+                    <widget name="web_ribbon" title="Not Approved" bg_color="text-bg-danger"
+                            invisible="not active or xn_approval_state != 'rejected'"/>
+                    <div class="alert alert-warning mb-3" role="alert" invisible="not xn_is_approver">
+                        <p class="mb-1"><strong>Your approval is needed.</strong>
+                            Review the request below, then click Approve or Reject at the top.</p>
+                        <field name="xn_approval_request_note" readonly="1"
+                               invisible="not xn_approval_request_note"/>
+                    </div>
+                    <div class="alert alert-info mb-3" role="alert"
+                         invisible="xn_is_approver or xn_approval_state != 'pending'">
+                        Waiting for approval from <field name="xn_approver_id" readonly="1" class="fw-bold"
+                                                         options="{'no_open': True}"/>.
+                    </div>
                     <div class="oe_title">
                         <h1><field name="number" readonly="1" invisible="not id"/></h1>
                         <h2>
@@ -183,6 +228,27 @@
                             <field name="xn_resolution_note"
                                    placeholder="What was wrong and what was done to fix it. Required before the ticket can be marked Resolved; the employee sees this."
                                    readonly="not xn_is_it_user"/>
+                        </page>
+                        <page string="Approval" name="approval" invisible="not xn_approval_ids">
+                            <field name="xn_approval_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false"
+                                      decoration-warning="state == 'pending'"
+                                      decoration-success="state == 'approved'"
+                                      decoration-danger="state == 'rejected'"
+                                      decoration-muted="state == 'cancelled'">
+                                    <field name="request_date"/>
+                                    <field name="requested_by_id" widget="many2one_avatar_user"/>
+                                    <field name="approver_id" widget="many2one_avatar_user"/>
+                                    <field name="request_note"/>
+                                    <field name="state" widget="badge"
+                                           decoration-warning="state == 'pending'"
+                                           decoration-success="state == 'approved'"
+                                           decoration-danger="state == 'rejected'"/>
+                                    <field name="decision_date"/>
+                                    <field name="decided_by_id" optional="hide"/>
+                                    <field name="decision_comment"/>
+                                </tree>
+                            </field>
                         </page>
                         <page string="Timeline" name="timeline" invisible="not id">
                             <group>
@@ -251,6 +317,23 @@
             (0, 0, {'view_mode': 'kanban', 'view_id': ref('helpdesk_mgmt.view_helpdesk_ticket_kanban')}),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('view_xn_helpdesk_ticket_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('view_xn_helpdesk_ticket_form')})]"/>
+    </record>
+
+    <!-- For managers asked to approve: no Helpdesk rights needed. -->
+    <record id="action_xn_helpdesk_ticket_to_approve" model="ir.actions.act_window">
+        <field name="name">To Approve</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('xn_approval_ids.approver_id', '=', uid)]</field>
+        <field name="search_view_id" ref="view_xn_helpdesk_ticket_search"/>
+        <field name="context">{'search_default_awaiting_my_approval': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_xn_helpdesk_ticket_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_xn_helpdesk_ticket_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing waiting for your approval</p>
+            <p>When IT needs your approval on a request, it appears here and you get an email. Remove the filter to see requests you have already decided.</p>
+        </field>
     </record>
 
     <record id="action_xn_helpdesk_ticket_unassigned" model="ir.actions.act_window">

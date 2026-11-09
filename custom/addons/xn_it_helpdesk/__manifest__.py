@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Auditree IT Helpdesk",
-    "version": "17.0.1.1.0",
+    "version": "17.0.1.2.0",
     "category": "Services/Helpdesk",
     "summary": "IT tickets for employees, run by the IT team. "
                "Built on OCA helpdesk_mgmt.",
@@ -28,6 +28,25 @@ IT team (Helpdesk groups from helpdesk_mgmt)
   Closed. Resolution notes are mandatory before Resolved or Closed.
 * Dashboard tiles per status, filters by date / employee / category /
   priority / status / assignee, and an ageing + resolution-time report.
+
+Management approval
+-------------------
+* IT clicks Request Approval, picks the approver (the team's Default
+  Approver is suggested) and says what needs approving. The ticket moves to
+  Pending Approval and the approver gets an email with a link.
+* The approver opens the ticket (or IT Helpdesk > To Approve) and clicks
+  Approve or Reject; a reason is required to reject. No Helpdesk rights
+  needed: a record rule lets approvers read the tickets they are asked about.
+* Approved: back to In Progress (New if unassigned) for IT to carry out.
+  Rejected: resolved as not approved, so the employee gets the Resolved
+  email with the reason. IT (whoever asked, the assignee, the IT team) is
+  emailed either way. IT can withdraw a pending request.
+* While pending, the ticket cannot leave Pending Approval any other way,
+  and cannot be moved into it without a request.
+* Every request is a row in the ticket's Approval tab: requested by / on,
+  approver, what needed approval, outcome, decided by / on, comments. Rows
+  cannot be edited or deleted, and a ticket with approval history cannot be
+  deleted.
 
 Notifications
 -------------
@@ -59,6 +78,7 @@ Other rules
         "views/helpdesk_ticket_views.xml",
         "views/helpdesk_ticket_stage_views.xml",
         "views/helpdesk_ticket_report_views.xml",
+        "views/helpdesk_approval_views.xml",
         "views/menus.xml",
         "views/portal_views.xml",
     ],

@@ -21,6 +21,23 @@
             <field name="xn_state">in_progress</field>
             <field name="mail_template_id" ref="mail_template_ticket_status"/>
         </record>
+        <!--
+            Waiting for management approval. Same sequence as In Progress, so
+            it sorts straight after it (stages order by sequence, id). Entered
+            and left only through the approval buttons (see
+            _xn_check_approval_stage). The employee gets the usual status
+            email when the ticket lands here.
+        -->
+        <record id="stage_pending_approval" model="helpdesk.ticket.stage">
+            <field name="name">Pending Approval</field>
+            <field name="sequence">2</field>
+            <field name="xn_state">pending_approval</field>
+            <field name="unattended" eval="False"/>
+            <field name="closed" eval="False"/>
+            <field name="fold" eval="False"/>
+            <field name="company_id" eval="False"/>
+            <field name="mail_template_id" ref="mail_template_ticket_status"/>
+        </record>
         <record id="helpdesk_mgmt.helpdesk_ticket_stage_awaiting" model="helpdesk.ticket.stage">
             <field name="name">On Hold</field>
             <field name="xn_state">on_hold</field>

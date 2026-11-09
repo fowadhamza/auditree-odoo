@@ -29,6 +29,12 @@
               action="action_xn_helpdesk_my_tickets"
               sequence="5"/>
 
+    <menuitem id="menu_xn_it_helpdesk_to_approve"
+              name="To Approve"
+              parent="menu_xn_it_helpdesk_root"
+              action="action_xn_helpdesk_ticket_to_approve"
+              sequence="7"/>
+
     <menuitem id="menu_xn_it_helpdesk_tickets"
               name="Tickets"
               parent="menu_xn_it_helpdesk_root"

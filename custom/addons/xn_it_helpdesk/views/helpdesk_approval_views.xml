@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The dialog behind Request Approval / Approve / Reject. -->
+    <record id="view_xn_helpdesk_approval_wizard_form" model="ir.ui.view">
+        <field name="name">xn.helpdesk.approval.wizard.form</field>
+        <field name="model">xn.helpdesk.approval.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="ticket_id" invisible="1" force_save="1"/>
+                <field name="mode" invisible="1" force_save="1"/>
+                <p invisible="mode != 'request'">
+                    The ticket moves to Pending Approval and the approver gets an
+                    email with a link to it. IT is told when they decide.
+                </p>
+                <p invisible="mode != 'approve'">
+                    The ticket goes back to IT to carry out the request. IT gets an email.
+                </p>
+                <p invisible="mode != 'reject'">
+                    The ticket is resolved as not approved. The employee and IT get an
+                    email with your reason.
+                </p>
+                <group invisible="mode != 'request'">
+                    <field name="approver_id" required="mode == 'request'"
+                           options="{'no_create': True, 'no_open': True}"/>
+                </group>
+                <label for="note" string="What needs approval" class="fw-bold" invisible="mode != 'request'"/>
+                <label for="note" string="Comments (optional)" class="fw-bold" invisible="mode != 'approve'"/>
+                <label for="note" string="Reason for rejecting" class="fw-bold" invisible="mode != 'reject'"/>
+                <field name="note" nolabel="1" required="mode == 'reject'"
+                       placeholder="e.g. Install the requested software on the employee's laptop; licence and cost details."/>
+                <footer>
+                    <button name="action_confirm" type="object" string="Send for Approval"
+                            class="btn-primary" invisible="mode != 'request'"/>
+                    <button name="action_confirm" type="object" string="Approve"
+                            class="btn-success" invisible="mode != 'approve'"/>
+                    <button name="action_confirm" type="object" string="Reject"
+                            class="btn-danger" invisible="mode != 'reject'"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Default Approver on the team form (IT Helpdesk > Configuration > Teams). -->
+    <record id="view_helpdesk_team_form_xn_approver" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.team.form.xn.approver</field>
+        <field name="model">helpdesk.ticket.team</field>
+        <field name="inherit_id" ref="helpdesk_mgmt.view_helpdesk_team_form"/>
+        <field name="arch" type="xml">
+            <field name="user_id" position="after">
+                <field name="xn_default_approver_id" options="{'no_create': True}"/>
+            </field>
+        </field>
+    </record>
+</odoo>

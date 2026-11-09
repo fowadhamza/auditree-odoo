@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 from . import controllers
 from . import models
+from . import wizard
 
 # Shared IT mailbox login: on the IT team even though it is a shared account.
 IT_TEAM_LOGINS = ['it@auditree.com']
+
+# Suggested approver when IT asks for management approval (the IT Support
+# team's Default Approver). Same person as xn_purchase_approval's seed rule.
+DEFAULT_APPROVER_LOGIN = 'ghazala.nishath@auditree.com'
 
 # Production trial: the only employees given "Raise IT Tickets" on install.
 # Going live means giving that group to everyone; edit nothing here for that.
@@ -36,3 +41,17 @@ def post_init_hook(env):
     agents = it_group.users.filtered(lambda u: u.active and not u.share)
     if team and agents:
         team.write({'user_ids': [(4, user.id) for user in agents]})
+
+    set_default_approver(env)
+
+
+def set_default_approver(env):
+    """Make DEFAULT_APPROVER_LOGIN the IT Support team's Default Approver,
+    unless one is already set. Shared with the 17.0.1.2.0 migration."""
+    team = env.ref('xn_it_helpdesk.team_it_support', raise_if_not_found=False)
+    if not team or team.xn_default_approver_id:
+        return
+    approver = env['res.users'].search(
+        [('login', '=', DEFAULT_APPROVER_LOGIN), ('share', '=', False)], limit=1)
+    if approver:
+        team.xn_default_approver_id = approver

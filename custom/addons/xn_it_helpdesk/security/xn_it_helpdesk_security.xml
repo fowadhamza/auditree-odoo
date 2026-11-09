@@ -41,5 +41,44 @@
             <field name="global" eval="True"/>
             <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         </record>
+
+        <!--
+            Approvers read the tickets they were asked to approve, even when
+            they are not the requester, a follower or on the IT team. Group
+            rules are OR'ed, so this only widens helpdesk_mgmt's "Internal
+            Tickets" rule; writing still needs the Approve / Reject buttons.
+        -->
+        <record id="xn_helpdesk_ticket_approver_rule" model="ir.rule">
+            <field name="name">IT Tickets: approvers</field>
+            <field name="model_id" ref="helpdesk_mgmt.model_helpdesk_ticket"/>
+            <field name="domain_force">[('xn_approval_ids.approver_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Approval history: IT sees all of it; everyone else sees the rows
+             of tickets they raised, follow, were asked to approve or asked
+             approval for. Nobody writes rows except through the buttons. -->
+        <record id="xn_helpdesk_approval_user_rule" model="ir.rule">
+            <field name="name">IT Ticket Approvals: own tickets</field>
+            <field name="model_id" ref="model_xn_helpdesk_approval"/>
+            <field name="domain_force">['|', '|', '|',
+                ('approver_id', '=', user.id),
+                ('requested_by_id', '=', user.id),
+                ('ticket_id.partner_id', '=', user.partner_id.id),
+                ('ticket_id.message_partner_ids', 'in', [user.partner_id.id])]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="xn_helpdesk_approval_it_rule" model="ir.rule">
+            <field name="name">IT Ticket Approvals: IT team</field>
+            <field name="model_id" ref="model_xn_helpdesk_approval"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('helpdesk_mgmt.group_helpdesk_user'))]"/>
+        </record>
+        <record id="xn_helpdesk_approval_comp_rule" model="ir.rule">
+            <field name="name">IT Ticket Approvals: multi-company</field>
+            <field name="model_id" ref="model_xn_helpdesk_approval"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
     </data>
 </odoo>

@@ -4,6 +4,7 @@ from odoo import models, fields, _
 XN_STATES = [
     ('new', 'New'),
     ('in_progress', 'In Progress'),
+    ('pending_approval', 'Pending Approval'),
     ('on_hold', 'On Hold'),
     ('resolved', 'Resolved'),
     ('closed', 'Closed'),
