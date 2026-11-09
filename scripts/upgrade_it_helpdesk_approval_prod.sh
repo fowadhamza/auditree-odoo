@@ -167,7 +167,7 @@ code=$(curl -s -o /dev/null -w '%{http_code}' "$URL")
 echo "GET $URL -> $code"
 [ "$code" = "200" ] || echo "WARNING: expected 200. Retry in a minute; if still not 200, run: sudo journalctl -u odoo -n 80"
 echo "Stages:"
-sql "SELECT sequence || '  ' || name->>'en_US' || '  (' || COALESCE(xn_state, '-') || ')' FROM helpdesk_ticket_stage WHERE active ORDER BY sequence, id"
+sql "SELECT sequence || '  ' || (name::jsonb->>'en_US') || '  (' || COALESCE(xn_state, '-') || ')' FROM helpdesk_ticket_stage WHERE active ORDER BY sequence, id"
 echo "IT Support default approver:"
 sql "SELECT COALESCE(u.login, '(none)') FROM helpdesk_ticket_team t
        JOIN ir_model_data d ON d.res_id = t.id AND d.model = 'helpdesk.ticket.team'
