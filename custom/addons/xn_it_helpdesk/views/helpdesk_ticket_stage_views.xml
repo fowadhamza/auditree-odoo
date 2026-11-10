@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_helpdesk_ticket_stage_form_xn" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.stage.form.xn</field>
+        <field name="model">helpdesk.ticket.stage</field>
+        <field name="inherit_id" ref="helpdesk_mgmt.view_helpdesk_ticket_stage_form"/>
+        <field name="arch" type="xml">
+            <field name="closed" position="before">
+                <field name="xn_state"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_stage_tree_xn" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.stage.tree.xn</field>
+        <field name="model">helpdesk.ticket.stage</field>
+        <field name="inherit_id" ref="helpdesk_mgmt.view_helpdesk_ticket_stage_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="xn_state"/>
+            </field>
+        </field>
+    </record>
+
+    <!--
+        Dashboard: one tile per IT status with its ticket count. Counts are
+        taken as the viewing user, so an employee sees their own tickets and
+        the IT team sees all of them. A tile opens the matching tickets.
+    -->
+    <record id="view_xn_helpdesk_dashboard_kanban" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.stage.dashboard.xn</field>
+        <field name="model">helpdesk.ticket.stage</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <kanban create="false" edit="false" delete="false" group_create="false"
+                    records_draggable="false">
+                <field name="name"/>
+                <field name="xn_state"/>
+                <field name="xn_ticket_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card">
+                            <a type="object" name="action_xn_open_tickets"
+                               class="d-block text-center text-reset py-3">
+                                <div class="display-5 fw-bold">
+                                    <field name="xn_ticket_count"/>
+                                </div>
+                                <div class="fs-5 text-muted">
+                                    <field name="name"/>
+                                </div>
+                            </a>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_xn_helpdesk_dashboard" model="ir.actions.act_window">
+        <field name="name">IT Helpdesk Dashboard</field>
+        <field name="res_model">helpdesk.ticket.stage</field>
+        <field name="view_mode">kanban</field>
+        <field name="domain">[('xn_state', '!=', False)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_xn_helpdesk_dashboard_kanban')})]"/>
+    </record>
+</odoo>
