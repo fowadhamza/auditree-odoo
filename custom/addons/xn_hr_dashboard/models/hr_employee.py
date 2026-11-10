@@ -293,6 +293,10 @@ class HrEmployee(models.Model):
             "name": label,
             "res_model": model,
             "view_mode": "list,form",
+            # The Odoo 17 web client reads `views`, not `view_mode`, for an
+            # action dict returned from a method; without it doAction fails
+            # with "Cannot read properties of undefined (reading 'map')".
+            "views": [[False, "list"], [False, "form"]],
             "domain": self._xn_domains()[key],
             "context": {"create": False},
             "target": "current",
