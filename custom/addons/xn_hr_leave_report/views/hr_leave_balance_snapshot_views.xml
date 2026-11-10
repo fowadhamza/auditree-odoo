@@ -10,7 +10,7 @@
         <field name="name">hr.leave.balance.snapshot.list</field>
         <field name="model">hr.leave.balance.snapshot</field>
         <field name="arch" type="xml">
-            <tree string="Leave Balance Snapshot"
+            <tree string="Leave Balance Snapshot" class="xn_freeze_name"
                   create="false" edit="false" delete="false"
                   default_order="year desc, month desc, employee_name">
 

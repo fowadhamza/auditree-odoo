@@ -8,7 +8,7 @@
         <field name="name">hr.leave.balance.report.list</field>
         <field name="model">hr.leave.balance.report</field>
         <field name="arch" type="xml">
-            <tree string="Employee Leave Balances"
+            <tree string="Employee Leave Balances" class="xn_freeze_name"
                   create="false" edit="false" delete="false"
                   default_order="employee_name">
 

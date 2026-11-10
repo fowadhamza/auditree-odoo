@@ -1,0 +1,39 @@
+// Keep the Employee column visible while the wide leave reports scroll
+// sideways. Applied to any list view whose <tree> carries
+// class="xn_freeze_name". The checkbox column (40px wide in core,
+// see web/static/src/views/list/list_renderer.scss) is frozen too, and
+// the name column sits immediately to its right.
+
+@include media-breakpoint-up(md) {
+    .xn_freeze_name .o_list_table {
+        > thead > tr > th,
+        > tbody > tr > td,
+        > tfoot > tr > td {
+            &.o_list_record_selector,
+            &[data-name="employee_name"],
+            &[name="employee_name"] {
+                position: sticky;
+                z-index: 2;
+                background-color: $o-view-background-color;
+            }
+
+            &.o_list_record_selector {
+                left: 0;
+            }
+
+            &[data-name="employee_name"],
+            &[name="employee_name"] {
+                left: 40px;
+                box-shadow: inset -1px 0 0 $border-color;
+            }
+        }
+
+        // Header cells sit above the frozen body cells when both scroll.
+        > thead > tr > th {
+            &.o_list_record_selector,
+            &[data-name="employee_name"] {
+                z-index: 3;
+            }
+        }
+    }
+}

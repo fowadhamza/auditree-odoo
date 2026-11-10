@@ -10,7 +10,7 @@
         <field name="name">hr.leave.period.report.list</field>
         <field name="model">hr.leave.period.report</field>
         <field name="arch" type="xml">
-            <tree string="Leave Activity by Period"
+            <tree string="Leave Activity by Period" class="xn_freeze_name"
                   create="false" edit="false" delete="false"
                   default_order="year desc, month desc, employee_name">
 
