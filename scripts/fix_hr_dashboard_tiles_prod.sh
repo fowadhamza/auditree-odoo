@@ -43,7 +43,9 @@ if ! sudo cat "$TARGET" | diff --strip-trailing-cr "$OLD" - ; then
     fail "prod hr_employee.py differs from the last prod tag - not overwriting unknown changes"
 fi
 echo "Prod file matches the last prod tag."
-"$ROOT/venv/bin/python" -m py_compile "$NEW" || fail "new file does not compile"
+# System python3, parse only: the venv is not readable by login users.
+python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read(), sys.argv[1])' "$NEW" \
+    || fail "new file does not parse"
 systemctl is-active --quiet odoo || fail "odoo is not running right now - investigate first"
 
 step "2/4 Swap file (old copy kept)"
