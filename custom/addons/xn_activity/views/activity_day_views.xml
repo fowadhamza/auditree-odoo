@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_activity_day_tree" model="ir.ui.view">
+        <field name="name">xn.activity.day.tree</field>
+        <field name="model">xn.activity.day</field>
+        <field name="arch" type="xml">
+            <tree string="Daily Work Metrics" create="false" edit="false" delete="false"
+                  decoration-muted="screen_hours == 0">
+                <field name="date"/>
+                <field name="user_label"/>
+                <field name="employee_id" column_invisible="1"/>
+                <field name="linked" column_invisible="1"/>
+                <field name="has_note" column_invisible="1"/>
+                <field name="department_id" optional="show"/>
+                <field name="screen_hours" widget="float_time" sum="Total"/>
+                <field name="productive_hours" widget="float_time" sum="Total"/>
+                <field name="productive_status" widget="badge"
+                       decoration-success="productive_status == 'good'"
+                       decoration-warning="productive_status == 'fair'"
+                       decoration-danger="productive_status == 'low'"/>
+                <field name="work_hours" widget="float_time" sum="Total" optional="show"/>
+                <field name="idle_hours" widget="float_time" sum="Total" optional="show"/>
+                <field name="locked_hours" widget="float_time" sum="Total" optional="show"/>
+                <field name="first_activity" optional="show"/>
+                <field name="last_activity" optional="show"/>
+                <field name="day_kind" optional="hide"/>
+                <field name="out_of_hours" optional="show"/>
+                <field name="time_off" optional="show"/>
+                <field name="note" optional="show"/>
+                <field name="computers" optional="hide"/>
+                <button name="action_open_slots" type="object" string="Detail"
+                        icon="fa-list" invisible="screen_hours == 0 and idle_hours == 0 and locked_hours == 0"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_day_form" model="ir.ui.view">
+        <field name="name">xn.activity.day.form</field>
+        <field name="model">xn.activity.day</field>
+        <field name="arch" type="xml">
+            <form string="Daily Work Metrics" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_open_slots" type="object" string="5-Minute Detail"
+                            class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="user_label"/></h1>
+                        <h2><field name="date"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="department_id"/>
+                            <field name="day_kind"/>
+                            <field name="time_off"/>
+                            <field name="computers"/>
+                        </group>
+                        <group>
+                            <field name="first_activity"/>
+                            <field name="last_activity"/>
+                            <field name="out_of_hours"/>
+                        </group>
+                        <group>
+                            <field name="screen_hours" widget="float_time"/>
+                            <field name="productive_hours" widget="float_time"/>
+                            <field name="productive_status" widget="badge"
+                                   decoration-success="productive_status == 'good'"
+                                   decoration-warning="productive_status == 'fair'"
+                                   decoration-danger="productive_status == 'low'"/>
+                            <field name="work_hours" widget="float_time"/>
+                        </group>
+                        <group>
+                            <field name="idle_hours" widget="float_time"/>
+                            <field name="locked_hours" widget="float_time"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="No note for this day."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_day_pivot" model="ir.ui.view">
+        <field name="name">xn.activity.day.pivot</field>
+        <field name="model">xn.activity.day</field>
+        <field name="arch" type="xml">
+            <pivot string="Daily Work Metrics">
+                <field name="user_label" type="row"/>
+                <field name="date" interval="week" type="col"/>
+                <field name="screen_hours" type="measure" widget="float_time"/>
+                <field name="productive_hours" type="measure" widget="float_time"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_day_graph" model="ir.ui.view">
+        <field name="name">xn.activity.day.graph</field>
+        <field name="model">xn.activity.day</field>
+        <field name="arch" type="xml">
+            <graph string="Daily Work Metrics" type="bar">
+                <field name="date" interval="day"/>
+                <field name="productive_hours" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_day_search" model="ir.ui.view">
+        <field name="name">xn.activity.day.search</field>
+        <field name="model">xn.activity.day</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_label"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="today" string="Today"
+                        domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="yesterday" string="Yesterday"
+                        domain="[('date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_week" string="This Week"
+                        domain="[('date', '&gt;=', (context_today() + relativedelta(weeks=-1, days=1, weekday=0)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="This Month"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter name="filter_date" date="date"/>
+                <separator/>
+                <filter name="not_linked" string="Not Linked to an Employee"
+                        domain="[('linked', '=', False)]"/>
+                <filter name="below_target" string="Below Target"
+                        domain="[('productive_status', 'in', ('fair', 'low'))]"/>
+                <filter name="out_of_hours" string="Out of Hours"
+                        domain="[('out_of_hours', '=', True)]"/>
+                <filter name="has_note" string="Has Note" domain="[('has_note', '=', True)]"/>
+                <filter name="time_off" string="On Time Off" domain="[('time_off', '!=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_employee" string="Employee" context="{'group_by': 'user_label'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_day" model="ir.actions.act_window">
+        <field name="name">Daily Work Metrics</field>
+        <field name="res_model">xn.activity.day</field>
+        <field name="view_mode">tree,pivot,graph,form</field>
+        <field name="search_view_id" ref="view_xn_activity_day_search"/>
+        <field name="context">{'search_default_this_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No activity yet</p>
+            <p>Rows appear within 5 minutes of a laptop with the agent being used.
+               Install the agent from Agent Setup.</p>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_day_my" model="ir.actions.act_window">
+        <field name="name">My Activity</field>
+        <field name="res_model">xn.activity.day</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_xn_activity_day_search"/>
+        <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+        <field name="context">{'search_default_this_month': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing recorded for you yet</p>
+            <p>This is the activity recorded from your laptop: active, idle and
+               locked time and the programs in use. No titles, websites,
+               keystrokes or screenshots are collected.</p>
+        </field>
+    </record>
+</odoo>

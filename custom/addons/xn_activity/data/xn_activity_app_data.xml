@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Preloaded programs. HR reviews the list before go-live; changes made in
+     the UI are kept on upgrade (noupdate). Anything not listed arrives as
+     Unclassified. -->
+<odoo noupdate="1">
+    <!-- Productive -->
+    <record id="app_excel" model="xn.activity.app"><field name="name">excel</field><field name="friendly_name">Excel</field><field name="category">productive</field></record>
+    <record id="app_winword" model="xn.activity.app"><field name="name">winword</field><field name="friendly_name">Word</field><field name="category">productive</field></record>
+    <record id="app_powerpnt" model="xn.activity.app"><field name="name">powerpnt</field><field name="friendly_name">PowerPoint</field><field name="category">productive</field></record>
+    <record id="app_outlook" model="xn.activity.app"><field name="name">outlook</field><field name="friendly_name">Outlook</field><field name="category">productive</field></record>
+    <record id="app_olk" model="xn.activity.app"><field name="name">olk</field><field name="friendly_name">Outlook (new)</field><field name="category">productive</field></record>
+    <record id="app_onenote" model="xn.activity.app"><field name="name">onenote</field><field name="friendly_name">OneNote</field><field name="category">productive</field></record>
+    <record id="app_msaccess" model="xn.activity.app"><field name="name">msaccess</field><field name="friendly_name">Access</field><field name="category">productive</field></record>
+    <record id="app_msteams" model="xn.activity.app"><field name="name">ms-teams</field><field name="friendly_name">Teams</field><field name="category">productive</field></record>
+    <record id="app_teams" model="xn.activity.app"><field name="name">teams</field><field name="friendly_name">Teams (classic)</field><field name="category">productive</field></record>
+    <record id="app_acrord32" model="xn.activity.app"><field name="name">acrord32</field><field name="friendly_name">Acrobat Reader</field><field name="category">productive</field></record>
+    <record id="app_acrobat" model="xn.activity.app"><field name="name">acrobat</field><field name="friendly_name">Acrobat</field><field name="category">productive</field></record>
+    <record id="app_chrome" model="xn.activity.app"><field name="name">chrome</field><field name="friendly_name">Chrome</field><field name="category">productive</field></record>
+    <record id="app_msedge" model="xn.activity.app"><field name="name">msedge</field><field name="friendly_name">Edge</field><field name="category">productive</field></record>
+    <record id="app_firefox" model="xn.activity.app"><field name="name">firefox</field><field name="friendly_name">Firefox</field><field name="category">productive</field></record>
+    <record id="app_tally" model="xn.activity.app"><field name="name">tally</field><field name="friendly_name">Tally</field><field name="category">productive</field></record>
+    <record id="app_zoom" model="xn.activity.app"><field name="name">zoom</field><field name="friendly_name">Zoom</field><field name="category">productive</field></record>
+
+    <!-- Neutral: Windows itself, the lock screen, the agent's placeholders -->
+    <record id="app_lockscreen" model="xn.activity.app"><field name="name">lockscreen</field><field name="friendly_name">Lock screen</field><field name="category">neutral</field></record>
+    <record id="app_lockapp" model="xn.activity.app"><field name="name">lockapp</field><field name="friendly_name">Lock screen (LockApp)</field><field name="category">neutral</field></record>
+    <record id="app_unknown" model="xn.activity.app"><field name="name">unknown</field><field name="friendly_name">No window in front</field><field name="category">neutral</field></record>
+    <record id="app_explorer" model="xn.activity.app"><field name="name">explorer</field><field name="friendly_name">File Explorer / Desktop</field><field name="category">neutral</field></record>
+    <record id="app_searchhost" model="xn.activity.app"><field name="name">searchhost</field><field name="friendly_name">Windows Search</field><field name="category">neutral</field></record>
+    <record id="app_searchapp" model="xn.activity.app"><field name="name">searchapp</field><field name="friendly_name">Windows Search (Win 10)</field><field name="category">neutral</field></record>
+    <record id="app_startmenu" model="xn.activity.app"><field name="name">startmenuexperiencehost</field><field name="friendly_name">Start menu</field><field name="category">neutral</field></record>
+    <record id="app_shellexp" model="xn.activity.app"><field name="name">shellexperiencehost</field><field name="friendly_name">Windows shell</field><field name="category">neutral</field></record>
+    <record id="app_appframe" model="xn.activity.app"><field name="name">applicationframehost</field><field name="friendly_name">Windows app frame</field><field name="category">neutral</field></record>
+    <record id="app_settings" model="xn.activity.app"><field name="name">systemsettings</field><field name="friendly_name">Windows Settings</field><field name="category">neutral</field></record>
+    <record id="app_taskmgr" model="xn.activity.app"><field name="name">taskmgr</field><field name="friendly_name">Task Manager</field><field name="category">neutral</field></record>
+
+    <!-- Unproductive -->
+    <record id="app_vlc" model="xn.activity.app"><field name="name">vlc</field><field name="friendly_name">VLC</field><field name="category">unproductive</field></record>
+    <record id="app_wmplayer" model="xn.activity.app"><field name="name">wmplayer</field><field name="friendly_name">Windows Media Player</field><field name="category">unproductive</field></record>
+    <record id="app_spotify" model="xn.activity.app"><field name="name">spotify</field><field name="friendly_name">Spotify</field><field name="category">unproductive</field></record>
+    <record id="app_steam" model="xn.activity.app"><field name="name">steam</field><field name="friendly_name">Steam</field><field name="category">unproductive</field></record>
+    <record id="app_solitaire" model="xn.activity.app"><field name="name">solitaire</field><field name="friendly_name">Solitaire</field><field name="category">unproductive</field></record>
+</odoo>

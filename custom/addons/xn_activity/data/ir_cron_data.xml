@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_xn_activity_purge" model="ir.cron">
+        <field name="name">Activity: delete data past retention</field>
+        <field name="model_id" ref="model_xn_activity_day"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_purge()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 21:00:00')"/>
+        <field name="active" eval="True"/>
+    </record>
+    <!-- Mondays 03:00 UTC = 08:30 IST. Sends real email. -->
+    <record id="cron_xn_activity_digest" model="ir.cron">
+        <field name="name">Activity: weekly digest to HR</field>
+        <field name="model_id" ref="model_xn_activity_day"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_weekly_digest()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="numbercall">-1</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=7 - DateTime.now().weekday())).strftime('%Y-%m-%d 03:00:00')"/>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

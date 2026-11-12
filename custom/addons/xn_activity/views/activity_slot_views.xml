@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_activity_slot_tree" model="ir.ui.view">
+        <field name="name">xn.activity.slot.tree</field>
+        <field name="model">xn.activity.slot</field>
+        <field name="arch" type="xml">
+            <tree string="5-Minute Slots" create="false" edit="false" delete="false"
+                  default_order="slot_start">
+                <field name="slot_start"/>
+                <field name="app_id"/>
+                <field name="app_category" optional="show"/>
+                <field name="active_hours" widget="float_time" sum="Total"/>
+                <field name="idle_hours" widget="float_time" sum="Total"/>
+                <field name="locked_hours" widget="float_time" sum="Total"/>
+                <field name="device_id" optional="show"/>
+                <field name="user_key" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_slot_search" model="ir.ui.view">
+        <field name="name">xn.activity.slot.search</field>
+        <field name="model">xn.activity.slot</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="user_key"/>
+                <field name="app_id"/>
+                <field name="device_id"/>
+                <filter name="filter_date" date="local_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_app" string="App" context="{'group_by': 'app_id'}"/>
+                    <filter name="group_hour" string="Hour" context="{'group_by': 'slot_start:hour'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- App usage across people and dates (effective category) -->
+    <record id="view_xn_activity_app_usage_pivot" model="ir.ui.view">
+        <field name="name">xn.activity.app.usage.pivot</field>
+        <field name="model">xn.activity.app.usage</field>
+        <field name="arch" type="xml">
+            <pivot string="App Usage">
+                <field name="category" type="row"/>
+                <field name="app_id" type="row"/>
+                <field name="date" interval="week" type="col"/>
+                <field name="active_hours" type="measure" widget="float_time"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_app_usage_graph" model="ir.ui.view">
+        <field name="name">xn.activity.app.usage.graph</field>
+        <field name="model">xn.activity.app.usage</field>
+        <field name="arch" type="xml">
+            <graph string="App Usage" type="bar" stacked="True">
+                <field name="date" interval="week"/>
+                <field name="category"/>
+                <field name="active_hours" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_app_usage_search" model="ir.ui.view">
+        <field name="name">xn.activity.app.usage.search</field>
+        <field name="model">xn.activity.app.usage</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="app_id"/>
+                <filter name="this_month" string="This Month"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter name="filter_date" date="date"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                    <filter name="group_app" string="App" context="{'group_by': 'app_id'}"/>
+                    <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_app_usage" model="ir.actions.act_window">
+        <field name="name">App Usage</field>
+        <field name="res_model">xn.activity.app.usage</field>
+        <field name="view_mode">pivot,graph</field>
+        <field name="search_view_id" ref="view_xn_activity_app_usage_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+</odoo>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_activity_setup_form" model="ir.ui.view">
+        <field name="name">xn.activity.setup.form</field>
+        <field name="model">xn.activity.setup</field>
+        <field name="arch" type="xml">
+            <form string="Agent Setup">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Download the installer and deploy it with Endpoint Central
+                        (Computer Configuration, Custom Script, run as SYSTEM). Changing
+                        the idle threshold reaches laptops on their next report; a new
+                        server URL or key needs a new installer.
+                    </div>
+                    <group>
+                        <group string="Connection">
+                            <field name="server_url"/>
+                            <field name="api_key" password="True"/>
+                            <field name="old_key_until" invisible="not old_key_until"/>
+                        </group>
+                        <group string="Report">
+                            <field name="productive_target" widget="float_time"/>
+                            <field name="idle_minutes"/>
+                            <field name="digest_to" placeholder="Empty: every HR Manager"/>
+                        </group>
+                        <group string="Retention">
+                            <field name="retention_days"/>
+                            <field name="summary_retention_days"/>
+                            <field name="key_grace_days"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_save" type="object" string="Save" class="btn-primary"/>
+                    <button name="action_download_installer" type="object"
+                            string="Save and Download Installer" class="btn-secondary"/>
+                    <button name="action_new_key" type="object" string="Generate New Key"
+                            class="btn-secondary"
+                            confirm="Laptops must get a new installer before the grace period ends, or they stop reporting. Continue?"/>
+                    <button string="Close" special="cancel" class="btn-link"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_setup" model="ir.actions.act_window">
+        <field name="name">Agent Setup</field>
+        <field name="res_model">xn.activity.setup</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

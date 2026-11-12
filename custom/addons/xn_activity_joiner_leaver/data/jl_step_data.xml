@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Steps added to the xn_joiner_leaver checklists. Editable in the UI after
+     install (noupdate). Checklists already started do not get them. -->
+<odoo noupdate="1">
+    <record id="step_join_activity_agent" model="xn.jl.step">
+        <field name="process">join</field>
+        <field name="sequence">27</field>
+        <field name="name">Confirm the activity agent reports from the joiner's laptop (Employees &gt; Activity &gt; Devices)</field>
+        <field name="role">it</field>
+        <field name="anchor">date</field>
+        <field name="days">1</field>
+        <field name="note">The agent is deployed by Endpoint Central. The laptop should appear under Devices, linked to the joiner, within 10 minutes of use. If it is linked to no one, check the joiner's work email in Odoo.</field>
+    </record>
+    <record id="step_leave_activity_agent" model="xn.jl.step">
+        <field name="process">leave</field>
+        <field name="sequence">18</field>
+        <field name="name">Remove the activity agent from the returned laptop (Endpoint Central, install.ps1 -Uninstall)</field>
+        <field name="role">it</field>
+        <field name="anchor">after</field>
+        <field name="after_step_id" ref="xn_joiner_leaver.step_leave_unboxing"/>
+        <field name="days">1</field>
+    </record>
+</odoo>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_xn_activity_device_tree" model="ir.ui.view">
+        <field name="name">xn.activity.device.tree</field>
+        <field name="model">xn.activity.device</field>
+        <field name="arch" type="xml">
+            <tree string="Devices" create="false" edit="false"
+                  decoration-danger="stale" decoration-warning="clock_flag">
+                <field name="name"/>
+                <field name="last_user_key"/>
+                <field name="employee_id"/>
+                <field name="first_seen"/>
+                <field name="last_seen"/>
+                <field name="days_reported"/>
+                <field name="agent_version"/>
+                <field name="clock_offset" optional="show"/>
+                <field name="clock_flag" optional="show"/>
+                <field name="stale"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_device_search" model="ir.ui.view">
+        <field name="name">xn.activity.device.search</field>
+        <field name="model">xn.activity.device</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="last_user_key"/>
+                <field name="employee_id"/>
+                <filter name="stale" string="Not Reporting" domain="[('stale', '=', True)]"/>
+                <filter name="clock_flag" string="Clock Off" domain="[('clock_flag', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_version" string="Agent Version" context="{'group_by': 'agent_version'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_device" model="ir.actions.act_window">
+        <field name="name">Devices</field>
+        <field name="res_model">xn.activity.device</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_xn_activity_device_search"/>
+        <field name="help" type="html">
+            <p>One row per laptop that has reported. Red rows have not reported
+               for 2 or more working days: the agent may have been removed or
+               blocked, or the laptop is off.</p>
+        </field>
+    </record>
+
+    <record id="view_xn_activity_view_log_tree" model="ir.ui.view">
+        <field name="name">xn.activity.view.log.tree</field>
+        <field name="model">xn.activity.view.log</field>
+        <field name="arch" type="xml">
+            <tree string="Detail Views" create="false" edit="false" delete="false">
+                <field name="create_date"/>
+                <field name="viewer_id"/>
+                <field name="employee_id"/>
+                <field name="user_label"/>
+                <field name="date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_view_log" model="ir.actions.act_window">
+        <field name="name">Detail View Log</field>
+        <field name="res_model">xn.activity.view.log</field>
+        <field name="view_mode">tree</field>
+    </record>
+</odoo>

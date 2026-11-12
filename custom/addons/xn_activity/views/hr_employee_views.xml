@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_xn_activity" model="ir.ui.view">
+        <field name="name">hr.employee.form.xn.activity</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='hr_settings']" position="inside">
+                <group string="Activity Tracking" name="xn_activity" groups="hr.group_hr_user">
+                    <field name="xn_activity_excluded"/>
+                    <field name="xn_activity_login" invisible="xn_activity_excluded"
+                           placeholder="Only if the laptop does not sign in with the work email"/>
+                    <field name="xn_activity_notice_date"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
