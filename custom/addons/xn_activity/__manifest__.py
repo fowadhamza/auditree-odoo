@@ -32,6 +32,7 @@ No titles, URLs, keystrokes or screenshots are collected. See README.md.
         "resource",
     ],
     "data": [
+        "security/xn_activity_groups.xml",
         "security/ir.model.access.csv",
         "security/xn_activity_security.xml",
         "data/xn_activity_app_data.xml",

@@ -42,7 +42,10 @@ changes (re-link). Changing the productive target re-grades all rows in SQL.
 
 ## Access
 
-- HR Officer: all reports, devices, app usage; can add notes for anyone.
+- Activity Tracking: View All Employees (`group_xn_activity_viewer`): all
+  reports, devices, app usage, read-only. For the board of directors; give
+  it in Settings > Users. HR Officers get it automatically (implied).
+- HR Officer: the above, and can add notes for anyone.
 - HR Manager: plus Agent Setup, app classification, overrides, view log.
 - Employee: My Activity (own days and slots) and own day notes.
 - Notes can be changed only by their author.

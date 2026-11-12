@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_xn_activity" model="ir.module.category">
+        <field name="name">Activity Tracking</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- Read-only view of everyone's activity reports (Daily Work Metrics,
+         App Usage, Devices) without any HR rights: the board of directors.
+         HR Officers get it through implied_ids below. -->
+    <record id="group_xn_activity_viewer" model="res.groups">
+        <field name="name">View All Employees</field>
+        <field name="category_id" ref="module_category_xn_activity"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Sees every employee's activity reports. Cannot
+change settings, classify apps or edit employees.</field>
+    </record>
+
+    <record id="hr.group_hr_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('xn_activity.group_xn_activity_viewer'))]"/>
+    </record>
+</odoo>
