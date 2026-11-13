@@ -12,6 +12,7 @@
                        decoration-success="category == 'productive'"
                        decoration-danger="category == 'unproductive'"
                        decoration-info="category == 'neutral'"/>
+                <field name="idle_as_active" optional="show"/>
                 <field name="create_date" string="First Seen" optional="hide"/>
             </tree>
         </field>
@@ -27,6 +28,7 @@
                         <field name="name"/>
                         <field name="friendly_name"/>
                         <field name="category"/>
+                        <field name="idle_as_active"/>
                     </group>
                     <separator string="Department Overrides"/>
                     <field name="rule_ids">

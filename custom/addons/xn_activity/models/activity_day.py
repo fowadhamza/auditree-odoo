@@ -106,17 +106,17 @@ class XnActivityDay(models.Model):
             SELECT s.day_key, s.local_date,
                    max(s.employee_id),
                    min(s.user_key),
-                   COALESCE(sum(s.active_hours), 0),
-                   COALESCE(sum(s.idle_hours), 0),
+                   COALESCE(sum(x.act), 0),
+                   COALESCE(sum(x.idl), 0),
                    COALESCE(sum(s.locked_hours), 0),
-                   COALESCE(sum(s.active_hours) FILTER (
+                   COALESCE(sum(x.act) FILTER (
                        WHERE COALESCE(r.category, a.category) = 'productive'), 0),
-                   COALESCE(sum(s.active_hours) FILTER (
+                   COALESCE(sum(x.act) FILTER (
                        WHERE COALESCE(r.category, a.category) = 'unproductive'), 0),
-                   min(s.slot_start) FILTER (WHERE s.active_hours > 0),
-                   max(s.slot_start) FILTER (WHERE s.active_hours > 0),
-                   min(s.local_minute) FILTER (WHERE s.active_hours > 0),
-                   max(s.local_minute) FILTER (WHERE s.active_hours > 0),
+                   min(s.slot_start) FILTER (WHERE x.act > 0),
+                   max(s.slot_start) FILTER (WHERE x.act > 0),
+                   min(s.local_minute) FILTER (WHERE x.act > 0),
+                   max(s.local_minute) FILTER (WHERE x.act > 0),
                    string_agg(DISTINCT d.name, ', ')
               FROM xn_activity_slot s
               JOIN wanted w ON w.day_key = s.day_key
@@ -126,6 +126,13 @@ class XnActivityDay(models.Model):
          LEFT JOIN hr_employee e ON e.id = s.employee_id
          LEFT JOIN xn_activity_app_rule r ON r.app_id = s.app_id
                                          AND r.department_id = e.department_id
+              -- Apps marked "Count Idle as Active" (meetings, reading):
+              -- their idle time is reported as active.
+             CROSS JOIN LATERAL (SELECT
+                   s.active_hours + CASE WHEN a.idle_as_active
+                                         THEN s.idle_hours ELSE 0 END AS act,
+                   CASE WHEN a.idle_as_active THEN 0
+                        ELSE s.idle_hours END AS idl) x
           GROUP BY s.day_key, s.local_date
         """, (keys, dates))
         data = {}

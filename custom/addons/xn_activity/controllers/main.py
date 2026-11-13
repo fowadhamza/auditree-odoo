@@ -241,6 +241,7 @@ class XnActivityController(http.Controller):
             UPDATE xn_activity_device
                SET last_seen = %s, agent_version = %s, clock_offset = %s,
                    clock_flag = abs(%s) > 300, last_user_key = %s,
+                   active = true, stale_alerted_on = NULL,
                    employee_id = %s, write_date = %s
              WHERE id = %s
         """, (fields.Datetime.now(), p['agent'] or None, p['clock_offset'],

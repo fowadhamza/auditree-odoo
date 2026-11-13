@@ -61,6 +61,10 @@ class XnActivitySetup(models.TransientModel):
         string='Previous Key Grace Period (days)',
         help="After a new key is generated, laptops on the previous key keep "
              "reporting for this many days.")
+    alert_to = fields.Char(
+        string='Laptop Alerts To',
+        help="Comma-separated emails for the weekday 'laptops not reporting' "
+             "alert, e.g. it@auditree.com. Empty uses the digest recipients.")
     digest_to = fields.Char(
         string='Weekly Digest To',
         help="Comma-separated emails. Empty sends to every HR Manager.")

@@ -13,10 +13,11 @@ DEFAULTS = {
     'summary_retention_days': 730,   # daily summaries
     'key_grace_days': 14,
     'digest_to': '',                 # empty = HR Managers' emails
+    'alert_to': '',                  # empty = same as the digest
 }
 
 MIN_RETENTION_DAYS = 7
-AGENT_VERSION = '1.0'
+AGENT_VERSION = '1.1'
 
 
 def _num(value, default, cast):

@@ -11,15 +11,15 @@
     <record id="app_olk" model="xn.activity.app"><field name="name">olk</field><field name="friendly_name">Outlook (new)</field><field name="category">productive</field></record>
     <record id="app_onenote" model="xn.activity.app"><field name="name">onenote</field><field name="friendly_name">OneNote</field><field name="category">productive</field></record>
     <record id="app_msaccess" model="xn.activity.app"><field name="name">msaccess</field><field name="friendly_name">Access</field><field name="category">productive</field></record>
-    <record id="app_msteams" model="xn.activity.app"><field name="name">ms-teams</field><field name="friendly_name">Teams</field><field name="category">productive</field></record>
-    <record id="app_teams" model="xn.activity.app"><field name="name">teams</field><field name="friendly_name">Teams (classic)</field><field name="category">productive</field></record>
+    <record id="app_msteams" model="xn.activity.app"><field name="name">ms-teams</field><field name="friendly_name">Teams</field><field name="category">productive</field><field name="idle_as_active" eval="True"/></record>
+    <record id="app_teams" model="xn.activity.app"><field name="name">teams</field><field name="friendly_name">Teams (classic)</field><field name="category">productive</field><field name="idle_as_active" eval="True"/></record>
     <record id="app_acrord32" model="xn.activity.app"><field name="name">acrord32</field><field name="friendly_name">Acrobat Reader</field><field name="category">productive</field></record>
     <record id="app_acrobat" model="xn.activity.app"><field name="name">acrobat</field><field name="friendly_name">Acrobat</field><field name="category">productive</field></record>
     <record id="app_chrome" model="xn.activity.app"><field name="name">chrome</field><field name="friendly_name">Chrome</field><field name="category">productive</field></record>
     <record id="app_msedge" model="xn.activity.app"><field name="name">msedge</field><field name="friendly_name">Edge</field><field name="category">productive</field></record>
     <record id="app_firefox" model="xn.activity.app"><field name="name">firefox</field><field name="friendly_name">Firefox</field><field name="category">productive</field></record>
     <record id="app_tally" model="xn.activity.app"><field name="name">tally</field><field name="friendly_name">Tally</field><field name="category">productive</field></record>
-    <record id="app_zoom" model="xn.activity.app"><field name="name">zoom</field><field name="friendly_name">Zoom</field><field name="category">productive</field></record>
+    <record id="app_zoom" model="xn.activity.app"><field name="name">zoom</field><field name="friendly_name">Zoom</field><field name="category">productive</field><field name="idle_as_active" eval="True"/></record>
 
     <!-- Neutral: Windows itself, the lock screen, the agent's placeholders -->
     <record id="app_lockscreen" model="xn.activity.app"><field name="name">lockscreen</field><field name="friendly_name">Lock screen</field><field name="category">neutral</field></record>

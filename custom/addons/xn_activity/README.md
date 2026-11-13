@@ -75,10 +75,23 @@ the per-session mutex keeps one copy. Queue and log:
 `%LOCALAPPDATA%\XnActivity\`. Sign the script with the internal
 code-signing certificate and add a Defender/EDR exclusion for the folder.
 
+## Calls and reading
+
+- Agent (1.1+): no input but the microphone in use (Windows'
+  CapabilityAccessManager registry: LastUsedTimeStop = 0) -> the sample is
+  active, not idle. Checked only when the user would otherwise be idle.
+- App flag *Count Idle as Active* (App Classification): idle time with that
+  app in front is reported as active; applies to past days. Teams and Zoom
+  set by default (migration 17.0.1.2.0 for existing databases).
+
 ## Crons
 
 - *Activity: delete data past retention* -- nightly; slots after 180 days,
   summaries after 730 (Agent Setup).
+- *Activity: alert on laptops not reporting* -- weekdays 10:00 IST. **Sends
+  real email** (to *Laptop Alerts To*, else the digest recipients), once per
+  laptop per silence of 2+ working days; cleared when it reports again.
+  Archive retired laptops in Devices.
 - *Activity: weekly digest to HR* -- Mondays 08:30 IST. **Sends real email**
   (to *Weekly Digest To*, else every HR Manager). Archive the outgoing mail
   server before testing on a prod copy.

@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
+import logging
 from datetime import timedelta
 
-from odoo import models, fields, api
+from markupsafe import Markup
+
+from odoo import models, fields, api, _
+
+from .activity_settings import get_settings
+
+_logger = logging.getLogger(__name__)
 
 CLOCK_FLAG_SECONDS = 300
 STALE_WORKING_DAYS = 2
@@ -24,6 +31,14 @@ class XnActivityDevice(models.Model):
     _order = 'last_seen desc'
 
     name = fields.Char(string='Computer', required=True, index=True)
+    active = fields.Boolean(
+        default=True,
+        help="Archive a retired laptop so it no longer raises alerts. It "
+             "comes back by itself if it reports again.")
+    stale_alerted_on = fields.Datetime(
+        string='Alert Sent', readonly=True,
+        help="When the 'not reporting' alert went out. Cleared when the "
+             "laptop reports again, so each silence alerts once.")
     last_user_key = fields.Char(string='Last Sign-in')
     employee_id = fields.Many2one('hr.employee', string='Last Employee',
                                   ondelete='set null')
@@ -81,3 +96,60 @@ class XnActivityDevice(models.Model):
         if stale:
             return ['|', ('last_seen', '=', False), ('last_seen', '<', cutoff)]
         return [('last_seen', '>=', cutoff)]
+
+    @api.model
+    def _xn_alert_recipients(self):
+        configured = get_settings(self.env)['alert_to']
+        if configured:
+            return [e.strip() for e in configured.split(',') if e.strip()]
+        return self.env['xn.activity.day']._xn_digest_recipients()
+
+    @api.model
+    def _cron_stale_alert(self):
+        """Weekday email: laptops that have gone quiet. Once per silence."""
+        now = fields.Datetime.now()
+        if now.weekday() >= 5:
+            return
+        devices = self.sudo().search([
+            ('stale', '=', True),
+            ('stale_alerted_on', '=', False),
+            ('last_seen', '!=', False),
+        ], order='last_seen')
+        if not devices:
+            return
+        to = self._xn_alert_recipients()
+        if not to:
+            _logger.info("xn_activity: %d laptops not reporting, no alert "
+                         "recipients", len(devices))
+            return
+        rows = Markup('').join(
+            Markup('<tr><td style="padding:4px 8px">%s</td>'
+                   '<td style="padding:4px 8px">%s</td>'
+                   '<td style="padding:4px 8px">%s</td>'
+                   '<td style="padding:4px 8px">%s</td></tr>') % (
+                d.name, d.employee_id.name or d.last_user_key or '-',
+                fields.Datetime.to_string(d.last_seen), d.agent_version or '-')
+            for d in devices)
+        body = Markup(
+            '<p>These laptops have not reported activity for %d or more '
+            'working days. The agent may have been removed or blocked by '
+            'antivirus, the laptop may be off or away, or the user may not '
+            'have signed in.</p>'
+            '<table style="border-collapse:collapse;font-size:13px">'
+            '<tr><th style="text-align:left;padding:4px 8px">Computer</th>'
+            '<th style="text-align:left;padding:4px 8px">Last user</th>'
+            '<th style="text-align:left;padding:4px 8px">Last seen (UTC)</th>'
+            '<th style="text-align:left;padding:4px 8px">Agent</th></tr>'
+            '%s</table>'
+            '<p style="color:#888">You get this once per laptop until it '
+            'reports again. Archive a retired laptop in Employees &gt; '
+            'Activity &gt; Devices to stop alerts for it.</p>'
+        ) % (STALE_WORKING_DAYS, rows)
+        self.env['mail.mail'].sudo().create({
+            'subject': _('Activity: %d laptop(s) not reporting', len(devices)),
+            'email_to': ','.join(to),
+            'body_html': body,
+            'auto_delete': True,
+        })
+        devices.write({'stale_alerted_on': now})
+        _logger.info("xn_activity: stale alert for %s", ', '.join(devices.mapped('name')))

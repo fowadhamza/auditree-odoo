@@ -32,8 +32,11 @@ class XnActivityAppUsage(models.Model):
                        e.department_id,
                        s.app_id,
                        COALESCE(r.category, a.category) AS category,
-                       s.active_hours,
-                       s.idle_hours
+                       s.active_hours + CASE WHEN a.idle_as_active
+                                             THEN s.idle_hours ELSE 0 END
+                           AS active_hours,
+                       CASE WHEN a.idle_as_active THEN 0
+                            ELSE s.idle_hours END AS idle_hours
                   FROM xn_activity_slot s
                   JOIN xn_activity_app a ON a.id = s.app_id
              LEFT JOIN hr_employee e ON e.id = s.employee_id

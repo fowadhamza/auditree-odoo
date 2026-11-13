@@ -11,6 +11,19 @@
         <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 21:00:00')"/>
         <field name="active" eval="True"/>
     </record>
+    <!-- Weekdays 04:30 UTC = 10:00 IST. Sends real email, once per laptop
+         per silence. -->
+    <record id="cron_xn_activity_stale_alert" model="ir.cron">
+        <field name="name">Activity: alert on laptops not reporting</field>
+        <field name="model_id" ref="model_xn_activity_device"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_stale_alert()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 04:30:00')"/>
+        <field name="active" eval="True"/>
+    </record>
     <!-- Mondays 03:00 UTC = 08:30 IST. Sends real email. -->
     <record id="cron_xn_activity_digest" model="ir.cron">
         <field name="name">Activity: weekly digest to HR</field>

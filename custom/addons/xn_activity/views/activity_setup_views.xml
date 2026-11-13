@@ -22,6 +22,7 @@
                             <field name="productive_target" widget="float_time"/>
                             <field name="idle_minutes"/>
                             <field name="digest_to" placeholder="Empty: every HR Manager"/>
+                            <field name="alert_to" placeholder="e.g. it@auditree.com"/>
                         </group>
                         <group string="Retention">
                             <field name="retention_days"/>

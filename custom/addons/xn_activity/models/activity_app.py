@@ -37,6 +37,11 @@ class XnActivityApp(models.Model):
                                 default='unclassified', index=True)
     rule_ids = fields.One2many('xn.activity.app.rule', 'app_id',
                                string='Department Overrides')
+    idle_as_active = fields.Boolean(
+        string='Count Idle as Active',
+        help="Time with this app in front but no keyboard or mouse input "
+             "counts as active, not idle: meetings, reading long documents. "
+             "Applies to past days too.")
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'This process name already exists.'),
@@ -57,10 +62,11 @@ class XnActivityApp(models.Model):
     def write(self, vals):
         if vals.get('name'):
             vals['name'] = clean_app_name(vals['name'])
-        old = {app.id: app.category for app in self}
+        old = {app.id: (app.category, app.idle_as_active) for app in self}
         res = super().write(vals)
-        if 'category' in vals:
-            changed = self.filtered(lambda a: old.get(a.id) != a.category)
+        if 'category' in vals or 'idle_as_active' in vals:
+            changed = self.filtered(
+                lambda a: old.get(a.id) != (a.category, a.idle_as_active))
             if changed:
                 self.env['xn.activity.day']._xn_recompute_for_apps(changed)
         return res

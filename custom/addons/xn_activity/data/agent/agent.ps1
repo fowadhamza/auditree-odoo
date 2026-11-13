@@ -81,6 +81,20 @@ function Test-Locked {
     return ($ui.Count -gt 0)
 }
 
+# Windows records, per app, when it last started and stopped using the
+# microphone (Settings > Privacy > Microphone reads the same keys). A start
+# with no stop means it is in use right now: a Teams/Zoom call, a phone call
+# in the browser. Only checked when there is no keyboard or mouse input.
+$MicKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone'
+function Test-MicInUse {
+    $keys = @(Get-ChildItem $MicKey -ErrorAction SilentlyContinue) + @(Get-ChildItem "$MicKey\NonPackaged" -ErrorAction SilentlyContinue)
+    foreach ($k in $keys) {
+        $v = Get-ItemProperty -Path $k.PSPath -ErrorAction SilentlyContinue
+        if ($v -and $v.LastUsedTimeStart -and $v.LastUsedTimeStop -eq 0) { return $true }
+    }
+    return $false
+}
+
 function Get-ForegroundApp {
     $p = [XnActivityNative]::ForegroundPid()
     if ($p -eq 0) { return 'unknown' }
@@ -178,7 +192,10 @@ while ($true) {
         } else {
             $app = Get-ForegroundApp
             if ($app -eq 'lockapp') { $state = 'locked' }
-            elseif ([XnActivityNative]::IdleSeconds() -ge $IdleSeconds) { $state = 'idle' }
+            elseif ([XnActivityNative]::IdleSeconds() -ge $IdleSeconds) {
+                # No input, but on a call: that is work, not idle.
+                if (Test-MicInUse) { $state = 'active' } else { $state = 'idle' }
+            }
             else { $state = 'active' }
         }
         if (-not $Current.ContainsKey($app)) { $Current[$app] = @{ active = 0; idle = 0; locked = 0 } }

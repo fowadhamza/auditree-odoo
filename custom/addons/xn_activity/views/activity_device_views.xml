@@ -4,7 +4,7 @@
         <field name="name">xn.activity.device.tree</field>
         <field name="model">xn.activity.device</field>
         <field name="arch" type="xml">
-            <tree string="Devices" create="false" edit="false"
+            <tree string="Devices" create="false" edit="false" delete="false"
                   decoration-danger="stale" decoration-warning="clock_flag">
                 <field name="name"/>
                 <field name="last_user_key"/>
@@ -16,6 +16,8 @@
                 <field name="clock_offset" optional="show"/>
                 <field name="clock_flag" optional="show"/>
                 <field name="stale"/>
+                <field name="stale_alerted_on" optional="hide"/>
+                <field name="active" column_invisible="1"/>
             </tree>
         </field>
     </record>
@@ -30,6 +32,8 @@
                 <field name="employee_id"/>
                 <filter name="stale" string="Not Reporting" domain="[('stale', '=', True)]"/>
                 <filter name="clock_flag" string="Clock Off" domain="[('clock_flag', '=', True)]"/>
+                <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_version" string="Agent Version" context="{'group_by': 'agent_version'}"/>
                 </group>
