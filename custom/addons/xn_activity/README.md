@@ -108,3 +108,56 @@ code-signing certificate and add a Defender/EDR exclusion for the folder.
 `xn_activity_joiner_leaver` (auto-installs with `xn_joiner_leaver`) adds an
 IT step to each checklist: confirm the agent reports (day after DOJ), remove
 it from the returned laptop.
+
+## Known issues (review 2026-11-17)
+
+Found by reading the code; none verified in a running Odoo yet. The
+holiday-timezone bug and slow app reclassification from the same review were
+fixed in a76ce4a.
+
+Bugs:
+
+1. **New employees are not relinked.** Only `hr.employee.write` calls
+   `_xn_activity_relink()`. If a laptop reports before HR creates the
+   employee, those days stay under the raw sign-in ("unlinked" in the
+   digest) while later days go to `emp:<id>`. Fix: override `create` too.
+2. **One bad slot poisons the agent queue.** `_validate` rejects the whole
+   batch with 400 for one malformed slot (`controllers/main.py`), and the
+   agent keeps a failed batch and resends it forever until `$MaxQueue`.
+   Fix: skip bad slots server-side; drop a batch on 4xx other than 403/429.
+3. **Concurrent ingest can fail on unique constraints.** Day rows
+   (`Day.create`) and new apps (`_xn_get_or_create`) are search-then-create,
+   so two requests at once (a person with two laptops, a new app on several
+   laptops) raise a unique violation and a 500; Odoo does not retry those.
+   Every agent posts within ~15 s after each 5-minute boundary, which makes
+   this likely. Self-heals on the next post. Fix: `INSERT ... ON CONFLICT`,
+   plus a random delay in the agent before posting.
+
+Data integrity:
+
+4. **Metrics can be faked by the employee.** `agent.ps1` (with the single
+   shared API key) is readable by Users, the server trusts the `upn` in the
+   body, and `queue.json` is user-writable. An agent in the user's session
+   cannot fully hide a secret; mitigations are binding a device to the first
+   UPN it reports and flagging new device/UPN pairs. Treat the numbers as
+   indicative, not disciplinary evidence.
+5. **A stuck microphone entry keeps someone "active".** `Test-MicInUse` reads
+   `LastUsedTimeStop = 0` as on a call; an app that crashed mid-call can leave
+   it at 0, so idle never counts. Fix: for NonPackaged keys, check the process
+   is running.
+
+Smaller:
+
+6. Stale-laptop alert counts Mon-Fri only (`_working_days_back`), so a
+   multi-day public holiday flags every laptop. Use the company calendar.
+7. Half-day leave is graded against the full productive target.
+8. The agent credits a fixed 15 s per sample, though each loop takes longer:
+   ~1-3% under-count. Credit the measured gap (capped).
+9. The view log covers only the Detail button; App Usage shows per-person,
+   per-day, per-app hours unlogged.
+10. HR Managers can unlink slots, but that does not rebuild the day row.
+11. A huge `sent_at` overflows the int `clock_offset`, and `Infinity` in a
+    slot raises an uncaught OverflowError: 500 instead of 400 (key needed).
+12. Ticking Exclude deletes history immediately, with no confirmation.
+13. No tests; `_validate`, `_status`, `_xn_vals`, `_xn_schedule` are easy to
+    cover.
