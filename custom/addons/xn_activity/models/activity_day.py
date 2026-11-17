@@ -2,6 +2,8 @@
 import logging
 from datetime import datetime, time, timedelta
 
+import pytz
+
 from odoo import models, fields, api, _
 
 from .activity_settings import get_settings
@@ -23,6 +25,30 @@ DAY_KINDS = [
     ('weekend', 'Weekend'),
     ('holiday', 'Public Holiday'),
 ]
+
+# Columns _xn_write_rows() sets, with their SQL types: every key _xn_vals()
+# returns except day_key and date, which identify the row.
+_UPDATE_COLUMNS = [
+    ('employee_id', 'int4'),
+    ('linked', 'bool'),
+    ('user_label', 'varchar'),
+    ('department_id', 'int4'),
+    ('screen_hours', 'float8'),
+    ('productive_hours', 'float8'),
+    ('work_hours', 'float8'),
+    ('idle_hours', 'float8'),
+    ('locked_hours', 'float8'),
+    ('productive_status', 'varchar'),
+    ('first_activity', 'timestamp'),
+    ('last_activity', 'timestamp'),
+    ('computers', 'varchar'),
+    ('day_kind', 'varchar'),
+    ('out_of_hours', 'bool'),
+    ('time_off', 'varchar'),
+    ('note', 'text'),
+    ('has_note', 'bool'),
+]
+UPDATE_CHUNK = 1000
 
 
 def _status(productive, screen, target):
@@ -163,7 +189,17 @@ class XnActivityDay(models.Model):
                                ('date', 'in', list(set(dates)))])
         by_pair = {(d.day_key, d.date): d for d in existing}
 
+        # Summaries outlive the 5-minute data (summary retention > slot
+        # retention). A day before the oldest slot still stored has lost its
+        # slots to the purge, so its metrics cannot be rebuilt: rebuilding it
+        # would zero them (day with a note) or delete the row (no note).
+        # Such days only take note changes. The purge cuts by date for
+        # everyone, so min(local_date) is exactly where the slots end.
+        cr.execute("SELECT min(local_date) FROM xn_activity_slot")
+        slots_from = cr.fetchone()[0]
+
         to_create = []
+        to_update = []
         to_unlink = Day.browse()
         for pair in pairs:
             key, date = pair
@@ -171,6 +207,12 @@ class XnActivityDay(models.Model):
             emp = emp_by_id.get(int(key[4:])) if key.startswith('emp:') else None
             note = notes.get((emp.id, date)) if emp else None
             current = by_pair.get(pair)
+            frozen = not row and (slots_from is None or date < slots_from)
+            if frozen and current:
+                if (current.note or False) != (note or False):
+                    current.write({'note': note or False,
+                                   'has_note': bool(note)})
+                continue
             if not row and not note:
                 if current:
                     to_unlink |= current
@@ -178,13 +220,52 @@ class XnActivityDay(models.Model):
             vals = self._xn_vals(key, date, row, emp, note,
                                  leaves, schedule, target)
             if current:
-                current.write(vals)
+                to_update.append((current.id, vals))
             else:
                 to_create.append(vals)
+        self._xn_write_rows(to_update)
         if to_unlink:
             to_unlink.unlink()
         if to_create:
             Day.create(to_create)
+
+    @api.model
+    def _xn_write_rows(self, updates):
+        """Batched UPDATE of existing day rows: [(id, vals from _xn_vals)].
+
+        A category change can rebuild thousands of days in one request, and
+        one ORM write per row was slow enough to hit the request time limit.
+        These are plain stored columns (no computes depend on them, no
+        tracking), so writing them in SQL skips nothing.
+        """
+        if not updates:
+            return
+        cr = self.env.cr
+        cols = [c for c, _t in _UPDATE_COLUMNS]
+        tpl = '(' + ','.join(['%s::int4'] + ['%s::' + t
+                                             for _c, t in _UPDATE_COLUMNS]) + ')'
+        # Inlined (mogrify) so that a '%' inside a note is not taken for a
+        # placeholder: the statement is executed without parameters.
+        write_uid = cr.mogrify('%s', (self.env.uid,)).decode()
+        write_date = cr.mogrify('%s', (fields.Datetime.now(),)).decode()
+        set_sql = ', '.join('%s = v.%s' % (c, c) for c in cols)
+        for i in range(0, len(updates), UPDATE_CHUNK):
+            values = []
+            for rec_id, vals in updates[i:i + UPDATE_CHUNK]:
+                params = [rec_id]
+                for col, typ in _UPDATE_COLUMNS:
+                    v = vals[col]
+                    if v is False and typ != 'bool':
+                        v = None
+                    params.append(v)
+                values.append(cr.mogrify(tpl, params).decode())
+            cr.execute(
+                "UPDATE xn_activity_day d SET " + set_sql
+                + ", write_uid = " + write_uid
+                + ", write_date = " + write_date
+                + " FROM (VALUES " + ','.join(values) + ") AS v(id, "
+                + ', '.join(cols) + ") WHERE d.id = v.id")
+        self.invalidate_model(cols + ['write_uid', 'write_date'])
 
     @api.model
     def _xn_vals(self, key, date, row, emp, note, leaves, schedule, target):
@@ -277,13 +358,32 @@ class XnActivityDay(models.Model):
         if not employees:
             return out
         lo, hi = min(dates), max(dates)
+        # Stored in UTC: widen by a day each way, then compare local dates.
         holidays = self.env['resource.calendar.leaves'].sudo().search([
             ('resource_id', '=', False),
-            ('date_from', '<=', datetime.combine(hi, time.max)),
-            ('date_to', '>=', datetime.combine(lo, time.min)),
+            ('date_from', '<=', datetime.combine(hi + timedelta(days=1),
+                                                 time.max)),
+            ('date_to', '>=', datetime.combine(lo - timedelta(days=1),
+                                               time.min)),
         ])
+        by_tz = {}
+
+        def holiday_dates(tz_name):
+            """[(calendar, first local date, last local date)]. A holiday on
+            26 Jan IST is stored from 25 Jan 18:30 UTC: taking .date() of the
+            UTC value would make 25 Jan a holiday too."""
+            if tz_name not in by_tz:
+                tz = pytz.timezone(tz_name)
+                by_tz[tz_name] = [
+                    (h.calendar_id,
+                     pytz.utc.localize(h.date_from).astimezone(tz).date(),
+                     pytz.utc.localize(h.date_to).astimezone(tz).date())
+                    for h in holidays]
+            return by_tz[tz_name]
+
         for emp in employees:
             cal = emp.resource_calendar_id or emp.company_id.resource_calendar_id
+            local_holidays = holiday_dates((cal and cal.tz) or emp.tz or 'UTC')
             hours = {}
             if cal:
                 for att in cal.attendance_ids:
@@ -294,9 +394,8 @@ class XnActivityDay(models.Model):
                     hours[day] = (min(s, att.hour_from), max(e, att.hour_to))
             for d in set(dates):
                 is_holiday = any(
-                    (not h.calendar_id or h.calendar_id == cal)
-                    and h.date_from.date() <= d <= h.date_to.date()
-                    for h in holidays)
+                    (not h_cal or h_cal == cal) and h_from <= d <= h_to
+                    for h_cal, h_from, h_to in local_holidays)
                 if is_holiday:
                     out[(emp.id, d)] = ('holiday', None, None)
                 elif cal and d.weekday() not in hours:

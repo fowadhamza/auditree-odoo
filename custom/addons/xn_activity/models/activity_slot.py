@@ -19,8 +19,12 @@ class XnActivitySlot(models.Model):
     _order = 'slot_start desc, app_id'
     _rec_name = 'slot_start'
 
+    # Indexes: this is the busiest table, so it carries only what a query
+    # uses. device_id is covered by xn_activity_slot_device_date_idx (and the
+    # unique constraint), day_key by xn_activity_slot_day_idx; slot_start is
+    # only sorted on within one person's day.
     device_id = fields.Many2one('xn.activity.device', string='Computer',
-                                required=True, ondelete='cascade', index=True)
+                                required=True, ondelete='cascade')
     user_key = fields.Char(string='Sign-in', required=True, index=True,
                            help="Microsoft 365 sign-in (UPN), or the Windows "
                                 "user name when there is none; lower case.")
@@ -28,8 +32,8 @@ class XnActivitySlot(models.Model):
     login = fields.Char(string='Windows User')
     employee_id = fields.Many2one('hr.employee', ondelete='set null',
                                   index=True)
-    day_key = fields.Char(required=True, index=True)
-    slot_start = fields.Datetime(required=True, index=True)
+    day_key = fields.Char(required=True)
+    slot_start = fields.Datetime(required=True)
     local_date = fields.Date(required=True, index=True)
     local_minute = fields.Integer(
         help="Minutes since local midnight on the laptop.")
@@ -50,4 +54,9 @@ class XnActivitySlot(models.Model):
         self.env.cr.execute("""
             CREATE INDEX IF NOT EXISTS xn_activity_slot_day_idx
                 ON xn_activity_slot (day_key, local_date)
+        """)
+        # Devices list: count(DISTINCT local_date) per device, index-only.
+        self.env.cr.execute("""
+            CREATE INDEX IF NOT EXISTS xn_activity_slot_device_date_idx
+                ON xn_activity_slot (device_id, local_date)
         """)

@@ -118,12 +118,13 @@ class XnActivityAppRule(models.Model):
         return rules
 
     def write(self, vals):
-        before = [(r.app_id, r.department_id) for r in self]
+        # Old and new (app, department) both need rebuilding; once each.
+        touched = {(r.app_id, r.department_id) for r in self}
         res = super().write(vals)
+        touched |= {(r.app_id, r.department_id) for r in self}
         Day = self.env['xn.activity.day']
-        for app, dept in before:
+        for app, dept in touched:
             Day._xn_recompute_for_apps(app, dept)
-        self._xn_touch()
         return res
 
     def unlink(self):

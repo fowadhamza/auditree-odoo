@@ -31,6 +31,13 @@ app's category or a department override changes (every day using that app),
 when a note changes, and when an employee's work email / Windows user name
 changes (re-link). Changing the productive target re-grades all rows in SQL.
 
+Days older than the oldest stored slot (summaries are kept longer than the
+5-minute data) cannot be rebuilt: a rebuild leaves their metrics alone and
+only updates the note. Re-linking and category changes therefore do not
+reach those days. Existing rows are updated in one batched SQL `UPDATE`
+(`_xn_write_rows`), not one ORM write per row -- keep `_UPDATE_COLUMNS` in
+step with `_xn_vals()` when adding a field to the summary.
+
 ## Linking and exclusions
 
 - UPN (`whoami /upn`) matched to `hr.employee.work_email`, then the
