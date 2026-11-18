@@ -50,11 +50,24 @@ step with `_xn_vals()` when adding a field to the summary.
 ## Access
 
 - Activity Tracking: View All Employees (`group_xn_activity_viewer`): all
-  reports, devices, app usage, read-only. For the board of directors; give
-  it in Settings > Users. HR Officers get it automatically (implied).
-- HR Officer: the above, and can add notes for anyone.
+  reports, devices, app usage, timelines, dashboard, read-only. HR Officers
+  get it automatically (implied).
+- Activity Tracking: Board of Directors (`group_xn_activity_board`, implies
+  View All Employees): also sees the names in the dashboard's *Worth a
+  conversation* panel. No HR group implies it, so HR does not. Give it in
+  Settings > Users. Migration 17.0.1.4.0 moved everyone who had View All
+  Employees without HR rights into it.
+- HR Officer: View All Employees, can add notes for anyone, and the
+  dashboard's *To sort out* panel.
 - HR Manager: plus Agent Setup, app classification, overrides, view log.
-- Employee: My Activity (own days and slots) and own day notes.
+- Reporting manager (no group): the "own and team" record rules on days,
+  slots and the usage view cover everyone below them in the org chart
+  (`employee_id child_of user.employee_ids`), so the dashboard, Team
+  Timeline and day detail show their team. Opening a report's detail is
+  logged. Devices stay viewer-only; the dashboard shows the team's laptops
+  through sudo, name and state only.
+- Employee: My Activity (own days and slots), own day notes, and the
+  dashboard for themselves.
 - Notes can be changed only by their author.
 
 ## Ingest endpoint
@@ -125,6 +138,28 @@ read their own rows of the view (same rules as the slots).
 - Drawn with CSS boxes (`static/src/timeline/`), no Chart.js. A component
   getter must not be called `window`: OWL templates read `window` as the
   browser global (the bars rendered empty until renamed `bounds`).
+
+## Dashboard
+
+Activity > Dashboard (`xn_activity_dashboard`, menu for every internal
+user). This week / last week / this month, compared with the period before;
+department filter. Data: `xn.activity.day.xn_dashboard_data`
+(`models/activity_dashboard.py`), read as the current user, so the scope is
+the record rules' (all / team / self, shown under the title).
+
+- Headline figures, averages per person by day, where screen time goes, by
+  department, today's timeline, laptops, top apps. Averages and "days on
+  target" count working days with screen time and no time off.
+- *Worth a conversation* (names of people under half the target on 3+
+  working days, with day notes): sent by the server only to the Board of
+  Directors; everyone else sees the count in the headline figures.
+- *Long days* (out-of-hours on 3+ days): a count, no names.
+- *To sort out* (new unclassified apps, unlinked sign-ins, missing
+  monitoring notice): HR only.
+- A newer request always wins over a slower earlier one (`loadToken`), so
+  the period buttons and the figures cannot disagree.
+- The weekly digest email still names people under target and goes to HR
+  Managers (or *Weekly Digest To*); it is not covered by the board-only rule.
 
 ## Crons
 

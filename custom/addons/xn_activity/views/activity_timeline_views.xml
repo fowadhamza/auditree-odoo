@@ -5,4 +5,11 @@
         <field name="name">Team Timeline</field>
         <field name="tag">xn_activity_team_timeline</field>
     </record>
+
+    <!-- Weekly / monthly overview; see static/src/dashboard. What it covers
+         follows the record rules (all, team, or self). -->
+    <record id="action_xn_activity_dashboard" model="ir.actions.client">
+        <field name="name">Activity Dashboard</field>
+        <field name="tag">xn_activity_dashboard</field>
+    </record>
 </odoo>

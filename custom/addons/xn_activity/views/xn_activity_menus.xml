@@ -3,6 +3,8 @@
     <menuitem id="menu_xn_activity_root" name="Activity" parent="hr.menu_hr_root"
               sequence="85" groups="base.group_user"/>
 
+    <menuitem id="menu_xn_activity_dashboard" name="Dashboard" parent="menu_xn_activity_root"
+              action="action_xn_activity_dashboard" sequence="1" groups="base.group_user"/>
     <menuitem id="menu_xn_activity_my" name="My Activity" parent="menu_xn_activity_root"
               action="action_xn_activity_day_my" sequence="5" groups="base.group_user"/>
     <menuitem id="menu_xn_activity_notes" name="Day Notes" parent="menu_xn_activity_root"

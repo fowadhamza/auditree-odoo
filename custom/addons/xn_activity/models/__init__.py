@@ -6,6 +6,7 @@ from . import activity_slot
 from . import activity_day
 from . import activity_digest
 from . import activity_timeline
+from . import activity_dashboard
 from . import activity_note
 from . import activity_view_log
 from . import activity_app_usage

@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Rules of different groups are OR'ed: an employee matches only the
-         "own" rules; activity viewers (the board, and HR Officers through
-         implied_ids) also match the "all" rules. -->
+         "own and team" rules; activity viewers (the board, and HR Officers
+         through implied_ids) also match the "all" rules. -->
 
-    <!-- Daily rows and slots: own data for everyone, all data for viewers. -->
+    <!-- Daily rows and slots: own data, plus everyone below you in the org
+         chart (reporting managers: direct and indirect reports); all data
+         for viewers. user is a superuser record in rule domains, so
+         user.employee_ids reads without HR rights. -->
+
     <record id="rule_xn_activity_day_own" model="ir.rule">
-        <field name="name">Activity day: own</field>
+        <field name="name">Activity day: own and team (reports below in the org chart)</field>
         <field name="model_id" ref="model_xn_activity_day"/>
-        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">['|', ('employee_id.user_id', '=', user.id), ('employee_id', 'child_of', user.employee_ids.ids)]</field>
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
     <record id="rule_xn_activity_day_hr" model="ir.rule">
@@ -18,9 +22,9 @@
         <field name="groups" eval="[(6, 0, [ref('group_xn_activity_viewer')])]"/>
     </record>
     <record id="rule_xn_activity_slot_own" model="ir.rule">
-        <field name="name">Activity slot: own</field>
+        <field name="name">Activity slot: own and team</field>
         <field name="model_id" ref="model_xn_activity_slot"/>
-        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">['|', ('employee_id.user_id', '=', user.id), ('employee_id', 'child_of', user.employee_ids.ids)]</field>
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
     <record id="rule_xn_activity_slot_hr" model="ir.rule">
@@ -32,9 +36,9 @@
 
     <!-- App usage view (also the 5-minute detail): same as the slots. -->
     <record id="rule_xn_activity_app_usage_own" model="ir.rule">
-        <field name="name">Activity app usage: own</field>
+        <field name="name">Activity app usage: own and team</field>
         <field name="model_id" ref="model_xn_activity_app_usage"/>
-        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="domain_force">['|', ('employee_id.user_id', '=', user.id), ('employee_id', 'child_of', user.employee_ids.ids)]</field>
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
     <record id="rule_xn_activity_app_usage_hr" model="ir.rule">

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="xn_activity.Dashboard">
+        <div class="o_action o_xn_dash o_xn_tl h-100 overflow-auto">
+            <div class="o_xn_dash_inner">
+
+                <div class="o_xn_dash_head">
+                    <div>
+                        <h1 class="o_xn_dash_title">Activity Dashboard</h1>
+                        <div class="text-muted" t-if="state.data">
+                            <t t-esc="state.data.label"/> - <t t-esc="state.data.scope_label"/>
+                        </div>
+                    </div>
+                    <div class="o_xn_dash_controls">
+                        <div class="btn-group" role="group" aria-label="Period">
+                            <t t-foreach="periods" t-as="p" t-key="p[0]">
+                                <button type="button"
+                                        t-att-class="'btn ' + (state.period === p[0] ? 'btn-primary' : 'btn-secondary')"
+                                        t-att-aria-pressed="state.period === p[0] ? 'true' : 'false'"
+                                        t-on-click="() => this.setPeriod(p[0])" t-esc="p[1]"/>
+                            </t>
+                        </div>
+                        <select t-if="state.data and state.data.departments.length > 1"
+                                class="form-select o_xn_dash_select" aria-label="Department"
+                                t-on-change="onDepartmentChange">
+                            <option value="" t-att-selected="!state.department">All departments</option>
+                            <t t-foreach="state.data.departments" t-as="dep" t-key="dep.id">
+                                <option t-att-value="dep.id" t-att-selected="state.department == dep.id" t-esc="dep.name"/>
+                            </t>
+                        </select>
+                        <button type="button" class="btn btn-secondary" t-on-click="() => this.openTeamTimeline()">Team Timeline</button>
+                    </div>
+                </div>
+
+                <t t-if="state.loading and !state.data">
+                    <div class="text-muted p-3">Loading...</div>
+                </t>
+                <t t-elif="state.data">
+                    <div t-att-class="'o_xn_dash_body' + (state.loading ? ' o_xn_dash_loading' : '')">
+
+                        <section class="o_xn_dash_kpis" aria-label="Summary">
+                            <t t-foreach="kpis" t-as="k" t-key="k.label">
+                                <div class="o_xn_dash_card o_xn_dash_kpi">
+                                    <span class="o_xn_dash_kpi_label" t-esc="k.label"/>
+                                    <span class="o_xn_dash_kpi_value" t-esc="k.value"/>
+                                    <span t-att-class="'o_xn_dash_kpi_delta ' + k.cls" t-esc="k.text"/>
+                                </div>
+                            </t>
+                        </section>
+
+                        <div class="o_xn_dash_row">
+                            <section class="o_xn_dash_card o_xn_dash_wide" aria-labelledby="xn-dash-byday">
+                                <div class="o_xn_dash_card_head">
+                                    <h2 id="xn-dash-byday">Average per person, by day</h2>
+                                    <div class="o_xn_dash_legend">
+                                        <span><span class="o_xn_tl_swatch o_xn_tl_productive"/>Productive</span>
+                                        <span><span class="o_xn_tl_swatch o_xn_dash_other"/>Other screen time</span>
+                                        <span><span class="o_xn_dash_target_key"/>Target <t t-esc="byDay.targetLabel"/></span>
+                                    </div>
+                                </div>
+                                <div class="o_xn_dash_bars">
+                                    <div class="o_xn_dash_target" aria-hidden="true" t-att-style="byDay.targetStyle"/>
+                                    <t t-foreach="byDay.days" t-as="d" t-key="d.key">
+                                        <div class="o_xn_dash_bar_col">
+                                            <span class="o_xn_dash_bar_total" t-esc="d.total"/>
+                                            <div class="o_xn_dash_bar" t-att-style="d.barStyle" t-att-title="d.title">
+                                                <div class="o_xn_dash_other" t-att-style="d.otherStyle"/>
+                                                <div class="o_xn_tl_productive o_xn_dash_bar_prod"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="o_xn_dash_bar_labels">
+                                    <t t-foreach="byDay.days" t-as="d" t-key="d.key">
+                                        <span t-esc="d.label"/>
+                                    </t>
+                                </div>
+                            </section>
+
+                            <section class="o_xn_dash_card o_xn_dash_narrow" aria-labelledby="xn-dash-split">
+                                <h2 id="xn-dash-split">Where screen time goes</h2>
+                                <t t-if="split.length">
+                                    <div class="o_xn_dash_split" aria-hidden="true">
+                                        <t t-foreach="split" t-as="s" t-key="s.key">
+                                            <div t-att-class="s.cls" t-att-style="s.barStyle"/>
+                                        </t>
+                                    </div>
+                                    <ul class="o_xn_dash_list">
+                                        <t t-foreach="split" t-as="s" t-key="s.key">
+                                            <li>
+                                                <span t-att-class="'o_xn_tl_swatch ' + s.cls"/>
+                                                <span class="o_xn_dash_grow" t-esc="s.label"/>
+                                                <span class="text-muted" t-esc="s.hours"/>
+                                                <strong class="o_xn_dash_num" t-esc="s.pct"/>
+                                            </li>
+                                        </t>
+                                    </ul>
+                                    <p t-if="unclassifiedPct" class="text-muted small mb-0">
+                                        <t t-esc="unclassifiedPct"/>% is still Unclassified: classifying those apps
+                                        sharpens every figure on this page.
+                                    </p>
+                                </t>
+                                <p t-else="" class="text-muted">No activity in this period.</p>
+                            </section>
+                        </div>
+
+                        <div class="o_xn_dash_row">
+                            <section class="o_xn_dash_card o_xn_dash_wide" aria-labelledby="xn-dash-dept">
+                                <h2 id="xn-dash-dept">By department</h2>
+                                <div class="o_xn_dash_table_wrap">
+                                    <table class="o_xn_dash_table">
+                                        <thead>
+                                            <tr>
+                                                <th>Department</th>
+                                                <th class="text-end">People</th>
+                                                <th class="text-end">Avg screen</th>
+                                                <th class="text-end">Avg productive</th>
+                                                <th class="o_xn_dash_col_target">Days on target</th>
+                                                <th class="text-end">vs previous</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="departments" t-as="r" t-key="r.key">
+                                                <tr>
+                                                    <td class="fw-medium" t-esc="r.name"/>
+                                                    <td class="text-end" t-esc="r.people"/>
+                                                    <td class="text-end" t-esc="r.screenText"/>
+                                                    <td class="text-end" t-esc="r.productiveText"/>
+                                                    <td>
+                                                        <div class="o_xn_dash_meter_row">
+                                                            <div class="o_xn_dash_meter"><div class="o_xn_tl_productive" t-att-style="r.barStyle"/></div>
+                                                            <span class="o_xn_dash_num" t-esc="r.pct"/>
+                                                        </div>
+                                                    </td>
+                                                    <td t-att-class="'text-end ' + r.deltaCls" t-esc="r.deltaText"/>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                    <p t-if="!departments.length" class="text-muted">No activity in this period.</p>
+                                </div>
+                            </section>
+
+                            <section class="o_xn_dash_card o_xn_dash_narrow" aria-labelledby="xn-dash-attn">
+                                <t t-if="state.data.is_board">
+                                    <h2 id="xn-dash-attn">Worth a conversation</h2>
+                                    <p class="text-muted small">Under half the target on 3+ working days, time off excluded. Visible to the Board of Directors only.</p>
+                                    <ul class="o_xn_dash_people">
+                                        <t t-foreach="attention" t-as="a" t-key="a.employee_id">
+                                            <li>
+                                                <div class="o_xn_dash_people_top">
+                                                    <a href="#" t-on-click.prevent="() => this.openPersonDays(a.employee_id, a.name)" t-esc="a.name"/>
+                                                    <span class="o_xn_dash_down fw-semibold"><t t-esc="a.days"/> days</span>
+                                                </div>
+                                                <div class="text-muted small"><t t-esc="a.department"/> - avg productive <t t-esc="a.productiveText"/></div>
+                                                <div class="small" t-esc="a.notes or 'No day notes.'"/>
+                                            </li>
+                                        </t>
+                                    </ul>
+                                    <p t-if="!attention.length" class="text-muted">Nobody this period.</p>
+                                </t>
+                                <t t-else="">
+                                    <h2 id="xn-dash-attn">Long days</h2>
+                                </t>
+                                <div t-att-class="state.data.is_board ? 'o_xn_dash_divider' : ''">
+                                    <h3 t-if="state.data.is_board" class="o_xn_dash_h3">Long days</h3>
+                                    <p class="small mb-0">
+                                        <strong t-esc="state.data.long_days"/> people were active out of hours
+                                        (early, late, weekend or holiday) on 3+ days. A wellbeing check, not a target.
+                                    </p>
+                                </div>
+                            </section>
+                        </div>
+
+                        <section class="o_xn_dash_card o_xn_tl" t-if="state.data.today" aria-labelledby="xn-dash-today">
+                            <div class="o_xn_dash_card_head">
+                                <h2 id="xn-dash-today">Today so far</h2>
+                                <a href="#" t-on-click.prevent="() => this.openTeamTimeline()">Full Team Timeline</a>
+                            </div>
+                            <t t-if="today.days.length">
+                                <XnTimelineLegend states="timelineStates"/>
+                                <div class="o_xn_dash_today">
+                                    <span/>
+                                    <XnTimelineAxis lo="today.bounds.lo" hi="today.bounds.hi"/>
+                                    <t t-foreach="today.days" t-as="row" t-key="row.id">
+                                        <a href="#" class="o_xn_dash_today_name" t-on-click.prevent="() => this.openDay(row.id)" t-esc="row.label"/>
+                                        <XnTimelineBar slots="row.slots" lo="today.bounds.lo" hi="today.bounds.hi" labels="today.labels"/>
+                                    </t>
+                                </div>
+                            </t>
+                            <p t-else="" class="text-muted mb-0">Nothing reported yet today.</p>
+                        </section>
+
+                        <div class="o_xn_dash_row3">
+                            <section class="o_xn_dash_card" t-if="state.data.laptops.total" aria-labelledby="xn-dash-laptops">
+                                <h2 id="xn-dash-laptops">Laptops</h2>
+                                <div class="o_xn_dash_tiles">
+                                    <div class="o_xn_dash_tile o_xn_dash_tile_ok"><strong t-esc="state.data.laptops.reporting"/><span>reporting</span></div>
+                                    <div class="o_xn_dash_tile o_xn_dash_tile_warn"><strong t-esc="state.data.laptops.stale"/><span>silent 2+ days</span></div>
+                                    <div class="o_xn_dash_tile"><strong t-esc="state.data.laptops.old_agent"/><span>old agent</span></div>
+                                </div>
+                                <ul class="o_xn_dash_list o_xn_dash_lined">
+                                    <t t-foreach="state.data.laptops.issues" t-as="d" t-key="d.name">
+                                        <li>
+                                            <span class="o_xn_dash_grow fw-medium" t-esc="d.name"/>
+                                            <span t-att-class="d.warn ? 'o_xn_dash_warn fw-semibold' : 'text-muted'" t-esc="d.status"/>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </section>
+
+                            <section class="o_xn_dash_card" aria-labelledby="xn-dash-apps">
+                                <h2 id="xn-dash-apps">Top apps</h2>
+                                <ul class="o_xn_dash_apps">
+                                    <t t-foreach="apps" t-as="a" t-key="a.key">
+                                        <li>
+                                            <div class="o_xn_dash_app_top">
+                                                <span><t t-esc="a.name"/> <span t-att-class="'o_xn_dash_chip o_xn_dash_chip_' + a.category" t-esc="a.catLabel"/></span>
+                                                <span class="text-muted" t-esc="a.hoursText"/>
+                                            </div>
+                                            <div class="o_xn_dash_meter"><div t-att-class="a.barCls" t-att-style="a.barStyle"/></div>
+                                        </li>
+                                    </t>
+                                </ul>
+                                <p t-if="!apps.length" class="text-muted mb-0">No activity in this period.</p>
+                            </section>
+
+                            <section class="o_xn_dash_card" t-if="state.data.to_sort" aria-labelledby="xn-dash-todo">
+                                <h2 id="xn-dash-todo">To sort out</h2>
+                                <div>
+                                    <h3 class="o_xn_dash_h3">New unclassified apps (<t t-esc="state.data.to_sort.new_apps_count"/>)</h3>
+                                    <div class="o_xn_dash_chips">
+                                        <t t-foreach="state.data.to_sort.new_apps" t-as="n" t-key="n">
+                                            <span class="o_xn_dash_chip o_xn_dash_chip_unclassified" t-esc="n"/>
+                                        </t>
+                                    </div>
+                                    <a href="#" t-on-click.prevent="() => this.openApps()">Classify apps</a>
+                                </div>
+                                <div class="o_xn_dash_divider">
+                                    <h3 class="o_xn_dash_h3">Sign-ins not linked (<t t-esc="state.data.to_sort.unlinked.length"/>)</h3>
+                                    <t t-foreach="state.data.to_sort.unlinked" t-as="u" t-key="u.key">
+                                        <div class="small"><t t-esc="u.key"/> <span class="text-muted">on <t t-esc="u.computers"/></span></div>
+                                    </t>
+                                    <div t-if="state.data.to_sort.unlinked.length" class="small text-muted">Set the Windows User Name on the employee (HR Settings tab).</div>
+                                </div>
+                                <div class="o_xn_dash_divider">
+                                    <h3 class="o_xn_dash_h3">Monitoring notice not recorded (<t t-esc="state.data.to_sort.no_notice.length"/>)</h3>
+                                    <div class="small text-muted" t-esc="state.data.to_sort.no_notice.join(', ')"/>
+                                </div>
+                            </section>
+                        </div>
+
+                        <p class="text-muted small">Process names and active, idle and locked time only. No window titles,
+                            websites, keystrokes or screenshots are collected. Opening someone's 5-minute detail is logged.</p>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>
