@@ -26,7 +26,8 @@ Panels
 * A daily quote, the same for everyone, chosen by the date rather than at
   random so it changes at midnight and needs no cron. HR owns the list from
   Employees > Configuration > Dashboard Quotes.
-* Your team: birthdays, work anniversaries, announcements and events, each
+* Your team: who is on leave today (name, job and return date only, never
+  the leave type), birthdays, work anniversaries, announcements and events, each
   card sized to its own content.
 * Your leave: approved days per month over the last six months.
 * HR managers additionally get: decisions waiting on them, a Today row that
@@ -41,7 +42,7 @@ Neither is a dependency: each is queried only when its model is present, and
 the panel explains itself when it is not. Work anniversaries behave the same
 way with joining_date, which comes from xn_auditree_erp.
     """,
-    "version": "17.0.2.1.0",
+    "version": "17.0.2.2.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",

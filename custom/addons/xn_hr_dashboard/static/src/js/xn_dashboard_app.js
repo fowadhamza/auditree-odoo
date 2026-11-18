@@ -87,6 +87,7 @@ export class XnHrDashboard extends Component {
             employee: null,
             team: { birthdays: [], events: [], announcements: [] },
             anniversaries: { tracked: false, window: 30, rows: [] },
+            onLeave: [],
             leave: null,
             org: null,
         });
@@ -120,13 +121,15 @@ export class XnHrDashboard extends Component {
     async load() {
         this.state.isManager = await this.user.hasGroup("hr.group_hr_manager");
 
-        const [details, upcoming, anniversaries, leaveTrend] = await Promise.all([
+        const [details, upcoming, anniversaries, leaveTrend, onLeave] = await Promise.all([
             this.call("xn_user_details"),
             this.call("xn_upcoming"),
             this.call("xn_work_anniversaries"),
             this.call("xn_leave_trend", [6]),
+            this.call("xn_on_leave_today"),
         ]);
 
+        this.state.onLeave = this.shapeOnLeave(onLeave);
         this.state.employee = this.shapeEmployee(details);
         this.state.team = this.shapeTeam(upcoming);
         this.state.anniversaries = anniversaries || {
@@ -217,6 +220,25 @@ export class XnHrDashboard extends Component {
                 meta: row[1] || "",
             })),
         };
+    }
+
+    /** Who is away today. The date column reads "Until 21 Nov", or "Today". */
+    shapeOnLeave(rows) {
+        return (rows || []).map((row) => {
+            let note = "";
+            if (row.partial) {
+                note = "part of the day";
+            } else if (!row.back_today) {
+                note = row.days_left === 1 ? "1 more day" : `${row.days_left} more days`;
+            }
+            return {
+                id: row.id,
+                name: row.name || "",
+                job: row.job || "",
+                when: row.back_today ? "Today" : `Until ${row.until}`,
+                note,
+            };
+        });
     }
 
     /**

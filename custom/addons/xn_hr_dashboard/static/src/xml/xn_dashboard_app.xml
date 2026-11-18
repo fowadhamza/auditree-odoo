@@ -77,6 +77,32 @@
                         <h3 class="xn_row_label">Your team</h3>
                         <div class="xn_panels">
 
+                            <!-- First, because it is the only panel about
+                                 today. The leave type is deliberately not
+                                 shown; see xn_on_leave_today. -->
+                            <div class="xn_panel">
+                                <h4>On leave today</h4>
+                                <ul t-if="state.onLeave.length">
+                                    <t t-foreach="state.onLeave" t-as="person" t-key="person.id">
+                                        <li>
+                                            <img class="xn_dot_img" alt=""
+                                                 t-att-src="avatarUrl(person.id)"/>
+                                            <span class="xn_li_main">
+                                                <b><t t-esc="person.name"/></b>
+                                                <span t-esc="person.job"/>
+                                            </span>
+                                            <span class="xn_when">
+                                                <t t-esc="person.when"/>
+                                                <em t-if="person.note" t-esc="person.note"/>
+                                            </span>
+                                        </li>
+                                    </t>
+                                </ul>
+                                <p class="xn_empty" t-else="">
+                                    Everyone is in today.
+                                </p>
+                            </div>
+
                             <div class="xn_panel">
                                 <h4>Birthdays</h4>
                                 <ul t-if="state.team.birthdays.length">

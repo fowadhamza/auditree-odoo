@@ -159,11 +159,7 @@ class HrEmployee(models.Model):
                 ("check_in", "<", day_end),
             ],
             "late_today": [("id", "in", self._xn_late_attendance_ids())],
-            "on_leave_today": [
-                ("state", "=", "validate"),
-                ("date_from", "<", day_end),
-                ("date_to", ">=", day_start),
-            ],
+            "on_leave_today": self._xn_on_leave_domain(),
             "leave_to_approve": [("state", "in", ("confirm", "validate1"))],
             "allocation_to_approve": [("state", "in", ("confirm", "validate1"))],
             # Odoo archives refused applicants, not hired ones, so active
@@ -180,6 +176,18 @@ class HrEmployee(models.Model):
                 ("date", "<=", today),
             ],
         }
+
+    @api.model
+    def _xn_on_leave_domain(self):
+        """Approved leave overlapping today. Shared by the HR tile and the
+        "On leave today" panel, kept out of _xn_domains() so the panel, which
+        every employee loads, does not also pay for the late-arrival scan."""
+        day_start, day_end = self._xn_utc_bounds(fields.Date.context_today(self))
+        return [
+            ("state", "=", "validate"),
+            ("date_from", "<", day_end),
+            ("date_to", ">=", day_start),
+        ]
 
     @api.model
     def _xn_late_attendance_ids(self):
@@ -682,6 +690,55 @@ class HrEmployee(models.Model):
             "announcement": announcement,
             "announcements_tracked": announcements_tracked,
         }
+
+    @api.model
+    def xn_on_leave_today(self):
+        """Who is away today, for everyone's "Your team" row.
+
+        Uses the same domain as the HR managers' "On leave" tile, so the two
+        cannot disagree. sudo() because employees cannot read each other's
+        leave; in exchange only name, job and end date leave the server - the
+        leave type is never returned, since sick or maternity leave is not the
+        whole office's business. Shared mailboxes (employee_type 'system',
+        from xn_auditree_erp) and archived employees are skipped.
+        """
+        today = fields.Date.context_today(self)
+        domain = self._xn_on_leave_domain() + [
+            ("employee_id.active", "=", True),
+            ("employee_id.employee_type", "!=", "system"),
+            "|",
+            ("employee_id.company_id", "=", False),
+            ("employee_id.company_id", "in", self.env.companies.ids),
+        ]
+        leaves = self.env["hr.leave"].sudo().search(domain)
+
+        # One row per person: two half days on the same day are one absence.
+        by_employee = {}
+        for leave in leaves:
+            emp = leave.employee_id
+            until = leave.request_date_to or leave.date_to.date()
+            partial = bool(leave.request_unit_half or leave.request_unit_hours)
+            row = by_employee.get(emp.id)
+            if row is None:
+                by_employee[emp.id] = {
+                    "id": emp.id,
+                    "name": emp.name,
+                    "job": emp.job_title or emp.job_id.name or "",
+                    "until": until,
+                    "partial": partial,
+                }
+            else:
+                row["until"] = max(row["until"], until)
+                # Partial only if every leave today is partial.
+                row["partial"] = row["partial"] and partial
+
+        rows = sorted(by_employee.values(), key=lambda r: (r["until"], r["name"]))
+        for row in rows:
+            until = row.pop("until")
+            row["back_today"] = until <= today
+            row["until"] = format(until, "%d %b")
+            row["days_left"] = max(0, (until - today).days)
+        return rows
 
     @api.model
     def _xn_announcement_meta(self, code, date_start, date_end):
