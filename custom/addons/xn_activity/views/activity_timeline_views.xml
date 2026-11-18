@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- One row per person for a date; see static/src/timeline. -->
+    <record id="action_xn_activity_team_timeline" model="ir.actions.client">
+        <field name="name">Team Timeline</field>
+        <field name="tag">xn_activity_team_timeline</field>
+    </record>
+</odoo>

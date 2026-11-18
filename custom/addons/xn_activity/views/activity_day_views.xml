@@ -48,6 +48,7 @@
                         <h1><field name="user_label"/></h1>
                         <h2><field name="date"/></h2>
                     </div>
+                    <widget name="xn_activity_day_timeline"/>
                     <group>
                         <group>
                             <field name="department_id"/>

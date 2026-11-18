@@ -44,8 +44,16 @@ No titles, URLs, keystrokes or screenshots are collected. See README.md.
         "views/activity_note_views.xml",
         "views/activity_setup_views.xml",
         "views/hr_employee_views.xml",
+        "views/activity_timeline_views.xml",
         "views/xn_activity_menus.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "xn_activity/static/src/timeline/timeline.scss",
+            "xn_activity/static/src/timeline/timeline.js",
+            "xn_activity/static/src/timeline/timeline.xml",
+        ],
+    },
     "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,

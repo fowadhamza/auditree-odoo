@@ -108,6 +108,24 @@ classified Productive or Unproductive; the filter *Hide Windows / System*
 drops them, and Group By *Hour* shows when the time was spent. Employees
 read their own rows of the view (same rules as the slots).
 
+## Timelines
+
+- **Day form** (`xn_activity_day_timeline` widget): one bar for the day,
+  5-minute blocks coloured by state -- the category of the main app
+  (Productive, Neutral, Unclassified, Unproductive, Windows / System), Idle,
+  Locked -- with gaps where the laptop sent nothing. Hover a block for the
+  time, top 3 apps and active/idle/locked.
+- **Activity > Team Timeline** (activity viewers): the same bar, one row per
+  person for a date, with department filter, previous/next day, screen and
+  productive totals; a name opens the day.
+- Data: `xn.activity.day.xn_timeline_data` / `xn_team_timeline`
+  (`models/activity_timeline.py`), read through `xn.activity.app.usage` as
+  the current user, so record rules decide whose rows come back. Minutes
+  are laptop-local. Window: 08:00-20:00, widened to fit the data.
+- Drawn with CSS boxes (`static/src/timeline/`), no Chart.js. A component
+  getter must not be called `window`: OWL templates read `window` as the
+  browser global (the bars rendered empty until renamed `bounds`).
+
 ## Crons
 
 - *Activity: delete data past retention* -- nightly; slots after 180 days,
@@ -128,29 +146,19 @@ it from the returned laptop.
 
 ## Known issues (review 2026-11-17)
 
-Found by reading the code; none verified in a running Odoo yet. The
-holiday-timezone bug and slow app reclassification from the same review were
-fixed in a76ce4a.
+Found by reading the code. Fixed since, and verified on a copy of the test
+database (17.0.1.4.0): the holiday timezone and slow reclassification
+(a76ce4a); new employees not relinked (#1, `create` override); one bad slot
+blocking the queue (#2: the server skips malformed slots and reports
+`skipped`; agent 1.2 drops a batch on 400/413); unique-constraint 500s under
+concurrent ingest (#3: SQL `ON CONFLICT` for day rows and apps, which turns
+the clash into a serialization failure that Odoo retries -- the body is read
+with `get_data(cache=True)` so the retry can read it again -- plus a random
+0-2 minute delay before posting); the stuck microphone (#5: the app must be
+running and the call started within 12 hours); the fixed 15 s credit (#8);
+the `clock_offset` overflow and `Infinity` (#11).
 
-Bugs:
-
-1. **New employees are not relinked.** Only `hr.employee.write` calls
-   `_xn_activity_relink()`. If a laptop reports before HR creates the
-   employee, those days stay under the raw sign-in ("unlinked" in the
-   digest) while later days go to `emp:<id>`. Fix: override `create` too.
-2. **One bad slot poisons the agent queue.** `_validate` rejects the whole
-   batch with 400 for one malformed slot (`controllers/main.py`), and the
-   agent keeps a failed batch and resends it forever until `$MaxQueue`.
-   Fix: skip bad slots server-side; drop a batch on 4xx other than 403/429.
-3. **Concurrent ingest can fail on unique constraints.** Day rows
-   (`Day.create`) and new apps (`_xn_get_or_create`) are search-then-create,
-   so two requests at once (a person with two laptops, a new app on several
-   laptops) raise a unique violation and a 500; Odoo does not retry those.
-   Every agent posts within ~15 s after each 5-minute boundary, which makes
-   this likely. Self-heals on the next post. Fix: `INSERT ... ON CONFLICT`,
-   plus a random delay in the agent before posting.
-
-Data integrity:
+Still open:
 
 4. **Metrics can be faked by the employee.** `agent.ps1` (with the single
    shared API key) is readable by Users, the server trusts the `upn` in the
@@ -158,23 +166,12 @@ Data integrity:
    cannot fully hide a secret; mitigations are binding a device to the first
    UPN it reports and flagging new device/UPN pairs. Treat the numbers as
    indicative, not disciplinary evidence.
-5. **A stuck microphone entry keeps someone "active".** `Test-MicInUse` reads
-   `LastUsedTimeStop = 0` as on a call; an app that crashed mid-call can leave
-   it at 0, so idle never counts. Fix: for NonPackaged keys, check the process
-   is running.
-
-Smaller:
-
 6. Stale-laptop alert counts Mon-Fri only (`_working_days_back`), so a
    multi-day public holiday flags every laptop. Use the company calendar.
 7. Half-day leave is graded against the full productive target.
-8. The agent credits a fixed 15 s per sample, though each loop takes longer:
-   ~1-3% under-count. Credit the measured gap (capped).
-9. The view log covers only the Detail button; App Usage shows per-person,
-   per-day, per-app hours unlogged.
+9. The view log covers only the Detail button; App Usage and the timelines
+   show per-person detail unlogged.
 10. HR Managers can unlink slots, but that does not rebuild the day row.
-11. A huge `sent_at` overflows the int `clock_offset`, and `Infinity` in a
-    slot raises an uncaught OverflowError: 500 instead of 400 (key needed).
 12. Ticking Exclude deletes history immediately, with no confirmation.
 13. No tests; `_validate`, `_status`, `_xn_vals`, `_xn_schedule` are easy to
     cover.

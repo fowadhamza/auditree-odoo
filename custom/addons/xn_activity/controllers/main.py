@@ -27,6 +27,7 @@ MAX_AGE = timedelta(days=60)
 MAX_AHEAD = timedelta(hours=1)
 RATE_WINDOW = timedelta(hours=1)
 RATE_LIMIT = 60
+CLOCK_OFFSET_CAP = 10 * 365 * 86400
 
 _NAME_RE = re.compile(r'[^A-Za-z0-9._@\\-]')
 
@@ -59,9 +60,43 @@ def _parse_ts(value):
 
 
 def _seconds(value):
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError
+    if isinstance(value, bool) or not isinstance(value, (int, float)) \
+            or value != value or value in (float('inf'), float('-inf')):
+        raise ValueError('seconds must be a number')
     return min(max(int(value), 0), SLOT_SECONDS)
+
+
+def _slot(s, now):
+    """One slot from the agent -> stored values; None to skip it (no time,
+    or outside the accepted window); ValueError when malformed."""
+    if not isinstance(s, dict):
+        raise ValueError('slot must be an object')
+    start = _parse_ts(s.get('start'))
+    if start is None:
+        raise ValueError('slot start needs a UTC offset')
+    start = start.replace(second=0, microsecond=0,
+                          minute=start.minute - start.minute % 5)
+    active = _seconds(s.get('active', 0))
+    idle = _seconds(s.get('idle', 0))
+    locked = _seconds(s.get('locked', 0))
+    total = active + idle + locked
+    if not total:
+        return None
+    if total > SLOT_SECONDS:
+        # Scale down rather than reject: a sampling edge case.
+        k = SLOT_SECONDS / float(total)
+        active, idle, locked = (int(active * k), int(idle * k),
+                                int(locked * k))
+    utc = start.astimezone(timezone.utc)
+    if utc < now - MAX_AGE or utc > now + MAX_AHEAD:
+        return None
+    return {
+        'start_utc': utc.replace(tzinfo=None),
+        'local_date': start.date(),
+        'local_minute': start.hour * 60 + start.minute,
+        'app': str(s.get('app') or 'unknown')[:128],
+        'active': active, 'idle': idle, 'locked': locked,
+    }
 
 
 class XnActivityController(http.Controller):
@@ -98,23 +133,32 @@ class XnActivityController(http.Controller):
         length = req.content_length or 0
         if length > MAX_BODY:
             return _json(413, {'ok': False, 'error': 'too large'})
-        raw = req.get_data(cache=False)
+        # Odoo re-runs this handler after a serialization failure (two
+        # requests creating the same day row or app, see _xn_insert_rows).
+        # The stream can only be read once; cache=True keeps the body on the
+        # request object, which the retry reuses.
+        raw = req.get_data(cache=True)
         if len(raw) > MAX_BODY:
             return _json(413, {'ok': False, 'error': 'too large'})
         try:
             body = json.loads(raw.decode('utf-8-sig'))
             parsed = self._validate(body)
-        except (ValueError, TypeError, KeyError, AttributeError) as e:
+        except (ValueError, TypeError, KeyError, AttributeError,
+                OverflowError) as e:
             return _json(400, {'ok': False, 'error': 'malformed: %s' % e})
 
         device = self._touch_device(env, parsed)
         if device is None:
             return _json(429, {'ok': False, 'error': 'rate limited'})
         stored = self._store(env, device, parsed)
+        if parsed['bad_slots']:
+            _logger.info("xn_activity: %s skipped %d malformed slots",
+                         parsed['device'], parsed['bad_slots'])
         settings = get_settings(env)
         return _json(200, {
             'ok': True,
             'stored': stored,
+            'skipped': parsed['bad_slots'],
             'idle_seconds': int(settings['idle_minutes']) * 60,
         })
 
@@ -137,38 +181,24 @@ class XnActivityController(http.Controller):
             raise ValueError('more than %d slots' % MAX_SLOTS)
         now = datetime.now(timezone.utc)
         out = []
+        bad = 0
         for s in slots:
-            if not isinstance(s, dict):
-                raise ValueError('slot must be an object')
-            start = _parse_ts(s.get('start'))
-            if start is None:
-                raise ValueError('slot start needs a UTC offset')
-            start = start.replace(second=0, microsecond=0,
-                                  minute=start.minute - start.minute % 5)
-            active = _seconds(s.get('active', 0))
-            idle = _seconds(s.get('idle', 0))
-            locked = _seconds(s.get('locked', 0))
-            total = active + idle + locked
-            if total > SLOT_SECONDS:
-                # Scale down rather than reject: a sampling edge case.
-                k = SLOT_SECONDS / float(total)
-                active, idle, locked = (int(active * k), int(idle * k),
-                                        int(locked * k))
-            if not total:
+            # One malformed slot must not reject the batch: the agent keeps
+            # a rejected batch and resends it, so the whole queue would be
+            # stuck behind it. Skip it and say so in the response.
+            try:
+                v = _slot(s, now)
+            except (ValueError, TypeError, OverflowError):
+                bad += 1
                 continue
-            utc = start.astimezone(timezone.utc)
-            if utc < now - MAX_AGE or utc > now + MAX_AHEAD:
-                continue
-            out.append({
-                'start_utc': utc.replace(tzinfo=None),
-                'local_date': start.date(),
-                'local_minute': start.hour * 60 + start.minute,
-                'app': str(s.get('app') or 'unknown')[:128],
-                'active': active, 'idle': idle, 'locked': locked,
-            })
+            if v:
+                out.append(v)
         sent_at = _parse_ts(body.get('sent_at'))
         offset = int((sent_at - now).total_seconds()) if sent_at else 0
+        # Fits the int4 column; anything this far off is flagged anyway.
+        offset = max(min(offset, CLOCK_OFFSET_CAP), -CLOCK_OFFSET_CAP)
         return {
+            'bad_slots': bad,
             'upn': upn, 'login': login, 'device': device,
             'user_key': upn or login,
             'agent': _clean(body.get('agent'), 16),

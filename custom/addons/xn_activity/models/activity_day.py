@@ -226,8 +226,48 @@ class XnActivityDay(models.Model):
         self._xn_write_rows(to_update)
         if to_unlink:
             to_unlink.unlink()
-        if to_create:
-            Day.create(to_create)
+        self._xn_insert_rows(to_create)
+
+    @api.model
+    def _xn_insert_rows(self, creates):
+        """Batched INSERT of new day rows: [vals from _xn_vals].
+
+        Two requests can rebuild the same new day at once (a person with two
+        laptops posting at the same 5-minute mark). With the ORM, the second
+        create failed on UNIQUE(day_key, date) and the request ended in a
+        500. ON CONFLICT turns that into a serialization failure under
+        Odoo's REPEATABLE READ, which Odoo retries: the retry sees the row
+        and updates it.
+        """
+        if not creates:
+            return
+        cr = self.env.cr
+        cols = ['day_key', 'date'] + [c for c, _t in _UPDATE_COLUMNS]
+        types = ['varchar', 'date'] + [t for _c, t in _UPDATE_COLUMNS]
+        tpl = '(' + ','.join('%s::' + t for t in types) \
+            + ',%s::int4,%s::timestamp,%s::int4,%s::timestamp)'
+        now = fields.Datetime.now()
+        set_sql = ', '.join('%s = EXCLUDED.%s' % (c, c) for c in cols[2:])
+        for i in range(0, len(creates), UPDATE_CHUNK):
+            values = []
+            for vals in creates[i:i + UPDATE_CHUNK]:
+                params = []
+                for col, typ in zip(cols, types):
+                    v = vals[col]
+                    if v is False and typ != 'bool':
+                        v = None
+                    params.append(v)
+                params += [self.env.uid, now, self.env.uid, now]
+                values.append(cr.mogrify(tpl, params).decode())
+            cr.execute(
+                "INSERT INTO xn_activity_day (" + ', '.join(cols)
+                + ", create_uid, create_date, write_uid, write_date) VALUES "
+                + ','.join(values)
+                + " ON CONFLICT (day_key, date) DO UPDATE SET " + set_sql
+                + ", write_uid = EXCLUDED.write_uid"
+                + ", write_date = EXCLUDED.write_date",
+                log_exceptions=False)   # a clash is retried, not a fault
+        self.invalidate_model()
 
     @api.model
     def _xn_write_rows(self, updates):

@@ -44,6 +44,18 @@ class HrEmployee(models.Model):
         self.ensure_one()
         return self.xn_activity_excluded or self.employee_type == 'system'
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """A laptop can report before HR creates the employee (joiners):
+        those days sit under the raw sign-in. Attribute them now, as a
+        later edit of the work email or Windows user name would."""
+        employees = super().create(vals_list)
+        linkable = employees.sudo().filtered(
+            lambda e: e.work_email or e.xn_activity_login)
+        if linkable:
+            linkable._xn_activity_relink()
+        return employees
+
     def write(self, vals):
         res = super().write(vals)
         relink = {'xn_activity_login', 'work_email'} & set(vals)

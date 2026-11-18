@@ -105,12 +105,41 @@ function Test-Locked {
 # microphone (Settings > Privacy > Microphone reads the same keys). A start
 # with no stop means it is in use right now: a Teams/Zoom call, a phone call
 # in the browser. Only checked when there is no keyboard or mouse input.
+# An app that crashes mid-call can leave its stop time at 0 for good, so a
+# key only counts when that app is still running and the start is recent.
 $MicKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone'
+$MicMaxHours = 12
 function Test-MicInUse {
-    $keys = @(Get-ChildItem $MicKey -ErrorAction SilentlyContinue) + @(Get-ChildItem "$MicKey\NonPackaged" -ErrorAction SilentlyContinue)
-    foreach ($k in $keys) {
-        $v = Get-ItemProperty -Path $k.PSPath -ErrorAction SilentlyContinue
-        if ($v -and $v.LastUsedTimeStart -and $v.LastUsedTimeStop -eq 0) { return $true }
+    $paths = $null
+    foreach ($packaged in @($true, $false)) {
+        $root = if ($packaged) { $MicKey } else { "$MicKey\NonPackaged" }
+        foreach ($k in @(Get-ChildItem $root -ErrorAction SilentlyContinue)) {
+            if ($packaged -and $k.PSChildName -eq 'NonPackaged') { continue }
+            $v = Get-ItemProperty -Path $k.PSPath -ErrorAction SilentlyContinue
+            if (-not ($v -and $v.LastUsedTimeStart -and $v.LastUsedTimeStop -eq 0)) { continue }
+            try {
+                $started = [DateTime]::FromFileTime([long]$v.LastUsedTimeStart)
+                if (((Get-Date) - $started).TotalHours -gt $MicMaxHours) { continue }
+            } catch { continue }
+            if ($null -eq $paths) {
+                $paths = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.SessionId -eq $SessionId -and $_.Path } | ForEach-Object { $_.Path.ToLower() })
+            }
+            if ($packaged) {
+                # Package family name Name_PublisherId; installed under
+                # ...\WindowsApps\Name_Version_Arch__PublisherId\
+                $i = $k.PSChildName.LastIndexOf('_')
+                if ($i -lt 1) { continue }
+                $pkg = $k.PSChildName.Substring(0, $i).ToLower()
+                $pub = $k.PSChildName.Substring($i + 1).ToLower()
+                foreach ($p in $paths) {
+                    if ($p -like "*\windowsapps\$($pkg)_*__$($pub)\*") { return $true }
+                }
+            } else {
+                # Key name is the program's path with '#' for '\'.
+                $exe = $k.PSChildName.Replace('#', '\').ToLower()
+                if ($paths -contains $exe) { return $true }
+            }
+        }
     }
     return $false
 }
@@ -173,7 +202,16 @@ function Send-Queue {
                 -Headers @{ 'X-Activity-Key' = $ApiKey } -ContentType 'application/json' `
                 -Body ([Text.Encoding]::UTF8.GetBytes($json)) -UseBasicParsing -TimeoutSec 30
         } catch {
-            Write-Log "send failed ($($Queue.Count) queued): $($_.Exception.Message)"
+            $code = 0
+            try { $code = [int]$_.Exception.Response.StatusCode } catch { }
+            Write-Log "send failed ($code, $($Queue.Count) queued): $($_.Exception.Message)"
+            # 400/413: the server will never take this batch. Keeping it
+            # would block everything queued behind it, so drop it. Any other
+            # failure (network, 403 key, 429 rate limit, 5xx) is retried.
+            if (($code -eq 400 -or $code -eq 413) -and $n -gt 0) {
+                $Queue.RemoveRange(0, $n); Save-Queue
+                Write-Log "dropped $n slots rejected by the server"
+            }
             return
         }
         if ($n -gt 0) { $Queue.RemoveRange(0, $n); Save-Queue }
@@ -185,14 +223,22 @@ function Send-Queue {
 Write-Log "agent $AgentVersion started for $Login ($Upn) on $Device"
 $Current = @{}                   # app -> @{active; idle; locked}
 $CurrentSlot = Get-SlotStart (Get-Date)
-$LastTick = Get-Date
+$SendAt = $null
 Send-Queue
+$LastTick = Get-Date
 
 while ($true) {
     Start-Sleep -Seconds $SampleSeconds
     $now = Get-Date
     $gap = ($now - $LastTick).TotalSeconds
     $LastTick = $now
+
+    # Every laptop closes its slot at the same clock minute; posting at a
+    # random point in the next 2 minutes spreads the load on the server.
+    if ($SendAt -and $now -ge $SendAt) {
+        $SendAt = $null
+        Send-Queue
+    }
 
     $slot = Get-SlotStart $now
     if ($slot -ne $CurrentSlot) {
@@ -207,7 +253,7 @@ while ($true) {
         $Current = @{}
         $CurrentSlot = $slot
         Save-Queue
-        Send-Queue
+        if (-not $SendAt) { $SendAt = $now.AddSeconds((Get-Random -Minimum 5 -Maximum 120)) }
     }
 
     # A long gap means the laptop slept: count nothing for it.
@@ -226,7 +272,9 @@ while ($true) {
             else { $state = 'active' }
         }
         if (-not $Current.ContainsKey($app)) { $Current[$app] = @{ active = 0; idle = 0; locked = 0 } }
-        $Current[$app][$state] += $SampleSeconds
+        # Credit the time that actually passed: each loop takes a little
+        # longer than the sleep, and a fixed 15 s under-counted by 1-3%.
+        $Current[$app][$state] += [int][Math]::Round($gap)
     } catch {
         Write-Log "sample failed: $_"
     }

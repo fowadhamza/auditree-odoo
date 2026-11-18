@@ -97,10 +97,37 @@ class XnActivityApp(models.Model):
         wanted = set(clean.values())
         apps = self.sudo().search([('name', 'in', list(wanted))])
         by_name = {a.name: a.id for a in apps}
-        missing = wanted - set(by_name)
+        missing = sorted(wanted - set(by_name))
         if missing:
-            new = self.sudo().create([{'name': n} for n in sorted(missing)])
-            by_name.update({a.name: a.id for a in new})
+            # SQL, not create(): a new app reported by two laptops at once
+            # made the second create fail on UNIQUE(name) with a 500. With
+            # ON CONFLICT the clash is a serialization failure under
+            # REPEATABLE READ, which Odoo retries (the retry finds the app).
+            self.env.flush_all()
+            cr = self.env.cr
+            now = fields.Datetime.now()
+            uid = self.env.uid
+            values = ','.join(cr.mogrify(
+                "(%s,%s,'unclassified',%s,false,%s,%s,%s,%s)",
+                (n, n, n in SYSTEM_APPS, uid, now, uid, now)).decode()
+                for n in missing)
+            cr.execute("""
+                INSERT INTO xn_activity_app
+                       (name, display_label, category, is_system,
+                        idle_as_active, create_uid, create_date,
+                        write_uid, write_date)
+                VALUES """ + values + """
+                ON CONFLICT (name) DO NOTHING
+                RETURNING id, name
+            """, log_exceptions=False)   # the retry is expected, not a fault
+            by_name.update({name: app_id for app_id, name in cr.fetchall()})
+            self.invalidate_model()
+            still = [n for n in missing if n not in by_name]
+            if still:
+                # Not returned by DO NOTHING: committed by another request
+                # and visible to this transaction (READ COMMITTED callers).
+                by_name.update({a.name: a.id for a in self.sudo().search(
+                    [('name', 'in', still)])})
         return {raw: by_name[c] for raw, c in clean.items()}
 
 

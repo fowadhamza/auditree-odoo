@@ -1,0 +1,172 @@
+// Activity timelines (day form widget and Team Timeline).
+
+$xn-tl-productive: #2e7d32;
+$xn-tl-neutral: #5b7fa6;
+$xn-tl-unclassified: #d4a72c;
+$xn-tl-unproductive: #c62828;
+$xn-tl-system: #a3a9b0;
+$xn-tl-idle: #f1ddb0;
+$xn-tl-locked: #4e5d6c;
+$xn-tl-track: #eceff2;
+
+.o_xn_tl {
+    .o_xn_tl_bar {
+        position: relative;
+        height: 22px;
+        background: $xn-tl-track;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .o_xn_tl_loading {
+        opacity: 0.5;
+    }
+
+    .o_xn_tl_block {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        cursor: default;
+    }
+
+    .o_xn_tl_grid {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(0, 0, 0, 0.08);
+        pointer-events: none;
+    }
+
+    .o_xn_tl_axis {
+        position: relative;
+        height: 18px;
+        font-size: 11px;
+        color: $text-muted;
+    }
+
+    .o_xn_tl_tick {
+        position: absolute;
+        bottom: 2px;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 767.98px) {
+        .o_xn_tl_tick_minor {
+            display: none;
+        }
+    }
+
+    .o_xn_tl_productive { background: $xn-tl-productive; }
+    .o_xn_tl_neutral { background: $xn-tl-neutral; }
+    .o_xn_tl_unclassified { background: $xn-tl-unclassified; }
+    .o_xn_tl_unproductive { background: $xn-tl-unproductive; }
+    .o_xn_tl_system { background: $xn-tl-system; }
+    .o_xn_tl_idle {
+        background: repeating-linear-gradient(
+            45deg, $xn-tl-idle, $xn-tl-idle 3px, darken($xn-tl-idle, 8%) 3px, darken($xn-tl-idle, 8%) 6px);
+    }
+    .o_xn_tl_locked { background: $xn-tl-locked; }
+    .o_xn_tl_none { background: $xn-tl-track; border: 1px solid darken($xn-tl-track, 10%); }
+
+    .o_xn_tl_legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: $text-muted;
+    }
+
+    .o_xn_tl_legend_item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .o_xn_tl_swatch {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+    }
+}
+
+.o_xn_tl_team {
+    padding: 16px;
+    background: $o-view-background-color;
+
+    .o_xn_tl_controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        margin-bottom: 8px;
+    }
+
+    .o_xn_tl_date {
+        width: auto;
+    }
+
+    .o_xn_tl_department {
+        width: auto;
+        max-width: 260px;
+    }
+
+    .o_xn_tl_title {
+        margin: 0 0 0 4px;
+    }
+
+    .o_xn_tl_legend {
+        margin-bottom: 12px;
+    }
+
+    .o_xn_tl_row {
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr) 130px;
+        gap: 12px;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid $border-color;
+    }
+
+    .o_xn_tl_head {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: $o-view-background-color;
+        border-bottom-width: 2px;
+    }
+
+    .o_xn_tl_name {
+        min-width: 0;
+    }
+
+    .o_xn_tl_totals {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .o_xn_tl_status_good { color: $xn-tl-productive; }
+    .o_xn_tl_status_fair { color: darken($xn-tl-unclassified, 15%); }
+    .o_xn_tl_status_low { color: $xn-tl-unproductive; }
+    .o_xn_tl_status_none { color: $text-muted; }
+
+    @media (max-width: 767.98px) {
+        padding: 12px 16px;
+
+        .o_xn_tl_row {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .o_xn_tl_track {
+            grid-column: 1 / -1;
+            grid-row: 2;
+        }
+
+        .o_xn_tl_head .o_xn_tl_name,
+        .o_xn_tl_head .o_xn_tl_totals {
+            display: none;
+        }
+    }
+}

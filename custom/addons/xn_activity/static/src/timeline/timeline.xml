@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="xn_activity.TimelineAxis">
+        <div class="o_xn_tl_axis">
+            <t t-foreach="ticks" t-as="t" t-key="t.m">
+                <span t-att-class="'o_xn_tl_tick' + (t.minor ? ' o_xn_tl_tick_minor' : '')"
+                      t-att-style="'left:' + t.left + '%;transform:translateX(' + t.shift + ')'"
+                      t-esc="t.label"/>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="xn_activity.TimelineBar">
+        <div class="o_xn_tl_bar">
+            <t t-foreach="gridlines" t-as="g" t-key="g.m">
+                <span class="o_xn_tl_grid" t-att-style="'left:' + g.left + '%'"/>
+            </t>
+            <t t-foreach="blocks" t-as="b" t-key="b.key">
+                <span t-att-class="b.cls" t-att-style="b.style" t-att-title="b.title"/>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="xn_activity.TimelineLegend">
+        <div class="o_xn_tl_legend">
+            <t t-foreach="props.states" t-as="st" t-key="st[0]">
+                <span class="o_xn_tl_legend_item">
+                    <span t-att-class="'o_xn_tl_swatch o_xn_tl_' + st[0]"/>
+                    <t t-esc="st[1]"/>
+                </span>
+            </t>
+            <span class="o_xn_tl_legend_item">
+                <span class="o_xn_tl_swatch o_xn_tl_none"/>
+                No data (off, asleep or away)
+            </span>
+        </div>
+    </t>
+
+    <t t-name="xn_activity.DayTimeline">
+        <div class="o_xn_tl o_xn_tl_day mb-3">
+            <t t-if="!state.loaded">
+                <div class="o_xn_tl_bar o_xn_tl_loading"/>
+            </t>
+            <t t-elif="state.day and state.day.slots.length">
+                <XnTimelineAxis lo="bounds.lo" hi="bounds.hi"/>
+                <XnTimelineBar slots="state.day.slots" lo="bounds.lo" hi="bounds.hi" labels="labels"/>
+                <XnTimelineLegend states="state.states"/>
+            </t>
+            <t t-else="">
+                <div class="text-muted small">
+                    No 5-minute data for this day. It may be past the retention
+                    period, or the day only has a note.
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="xn_activity.TeamTimeline">
+        <div class="o_action o_xn_tl o_xn_tl_team h-100 overflow-auto">
+            <div class="o_xn_tl_controls">
+                <div class="btn-group">
+                    <button class="btn btn-secondary" title="Previous day" t-on-click="() => this.shift(-1)">
+                        <i class="fa fa-chevron-left"/>
+                    </button>
+                    <button class="btn btn-secondary" t-on-click="() => this.today()">Today</button>
+                    <button class="btn btn-secondary" title="Next day" t-on-click="() => this.shift(1)">
+                        <i class="fa fa-chevron-right"/>
+                    </button>
+                </div>
+                <input type="date" class="form-control o_xn_tl_date" t-att-value="state.date"
+                       t-on-change="onDateChange"/>
+                <select class="form-select o_xn_tl_department" t-on-change="onDepartmentChange">
+                    <option value="" t-att-selected="!state.department">All departments</option>
+                    <t t-foreach="state.data.departments" t-as="dep" t-key="dep.id">
+                        <option t-att-value="dep.id" t-att-selected="state.department == dep.id" t-esc="dep.name"/>
+                    </t>
+                </select>
+                <h4 class="o_xn_tl_title" t-esc="dateLabel"/>
+            </div>
+
+            <XnTimelineLegend states="state.data.states"/>
+
+            <t t-if="state.loading">
+                <div class="text-muted p-3">Loading...</div>
+            </t>
+            <t t-elif="!rows.length">
+                <div class="text-muted p-3">No activity recorded for this date.</div>
+            </t>
+            <t t-else="">
+                <div class="o_xn_tl_grid_rows">
+                    <div class="o_xn_tl_row o_xn_tl_head">
+                        <div class="o_xn_tl_name"/>
+                        <div class="o_xn_tl_track">
+                            <XnTimelineAxis lo="bounds.lo" hi="bounds.hi"/>
+                        </div>
+                        <div class="o_xn_tl_totals text-muted small">Screen / Productive</div>
+                    </div>
+                    <t t-foreach="rows" t-as="row" t-key="row.id">
+                        <div class="o_xn_tl_row">
+                            <div class="o_xn_tl_name">
+                                <a href="#" t-on-click.prevent="() => this.openDay(row.id)" t-esc="row.label"/>
+                                <div class="text-muted small text-truncate">
+                                    <t t-esc="row.department"/>
+                                    <t t-if="row.time_off"> (<t t-esc="row.time_off"/>)</t>
+                                </div>
+                            </div>
+                            <div class="o_xn_tl_track">
+                                <XnTimelineBar slots="row.slots" lo="bounds.lo" hi="bounds.hi" labels="labels"/>
+                            </div>
+                            <div class="o_xn_tl_totals">
+                                <span t-esc="row.screen"/> / <strong t-esc="row.productive"/>
+                                <div t-att-class="'small o_xn_tl_status_' + row.status" t-esc="row.statusLabel"/>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>

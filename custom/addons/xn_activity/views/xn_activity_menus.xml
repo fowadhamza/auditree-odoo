@@ -10,6 +10,8 @@
 
     <menuitem id="menu_xn_activity_day" name="Daily Work Metrics" parent="menu_xn_activity_root"
               action="action_xn_activity_day" sequence="10" groups="group_xn_activity_viewer"/>
+    <menuitem id="menu_xn_activity_team_timeline" name="Team Timeline" parent="menu_xn_activity_root"
+              action="action_xn_activity_team_timeline" sequence="15" groups="group_xn_activity_viewer"/>
     <menuitem id="menu_xn_activity_app_usage" name="App Usage" parent="menu_xn_activity_root"
               action="action_xn_activity_app_usage" sequence="20" groups="group_xn_activity_viewer"/>
     <menuitem id="menu_xn_activity_device" name="Devices" parent="menu_xn_activity_root"

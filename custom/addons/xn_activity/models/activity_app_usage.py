@@ -24,6 +24,9 @@ class XnActivityAppUsage(models.Model):
 
     date = fields.Date(readonly=True)
     slot_start = fields.Datetime(readonly=True)
+    local_minute = fields.Integer(readonly=True,
+                                  help="Minutes since local midnight on the "
+                                       "laptop.")
     day_key = fields.Char(readonly=True)
     employee_id = fields.Many2one('hr.employee', readonly=True)
     user_key = fields.Char(string='Sign-in', readonly=True)
@@ -43,6 +46,7 @@ class XnActivityAppUsage(models.Model):
                 SELECT s.id,
                        s.local_date AS date,
                        s.slot_start,
+                       s.local_minute,
                        s.day_key,
                        s.employee_id,
                        s.user_key,
