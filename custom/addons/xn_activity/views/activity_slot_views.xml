@@ -36,6 +36,27 @@
         </field>
     </record>
 
+    <!-- One day's 5-minute detail (Daily Work Metrics > Detail), opened
+         grouped by category then app. default_order on an aggregated field
+         also sorts the groups, so the biggest time comes first. -->
+    <record id="view_xn_activity_app_usage_detail_tree" model="ir.ui.view">
+        <field name="name">xn.activity.app.usage.detail.tree</field>
+        <field name="model">xn.activity.app.usage</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <tree string="5-Minute Detail" create="false" edit="false" delete="false"
+                  default_order="active_hours desc, slot_start">
+                <field name="slot_start"/>
+                <field name="app_id"/>
+                <field name="category" optional="hide"/>
+                <field name="active_hours" widget="float_time" sum="Total"/>
+                <field name="idle_hours" widget="float_time" sum="Total"/>
+                <field name="locked_hours" widget="float_time" sum="Total"/>
+                <field name="device_id" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
     <!-- App usage across people and dates (effective category) -->
     <record id="view_xn_activity_app_usage_pivot" model="ir.ui.view">
         <field name="name">xn.activity.app.usage.pivot</field>
@@ -73,9 +94,13 @@
                 <filter name="this_month" string="This Month"
                         domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
                 <filter name="filter_date" date="date"/>
+                <separator/>
+                <filter name="hide_system" string="Hide Windows / System"
+                        domain="[('category', '!=', 'system')]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
                     <filter name="group_app" string="App" context="{'group_by': 'app_id'}"/>
+                    <filter name="group_hour" string="Hour" context="{'group_by': 'slot_start:hour'}"/>
                     <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
                     <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
                 </group>

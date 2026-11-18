@@ -90,6 +90,23 @@ code-signing certificate and add a Defender/EDR exclusion for the folder.
 - App flag *Count Idle as Active* (App Classification): idle time with that
   app in front is reported as active; applies to past days. Teams and Zoom
   set by default (migration 17.0.1.2.0 for existing databases).
+- Agent (1.2+): when the window in front belongs to ApplicationFrameHost
+  (Store apps: Photos, Settings, Calculator, To Do) the app's own process is
+  reported instead of "Windows app frame". Needs the new installer on each
+  laptop; 1.1 agents keep reporting the frame host.
+
+## 5-Minute Detail
+
+The Detail button on a day opens `xn.activity.app.usage` (the SQL view
+behind App Usage), not the raw slots: grouped by category then app, largest
+time first (`default_order="active_hours desc"` also orders the groups), and
+idle time of *Count Idle as Active* apps shown as active, so the footer
+matches the day row. Apps flagged *Windows / System* (lock screen, Start
+menu, File Explorer, ...; set from `SYSTEM_APPS` when first seen, migration
+17.0.1.4.0 for existing apps) fold into one *Windows / System* group unless
+classified Productive or Unproductive; the filter *Hide Windows / System*
+drops them, and Group By *Hour* shows when the time was spent. Employees
+read their own rows of the view (same rules as the slots).
 
 ## Crons
 

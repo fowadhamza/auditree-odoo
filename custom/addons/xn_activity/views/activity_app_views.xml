@@ -13,6 +13,7 @@
                        decoration-danger="category == 'unproductive'"
                        decoration-info="category == 'neutral'"/>
                 <field name="idle_as_active" optional="show"/>
+                <field name="is_system" optional="show"/>
                 <field name="create_date" string="First Seen" optional="hide"/>
             </tree>
         </field>
@@ -29,6 +30,7 @@
                         <field name="friendly_name"/>
                         <field name="category"/>
                         <field name="idle_as_active"/>
+                        <field name="is_system"/>
                     </group>
                     <separator string="Department Overrides"/>
                     <field name="rule_ids">
@@ -65,6 +67,8 @@
                         domain="[('category', '=', 'unclassified')]"/>
                 <filter name="has_overrides" string="Has Department Overrides"
                         domain="[('rule_ids', '!=', False)]"/>
+                <filter name="is_system" string="Windows / System"
+                        domain="[('is_system', '=', True)]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
                 </group>

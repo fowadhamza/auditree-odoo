@@ -30,6 +30,20 @@
         <field name="groups" eval="[(6, 0, [ref('group_xn_activity_viewer')])]"/>
     </record>
 
+    <!-- App usage view (also the 5-minute detail): same as the slots. -->
+    <record id="rule_xn_activity_app_usage_own" model="ir.rule">
+        <field name="name">Activity app usage: own</field>
+        <field name="model_id" ref="model_xn_activity_app_usage"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    <record id="rule_xn_activity_app_usage_hr" model="ir.rule">
+        <field name="name">Activity app usage: viewers (HR, board) see all</field>
+        <field name="model_id" ref="model_xn_activity_app_usage"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('group_xn_activity_viewer')])]"/>
+    </record>
+
     <!-- Day notes: read own (HR: all); create own (HR: anyone's); change or
          delete only notes you wrote yourself. -->
     <record id="rule_xn_activity_note_read_own" model="ir.rule">

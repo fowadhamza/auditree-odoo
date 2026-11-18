@@ -13,6 +13,16 @@ CATEGORIES = [
 
 _APP_NAME_RE = re.compile(r'[^a-z0-9._-]')
 
+# Windows itself rather than a program someone works in. Flagged as
+# Windows / System when first seen, so the 5-minute detail can fold them
+# into one group (see xn.activity.app.usage). HR can change the flag.
+SYSTEM_APPS = {
+    'lockscreen', 'lockapp', 'unknown', 'explorer', 'searchhost',
+    'searchapp', 'startmenuexperiencehost', 'shellexperiencehost',
+    'applicationframehost', 'systemsettings', 'taskmgr', 'widgets',
+    'textinputhost', 'shellhost', 'logonui',
+}
+
 
 def clean_app_name(raw):
     """Process name as the agent sends it -> the key stored in Odoo."""
@@ -42,6 +52,13 @@ class XnActivityApp(models.Model):
         help="Time with this app in front but no keyboard or mouse input "
              "counts as active, not idle: meetings, reading long documents. "
              "Applies to past days too.")
+    is_system = fields.Boolean(
+        string='Windows / System',
+        help="Part of Windows (lock screen, Start menu, File Explorer) "
+             "rather than a work program. In the 5-minute detail its time "
+             "is grouped under Windows / System instead of its category, "
+             "unless it is classified Productive or Unproductive. Totals "
+             "are not affected.")
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'This process name already exists.'),
@@ -57,6 +74,8 @@ class XnActivityApp(models.Model):
         for vals in vals_list:
             if vals.get('name'):
                 vals['name'] = clean_app_name(vals['name'])
+                if 'is_system' not in vals:
+                    vals['is_system'] = vals['name'] in SYSTEM_APPS
         return super().create(vals_list)
 
     def write(self, vals):

@@ -50,6 +50,8 @@ public static class XnActivityNative {
     [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
     [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+    delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc cb, IntPtr lParam);
     public static uint IdleSeconds() {
         LASTINPUTINFO l = new LASTINPUTINFO();
         l.cbSize = (uint)Marshal.SizeOf(l);
@@ -62,6 +64,24 @@ public static class XnActivityNative {
         uint pid;
         GetWindowThreadProcessId(h, out pid);
         return pid;
+    }
+    // Store apps (Photos, Settings, Calculator, ...) are hosted in a window
+    // owned by ApplicationFrameHost; the app itself owns a child window.
+    // Returns that child's process, or 0 when there is none (suspended or
+    // minimised app). Only called when the foreground is the frame host.
+    public static uint FrameChildPid() {
+        IntPtr h = GetForegroundWindow();
+        if (h == IntPtr.Zero) return 0;
+        uint host;
+        GetWindowThreadProcessId(h, out host);
+        uint found = 0;
+        EnumChildWindows(h, delegate(IntPtr c, IntPtr l) {
+            uint p;
+            GetWindowThreadProcessId(c, out p);
+            if (p != 0 && p != host) { found = p; return false; }
+            return true;
+        }, IntPtr.Zero);
+        return found;
     }
 }
 '@
@@ -98,7 +118,14 @@ function Test-MicInUse {
 function Get-ForegroundApp {
     $p = [XnActivityNative]::ForegroundPid()
     if ($p -eq 0) { return 'unknown' }
-    try { return (Get-Process -Id $p -ErrorAction Stop).ProcessName.ToLower() } catch { return 'unknown' }
+    try { $name = (Get-Process -Id $p -ErrorAction Stop).ProcessName.ToLower() } catch { return 'unknown' }
+    if ($name -eq 'applicationframehost') {
+        $c = [XnActivityNative]::FrameChildPid()
+        if ($c -ne 0) {
+            try { $name = (Get-Process -Id $c -ErrorAction Stop).ProcessName.ToLower() } catch { }
+        }
+    }
+    return $name
 }
 
 function Get-SlotStart([datetime]$t) {

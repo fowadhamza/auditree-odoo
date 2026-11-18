@@ -21,7 +21,7 @@ stores the 5-minute slots and a daily summary per person.
 
 No titles, URLs, keystrokes or screenshots are collected. See README.md.
     """,
-    "version": "17.0.1.3.0",
+    "version": "17.0.1.4.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",

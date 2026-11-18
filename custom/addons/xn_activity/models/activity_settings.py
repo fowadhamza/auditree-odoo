@@ -17,7 +17,7 @@ DEFAULTS = {
 }
 
 MIN_RETENTION_DAYS = 7
-AGENT_VERSION = '1.1'
+AGENT_VERSION = '1.2'
 
 
 def _num(value, default, cast):

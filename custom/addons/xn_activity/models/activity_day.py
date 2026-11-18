@@ -466,17 +466,25 @@ class XnActivityDay(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('%(who)s - %(date)s', who=self.user_label,
                       date=self.date),
-            'res_model': 'xn.activity.slot',
+            # The usage view, not the raw slots: it carries the effective
+            # category (department overrides, Windows / System) and counts
+            # idle time of "Count Idle as Active" apps as active, so the
+            # footer totals match the day row.
+            'res_model': 'xn.activity.app.usage',
             'view_mode': 'tree,pivot,graph',
             'views': [
-                (self.env.ref('xn_activity.view_xn_activity_slot_tree').id,
+                (self.env.ref(
+                    'xn_activity.view_xn_activity_app_usage_detail_tree').id,
                  'tree'),
                 (False, 'pivot'),
                 (False, 'graph'),
             ],
+            # [id, name]: the web client reads search_view_id[0].
+            'search_view_id': [self.env.ref(
+                'xn_activity.view_xn_activity_app_usage_search').id, False],
             'domain': [('day_key', '=', self.day_key),
-                       ('local_date', '=', self.date)],
-            'context': {'group_by': ['app_id'], 'create': False},
+                       ('date', '=', self.date)],
+            'context': {'group_by': ['category', 'app_id'], 'create': False},
         }
 
     # ------------------------------------------------------------------
