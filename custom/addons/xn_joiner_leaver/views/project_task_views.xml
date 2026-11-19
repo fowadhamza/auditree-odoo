@@ -52,6 +52,8 @@
                         <group>
                             <field name="xn_jl_proof_required" invisible="not xn_jl_proof_required"/>
                             <field name="xn_jl_has_proof" invisible="not xn_jl_proof_required"/>
+                            <field name="xn_jl_proof_ids" widget="many2many_binary"
+                                   invisible="not xn_jl_proof_required and not xn_jl_proof_ids"/>
                             <field name="xn_jl_external" readonly="1"/>
                             <field name="xn_jl_escalated" readonly="1"/>
                         </group>
@@ -101,6 +103,7 @@
                 <field name="xn_jl_employee_id"/>
                 <field name="user_ids"/>
                 <filter name="mine" string="My Steps" domain="[('user_ids', 'in', uid)]"/>
+                <separator/>
                 <filter name="open" string="Open" domain="[('state', 'not in', ['1_done', '1_canceled'])]"/>
                 <filter name="late" string="Late"
                         domain="[('state', 'not in', ['1_done', '1_canceled']), ('xn_jl_due_date', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
@@ -134,8 +137,8 @@
         <field name="name">My Steps</field>
         <field name="res_model">project.task</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('xn_jl_checklist_id', '!=', False)]</field>
-        <field name="context">{'search_default_open': 1, 'search_default_mine': 1, 'create': False}</field>
+        <field name="domain">[('xn_jl_checklist_id', '!=', False), ('user_ids', 'in', uid)]</field>
+        <field name="context">{'search_default_open': 1, 'create': False}</field>
         <field name="search_view_id" ref="view_task_search_xn_jl"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('view_task_tree_xn_jl')}),

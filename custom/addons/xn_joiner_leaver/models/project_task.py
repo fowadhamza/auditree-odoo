@@ -32,8 +32,29 @@ class ProjectTask(models.Model):
     xn_jl_proof_required = fields.Char(related='xn_jl_step_id.proof_required')
     xn_jl_has_proof = fields.Boolean(
         string='Proof Attached', compute='_compute_xn_jl_has_proof')
+    xn_jl_proof_ids = fields.Many2many(
+        'ir.attachment', string='Attach Proof',
+        compute='_compute_xn_jl_proof_ids', inverse='_inverse_xn_jl_proof_ids',
+        help="Files attached to this step. Uploading here attaches the file "
+             "to the step; removing one deletes it.")
     xn_jl_escalated = fields.Boolean(string='Escalated', copy=False)
     xn_jl_alerted = fields.Boolean(copy=False)
+
+    def _compute_xn_jl_proof_ids(self):
+        for task in self:
+            if not isinstance(task.id, int):
+                task.xn_jl_proof_ids = False
+                continue
+            task.xn_jl_proof_ids = self.env['ir.attachment'].search([
+                ('res_model', '=', 'project.task'), ('res_id', '=', task.id)])
+
+    def _inverse_xn_jl_proof_ids(self):
+        """The upload widget already attaches new files to the task; only
+        removals need handling here."""
+        for task in self:
+            current = self.env['ir.attachment'].search([
+                ('res_model', '=', 'project.task'), ('res_id', '=', task.id)])
+            (current - task.xn_jl_proof_ids).unlink()
 
     def _compute_xn_jl_has_proof(self):
         ids = [i for i in self.ids if isinstance(i, int)]
@@ -60,8 +81,8 @@ class ProjectTask(models.Model):
                 for task in closing.filtered('xn_jl_proof_required'):
                     if not task.xn_jl_has_proof:
                         raise UserError(_(
-                            "Attach the proof (%(proof)s) to \"%(task)s\" before "
-                            "marking it done.",
+                            "Attach the proof (%(proof)s) to \"%(task)s\" with "
+                            "Attach Proof on the step before marking it done.",
                             proof=task.xn_jl_proof_required, task=task.name))
         res = super().write(vals)
         # sudo: the project is private, so the user closing a step only sees

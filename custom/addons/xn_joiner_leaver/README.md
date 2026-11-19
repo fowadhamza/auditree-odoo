@@ -40,7 +40,10 @@ Depends on core `hr`, `project`, `mail`, `resource` and on `hr_resignation` (ins
 - **Working days** use the company's working-hours calendar (weekdays plus its public
   holidays).
 - **Proof.** A step with *Proof* set cannot be marked done without an attachment (bypassed
-  for superuser/cron).
+  for superuser/cron). The step form has an *Attach Proof* upload field for this; files
+  attached through the chatter count too, and removing a file from the field deletes it.
+- **My Steps** is restricted to the user's own steps in the action domain, not just a
+  removable filter.
 - **Re-dating.** Changing the checklist date moves every open `date` step.
   *Cancel Checklist* (joiner did not join, resignation withdrawn) cancels the open steps.
   The checklist closes itself when every step is done or cancelled.
