@@ -44,6 +44,42 @@
         </field>
     </record>
 
+    <record id="view_xn_activity_installer_form" model="ir.ui.view">
+        <field name="name">xn.activity.installer.form</field>
+        <field name="model">xn.activity.installer</field>
+        <field name="arch" type="xml">
+            <form string="Agent Installer">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        Run install.ps1 on each laptop from an admin prompt, or deploy it
+                        with Endpoint Central (Computer Configuration, Custom Script, run as
+                        SYSTEM). Running it again updates the agent in place.
+                    </div>
+                    <div class="alert alert-warning" role="alert">
+                        The file contains the key laptops use to send data. Keep it like a
+                        password: send it only to the people installing it, never to a
+                        shared channel or folder.
+                    </div>
+                    <group>
+                        <field name="agent_version" string="Agent Version"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_download" type="object" string="Download Installer"
+                            class="btn-primary"/>
+                    <button string="Close" special="cancel" class="btn-link"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_xn_activity_installer" model="ir.actions.act_window">
+        <field name="name">Agent Installer</field>
+        <field name="res_model">xn.activity.installer</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <record id="action_xn_activity_setup" model="ir.actions.act_window">
         <field name="name">Agent Setup</field>
         <field name="res_model">xn.activity.setup</field>

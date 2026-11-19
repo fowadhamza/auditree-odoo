@@ -2,7 +2,7 @@
 """Agent endpoints.
 
 POST /xn_activity/ingest  -- laptops, API key in X-Activity-Key
-GET  /xn_activity/installer -- HR Manager, downloads install.ps1
+GET  /xn_activity/installer -- HR Manager or Agent Installer, downloads install.ps1
 """
 import hmac
 import json
@@ -15,7 +15,7 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 from ..models.activity_settings import get_settings
-from ..models.activity_setup import build_installer
+from ..models.activity_setup import build_installer, can_download_installer
 from ..models.activity_slot import day_key_for
 
 _logger = logging.getLogger(__name__)
@@ -326,7 +326,7 @@ class XnActivityController(http.Controller):
     @http.route('/xn_activity/installer', type='http', auth='user',
                 methods=['GET'])
     def installer(self, **kw):
-        if not request.env.user.has_group('hr.group_hr_manager'):
+        if not can_download_installer(request.env.user):
             return request.not_found()
         try:
             content = build_installer(request.env)

@@ -17,7 +17,10 @@
     <menuitem id="menu_xn_activity_app_usage" name="App Usage" parent="menu_xn_activity_root"
               action="action_xn_activity_app_usage" sequence="20" groups="group_xn_activity_viewer"/>
     <menuitem id="menu_xn_activity_device" name="Devices" parent="menu_xn_activity_root"
-              action="action_xn_activity_device" sequence="30" groups="group_xn_activity_viewer"/>
+              action="action_xn_activity_device" sequence="30"
+              groups="group_xn_activity_viewer,group_xn_activity_installer"/>
+    <menuitem id="menu_xn_activity_installer" name="Agent Installer" parent="menu_xn_activity_root"
+              action="action_xn_activity_installer" sequence="35" groups="group_xn_activity_installer"/>
 
     <menuitem id="menu_xn_activity_config" name="Configuration" parent="menu_xn_activity_root"
               sequence="90" groups="hr.group_hr_manager"/>

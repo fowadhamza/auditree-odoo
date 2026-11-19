@@ -43,6 +43,30 @@ def build_installer(env):
     return installer.replace('\r\n', '\n').replace('\n', '\r\n').encode('ascii')
 
 
+def can_download_installer(user):
+    """HR Managers (Agent Setup) and the IT Agent Installer role."""
+    return (user.has_group('hr.group_hr_manager')
+            or user.has_group('xn_activity.group_xn_activity_installer'))
+
+
+class XnActivityInstaller(models.TransientModel):
+    """Download-only screen for IT: no settings, no key changes."""
+    _name = 'xn.activity.installer'
+    _description = 'Activity Agent Installer Download'
+
+    agent_version = fields.Char(readonly=True,
+                                default=lambda self: AGENT_VERSION)
+
+    def action_download(self):
+        self.ensure_one()
+        if not can_download_installer(self.env.user):
+            raise UserError(_("Only an HR Manager or an Agent Installer can "
+                              "download the installer."))
+        build_installer(self.env)   # raise here, not in the download tab
+        return {'type': 'ir.actions.act_url',
+                'url': '/xn_activity/installer', 'target': 'self'}
+
+
 class XnActivitySetup(models.TransientModel):
     _name = 'xn.activity.setup'
     _description = 'Activity Agent Setup'

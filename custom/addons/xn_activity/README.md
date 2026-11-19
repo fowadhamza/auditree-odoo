@@ -60,6 +60,10 @@ step with `_xn_vals()` when adding a field to the summary.
 - HR Officer: View All Employees, can add notes for anyone, and the
   dashboard's *To sort out* panel.
 - HR Manager: plus Agent Setup, app classification, overrides, view log.
+- Activity Agent: Agent Installer (`group_xn_activity_installer`, own
+  category so the viewer/board dropdown stays one field): for IT. Activity >
+  Agent Installer downloads `install.ps1` (no settings, no key changes) and
+  Activity > Devices is readable. No activity reports beyond their own.
 - Reporting manager (no group): the "own and team" record rules on days,
   slots and the usage view cover everyone below them in the org chart
   (`employee_id child_of user.employee_ids`), so the dashboard, Team
@@ -83,7 +87,8 @@ Prod notes: nginx `client_max_body_size` must be at least 1m (default is
 ## Deploying the agent
 
 Agent Setup > *Save and Download Installer* gives `install.ps1` with URL, key
-and idle threshold embedded. Endpoint Central: Computer Configuration >
+and idle threshold embedded; Agent Installers get the same file from
+Activity > Agent Installer. Endpoint Central: Computer Configuration >
 Custom Script, run as SYSTEM:
 
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File install.ps1

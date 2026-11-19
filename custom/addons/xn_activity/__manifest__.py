@@ -17,11 +17,11 @@ stores the 5-minute slots and a daily summary per person.
   note (client visit, offline work).
 * Partners/directors (checkbox) and shared mailboxes are never stored.
 * Agent Setup (HR Manager) builds the install.ps1 that Endpoint Central
-  deploys.
+  deploys. IT can download it through the Agent Installer role.
 
 No titles, URLs, keystrokes or screenshots are collected. See README.md.
     """,
-    "version": "17.0.1.4.0",
+    "version": "17.0.1.5.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",

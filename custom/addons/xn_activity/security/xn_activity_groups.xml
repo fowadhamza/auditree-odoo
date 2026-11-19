@@ -27,6 +27,23 @@ change settings, classify apps or edit employees.</field>
 on the Activity Dashboard.</field>
     </record>
 
+    <!-- IT: download install.ps1 and see the Devices list, nothing else.
+         Its own category, so the user form keeps the View All Employees /
+         Board of Directors choice as one dropdown. -->
+    <record id="module_category_xn_activity_agent" model="ir.module.category">
+        <field name="name">Activity Agent</field>
+        <field name="sequence">61</field>
+    </record>
+
+    <record id="group_xn_activity_installer" model="res.groups">
+        <field name="name">Agent Installer</field>
+        <field name="category_id" ref="module_category_xn_activity_agent"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Downloads the agent installer and sees the Devices
+list (computer, last sign-in, agent version). No activity reports, no
+settings, no key changes.</field>
+    </record>
+
     <record id="hr.group_hr_user" model="res.groups">
         <field name="implied_ids" eval="[(4, ref('xn_activity.group_xn_activity_viewer'))]"/>
     </record>
