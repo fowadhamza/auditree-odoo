@@ -5,6 +5,10 @@ One entry per 5-minute slot that has data, in laptop-local minutes, with a
 single state for colouring. Read through xn.activity.app.usage as the
 current user, so the record rules decide whose slots come back (employees:
 their own; activity viewers: everyone) -- no sudo here.
+
+Connection quality (agent 1.3+) comes from xn.activity.net for the
+(computer, sign-in) pairs found in those same usage rows, so it never
+reaches further than the activity the user may already read.
 """
 from collections import defaultdict
 
@@ -56,18 +60,28 @@ class XnActivityDayTimeline(models.Model):
             [('day_key', 'in', list(set(days.mapped('day_key')))),
              ('date', 'in', list(set(days.mapped('date'))))],
             ['day_key', 'date', 'local_minute', 'app_id', 'category',
-             'active_hours', 'idle_hours', 'locked_hours'])
+             'active_hours', 'idle_hours', 'locked_hours', 'device_id',
+             'user_key'])
         # (day_key, date) -> minute -> app label -> [act, idle, locked, cat]
         grid = defaultdict(lambda: defaultdict(dict))
+        # (day_key, date) -> {(device id, sign-in)}: whose connection rows
+        # belong to the day.
+        sources = defaultdict(set)
         for r in rows:
+            if r['device_id']:
+                sources[(r['day_key'], r['date'])].add(
+                    (r['device_id'][0], r['user_key']))
             label = r['app_id'][1] if r['app_id'] else _('Unknown')
             cell = grid[(r['day_key'], r['date'])][r['local_minute'] or 0]
             v = cell.setdefault(label, [0.0, 0.0, 0.0, r['category']])
             v[0] += r['active_hours'] * 3600
             v[1] += r['idle_hours'] * 3600
             v[2] += r['locked_hours'] * 3600
+        Net = self.env['xn.activity.net']
+        net_rows = Net._xn_rows_for(dict(sources))
         out = []
         for day in days:
+            day_net = net_rows.get((day.day_key, day.date), [])
             slots = []
             for minute, apps in sorted(grid[(day.day_key, day.date)].items()):
                 state, top = _slot_state(apps)
@@ -98,6 +112,8 @@ class XnActivityDayTimeline(models.Model):
                 'time_off': day.time_off or '',
                 'note': day.note or '',
                 'slots': slots,
+                'net': Net._xn_strip(day_net),
+                'net_summary': Net._xn_summary(day_net),
             })
         return out
 

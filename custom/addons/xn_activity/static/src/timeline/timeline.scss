@@ -9,6 +9,15 @@ $xn-tl-idle: #f1ddb0;
 $xn-tl-locked: #4e5d6c;
 $xn-tl-track: #eceff2;
 
+// Connection quality strip (agent 1.3+): a blue scale for good, then
+// amber / orange-red / near-black, so it does not read as the activity bar.
+$xn-net-excellent: #1d4e89;
+$xn-net-good: #5b9bd5;
+$xn-net-fair: #f0b429;
+$xn-net-slow: #e4572e;
+$xn-net-offline: #2b2b2b;
+$xn-net-unknown: #cfd5db;
+
 .o_xn_tl {
     .o_xn_tl_bar {
         position: relative;
@@ -16,6 +25,30 @@ $xn-tl-track: #eceff2;
         background: $xn-tl-track;
         border-radius: 3px;
         overflow: hidden;
+    }
+
+    .o_xn_net_strip {
+        position: relative;
+        height: 6px;
+        margin-top: 2px;
+        background: $xn-tl-track;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .o_xn_net_excellent { background: $xn-net-excellent; }
+    .o_xn_net_good { background: $xn-net-good; }
+    .o_xn_net_fair { background: $xn-net-fair; }
+    .o_xn_net_slow { background: $xn-net-slow; }
+    .o_xn_net_offline { background: $xn-net-offline; }
+    .o_xn_net_unknown { background: $xn-net-unknown; }
+
+    .o_xn_net_legend {
+        margin-top: 2px;
+    }
+
+    .o_xn_net_summary {
+        margin-top: 4px;
     }
 
     .o_xn_tl_loading {

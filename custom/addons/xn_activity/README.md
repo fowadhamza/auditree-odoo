@@ -10,8 +10,10 @@ foreground process name; every 5 min it POSTs the closed slots to
 `/xn_activity/ingest`. Odoo stores them in `xn.activity.slot` and rebuilds
 the per-person-per-day summary `xn.activity.day`.
 
-Collected: process names and seconds. Never titles, URLs, keystrokes,
-clipboard or screenshots.
+Collected: process names and seconds; from agent 1.3 also connection type,
+metered flag, Wi-Fi signal bars, TCP connect times and occasional download
+speed (see Connection check). Never titles, URLs, network names, IP
+addresses, keystrokes, clipboard or screenshots.
 
 ## Models
 
@@ -182,6 +184,41 @@ the record rules' (all / team / self, shown under the title).
   the period buttons and the figures cannot disagree.
 - The weekly digest email still names people under target and goes to HR
   Managers (or *Weekly Digest To*); it is not covered by the board-only rule.
+
+## Connection check (agent 1.3+, module 17.0.1.8.0)
+
+- Every 5 minutes, at the agent's random send time: connection type from
+  Windows (`GetInternetConnectionProfile`: wired, Wi-Fi, mobile, other,
+  none), the metered flag (phone hotspots usually set it; a user can change
+  it, so it is a strong hint, not proof), Wi-Fi signal bars 0-5, and TCP
+  connect time (ms, name lookup excluded) to our server and to
+  `outlook.office365.com`. Whether the report itself went through is
+  counted per slot.
+- Speed test: *Speed Tests per Hour* (Agent Setup, 0-4, default 2) at
+  random minutes, only while the person is active and the connection is not
+  metered or mobile; downloads *Speed Test File*, by default
+  `gs://auditree-agent-speedtest/speedtest-2mb.bin` (asia-south1, public
+  read of that object only, no listing, `Cache-Control: no-store`; nothing
+  else may go in that bucket). Capped at 15 s and 8 MB. Both settings reach
+  laptops in the ingest reply, no new installer needed; 0 turns it off.
+- Stored in `xn.activity.net` per (computer, sign-in, slot), not per
+  employee, so relinking needs no update; timelines find a person's rows
+  through the day's slots. Kept as long as the 5-minute data; deleted with
+  them for excluded employees and for Work Accounts Only rejects (never
+  stored). HR Managers can list the model; everyone else sees it only
+  through the timelines and dashboard.
+- Grade per slot, worse of response time and speed: Excellent under 50 ms /
+  25+ Mbps, Good under 100 ms / 10+, Fair under 200 ms / 3+, else Slow;
+  Offline when there is no connection or every report failed with no
+  response. `activity_net.py` holds the limits.
+- Shown: a thin strip under every timeline bar (day form, Team Timeline,
+  dashboard today) with a hover text per slot and a one-line summary on the
+  day form; Devices gets Connection, Connection Quality, last speed and the
+  filters *Slow or Offline Now* and *On Metered Connection*; the dashboard
+  (HR, board) lists laptops with an hour or more slow, offline or metered.
+- Cost of the speed test at about 43 laptops, 2 tests/hour, 2 MB, working
+  hours only: about 30 GB/month of bucket egress, roughly USD 3-4. Set a
+  billing budget alert on the project.
 
 ## Crons
 

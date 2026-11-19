@@ -8,7 +8,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tools import file_open
 
 from .activity_settings import (DEFAULTS, MIN_RETENTION_DAYS, AGENT_VERSION,
-                                get_settings)
+                                MAX_SPEED_TESTS_PER_HOUR, get_settings)
 
 P = 'xn_activity.%s'
 
@@ -99,6 +99,17 @@ class XnActivitySetup(models.TransientModel):
              "Windows accounts and unknown users are dropped and shown as "
              "Rejected Sign-in on Devices. The Windows User Name field on "
              "employees is then not used.")
+    speed_test_url = fields.Char(
+        string='Speed Test File',
+        help="https address of a small file (about 2 MB) the agent downloads "
+             "to measure connection speed. Our own bucket by default. "
+             "Reaches laptops on their next report.")
+    speed_tests_per_hour = fields.Integer(
+        string='Speed Tests per Hour',
+        help="0 to 4, at random minutes, only while the person is active and "
+             "the connection is not metered (phone hotspot, mobile data). 0 "
+             "turns the speed test off; connection type and response time "
+             "are still recorded.")
 
     @api.model
     def default_get(self, fields_list):
@@ -114,7 +125,7 @@ class XnActivitySetup(models.TransientModel):
         return res
 
     @api.constrains('retention_days', 'idle_minutes', 'productive_target',
-                    'server_url')
+                    'server_url', 'speed_test_url', 'speed_tests_per_hour')
     def _check_values(self):
         for rec in self:
             if rec.retention_days < MIN_RETENTION_DAYS:
@@ -130,6 +141,13 @@ class XnActivitySetup(models.TransientModel):
             if not (rec.server_url or '').lower().startswith('https://'):
                 raise ValidationError(_("The server URL must start with "
                                         "https://."))
+            if not 0 <= rec.speed_tests_per_hour <= MAX_SPEED_TESTS_PER_HOUR:
+                raise ValidationError(_("Speed tests per hour: 0 to %s.",
+                                        MAX_SPEED_TESTS_PER_HOUR))
+            if rec.speed_test_url and \
+                    not rec.speed_test_url.lower().startswith('https://'):
+                raise ValidationError(_("The speed test file must be an "
+                                        "https:// address."))
 
     def _check_manager(self):
         if not self.env.user.has_group('hr.group_hr_manager'):

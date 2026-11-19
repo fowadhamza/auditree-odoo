@@ -20,9 +20,13 @@ stores the 5-minute slots and a daily summary per person.
 * Agent Setup (HR Manager) builds the install.ps1 that Endpoint Central
   deploys. IT can download it through the Agent Installer role.
 
-No titles, URLs, keystrokes or screenshots are collected. See README.md.
+* Agent 1.3+ also checks the connection: type, metered flag, Wi-Fi signal,
+  response time, and a few download speed tests an hour from our own bucket.
+
+No titles, URLs, network names, IP addresses, keystrokes or screenshots are
+collected. See README.md.
     """,
-    "version": "17.0.1.7.0",
+    "version": "17.0.1.8.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",

@@ -164,7 +164,56 @@ class XnActivityDayDashboard(models.Model):
                                       key=lambda kv: -len(kv[1]))]
         if is_hr:
             out['to_sort'] = self._xn_dash_to_sort(days, start)
+        if scope == 'all':
+            out['connections'] = self._xn_dash_connections(start, end)
         return out
+
+    @api.model
+    def _xn_dash_connections(self, start, end):
+        """Laptops with an hour or more of slow, offline or metered time in
+        the period (agent 1.3+). Viewers only: it covers every laptop. Not
+        filtered by department (a laptop is not in one)."""
+        cr = self.env.cr
+        self.env['xn.activity.net'].flush_model()
+        cr.execute("""
+            SELECT n.device_id,
+                   count(*) AS slots,
+                   count(*) FILTER (WHERE n.quality = 'slow') AS slow,
+                   count(*) FILTER (WHERE n.quality = 'offline') AS offline,
+                   count(*) FILTER (WHERE n.metered) AS metered,
+                   count(*) FILTER (WHERE n.conn_type = 'wifi') AS wifi,
+                   percentile_cont(0.5) WITHIN GROUP (ORDER BY n.down_mbps)
+                       FILTER (WHERE n.down_mbps IS NOT NULL) AS mbps,
+                   percentile_cont(0.5) WITHIN GROUP (ORDER BY n.rtt_ms)
+                       FILTER (WHERE n.rtt_ms IS NOT NULL) AS rtt
+              FROM xn_activity_net n
+             WHERE n.local_date >= %s AND n.local_date <= %s
+          GROUP BY n.device_id
+        """, (start, end))
+        rows = cr.dictfetchall()
+        devices = self.env['xn.activity.device'].sudo().with_context(
+            active_test=False).browse([r['device_id'] for r in rows])
+        by_id = {d.id: d for d in devices}
+        hour = 12   # 5-minute slots
+        out = []
+        for r in rows:
+            if max(r['slow'] + r['offline'], r['metered']) < hour:
+                continue
+            dev = by_id.get(r['device_id'])
+            out.append({
+                'name': dev.name if dev else '?',
+                'who': (dev.employee_id.name or dev.last_user_key or '')
+                if dev else '',
+                'slow_hours': r['slow'] * 5 / 60.0,
+                'offline_hours': r['offline'] * 5 / 60.0,
+                'metered_hours': r['metered'] * 5 / 60.0,
+                'wifi_pct': _avg(r['wifi'] * 100.0, r['slots']),
+                'mbps': r['mbps'],
+                'rtt': r['rtt'],
+            })
+        out.sort(key=lambda c: -(c['slow_hours'] + c['offline_hours']
+                                 + c['metered_hours']))
+        return out[:10]
 
     def _xn_dash_departments(self):
         groups = self.read_group([('department_id', '!=', False)],

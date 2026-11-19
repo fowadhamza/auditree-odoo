@@ -14,7 +14,8 @@ from odoo import http, fields, _
 from odoo.exceptions import UserError
 from odoo.http import request
 
-from ..models.activity_settings import get_settings
+from ..models.activity_net import net_label, net_quality
+from ..models.activity_settings import get_settings, MAX_SPEED_TESTS_PER_HOUR
 from ..models.activity_setup import build_installer, can_download_installer
 from ..models.activity_slot import day_key_for
 
@@ -99,6 +100,57 @@ def _slot(s, now):
     }
 
 
+NET_TYPES = ('wired', 'wifi', 'mobile', 'other', 'none')
+MAX_NET = 2000
+
+
+def _opt_int(value, lo, hi):
+    """Optional bounded integer: None stays None, else clamped."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) \
+            or value != value or value in (float('inf'), float('-inf')):
+        raise ValueError('number expected')
+    return min(max(int(value), lo), hi)
+
+
+def _net(n, now):
+    """One connection check from the agent -> stored values; None to skip
+    (outside the accepted window); ValueError when malformed."""
+    if not isinstance(n, dict):
+        raise ValueError('net entry must be an object')
+    start = _parse_ts(n.get('start'))
+    if start is None:
+        raise ValueError('net start needs a UTC offset')
+    start = start.replace(second=0, microsecond=0,
+                          minute=start.minute - start.minute % 5)
+    utc = start.astimezone(timezone.utc)
+    if utc < now - MAX_AGE or utc > now + MAX_AHEAD:
+        return None
+    conn = str(n.get('type') or 'other').lower()
+    if conn not in NET_TYPES:
+        conn = 'other'
+    mbps = n.get('mbps')
+    if mbps is not None:
+        if isinstance(mbps, bool) or not isinstance(mbps, (int, float)) \
+                or mbps != mbps or mbps in (float('inf'), float('-inf')):
+            raise ValueError('mbps must be a number')
+        mbps = round(min(max(float(mbps), 0.0), 10000.0), 1)
+    return {
+        'start_utc': utc.replace(tzinfo=None),
+        'local_date': start.date(),
+        'local_minute': start.hour * 60 + start.minute,
+        'conn': conn,
+        'metered': bool(n.get('metered')) and conn != 'none',
+        'bars': _opt_int(n.get('bars'), 0, 5) if conn == 'wifi' else None,
+        'rtt': _opt_int(n.get('rtt'), 0, 60000),
+        'm365': _opt_int(n.get('m365'), 0, 60000),
+        'mbps': mbps,
+        'ok': _opt_int(n.get('ok'), 0, 1000) or 0,
+        'fail': _opt_int(n.get('fail'), 0, 1000) or 0,
+    }
+
+
 class XnActivityController(http.Controller):
 
     # ------------------------------------------------------------------
@@ -155,11 +207,17 @@ class XnActivityController(http.Controller):
             _logger.info("xn_activity: %s skipped %d malformed slots",
                          parsed['device'], parsed['bad_slots'])
         settings = get_settings(env)
+        speed_url = settings['speed_test_url'] or ''
         return _json(200, {
             'ok': True,
             'stored': stored,
             'skipped': parsed['bad_slots'],
             'idle_seconds': int(settings['idle_minutes']) * 60,
+            # Agent 1.3+: speed test settings, applied on the next report.
+            'speed_url': speed_url if speed_url.lower().startswith('https://')
+            else '',
+            'speed_per_hour': max(0, min(int(settings['speed_tests_per_hour']),
+                                         MAX_SPEED_TESTS_PER_HOUR)),
         })
 
     def _validate(self, body):
@@ -193,11 +251,25 @@ class XnActivityController(http.Controller):
                 continue
             if v:
                 out.append(v)
+        # Connection checks (agent 1.3+): same rule, a bad one is skipped.
+        net = []
+        raw_net = body.get('net') or []
+        if not isinstance(raw_net, list):
+            raw_net = []
+        for n in raw_net[:MAX_NET]:
+            try:
+                v = _net(n, now)
+            except (ValueError, TypeError, OverflowError):
+                bad += 1
+                continue
+            if v:
+                net.append(v)
         sent_at = _parse_ts(body.get('sent_at'))
         offset = int((sent_at - now).total_seconds()) if sent_at else 0
         # Fits the int4 column; anything this far off is flagged anyway.
         offset = max(min(offset, CLOCK_OFFSET_CAP), -CLOCK_OFFSET_CAP)
         return {
+            'net': net,
             'bad_slots': bad,
             'upn': upn, 'login': login, 'device': device,
             'user_key': upn or login,
@@ -298,7 +370,10 @@ class XnActivityController(http.Controller):
               p['clock_offset'], None if stop else p['user_key'],
               None if stop else emp_id, fields.Datetime.now(), device_id))
         env['xn.activity.device'].invalidate_model()
-        if stop or not p['slots']:
+        if stop:
+            return 0
+        self._store_net(env, device_id, p)
+        if not p['slots']:
             return 0
         apps = env['xn.activity.app']._xn_get_or_create(
             {s['app'] for s in p['slots']})
@@ -338,6 +413,63 @@ class XnActivityController(http.Controller):
         env['xn.activity.slot'].invalidate_model()
         env['xn.activity.day']._xn_recompute(pairs)
         return len(rows)
+
+    def _store_net(self, env, device_id, p):
+        """Upsert the connection checks and refresh the device's latest
+        connection. Called only for sign-ins that are stored (not excluded,
+        not rejected by Work Accounts Only)."""
+        if not p['net']:
+            return
+        cr = env.cr
+        now = fields.Datetime.now()
+        rows = []
+        for n in p['net']:
+            quality = net_quality(n['conn'], n['rtt'], n['m365'], n['mbps'],
+                                  n['ok'], n['fail'])
+            rows.append(cr.mogrify(
+                "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1,%s,1,%s)",
+                (device_id, p['user_key'], n['start_utc'], n['local_date'],
+                 n['local_minute'], n['conn'], n['metered'], n['bars'],
+                 n['rtt'], n['m365'], n['mbps'], n['ok'], n['fail'], quality,
+                 now, now)).decode())
+        cr.execute("""
+            INSERT INTO xn_activity_net
+                   (device_id, user_key, slot_start, local_date, local_minute,
+                    conn_type, metered, signal_bars, rtt_ms, m365_ms,
+                    down_mbps, sends_ok, sends_failed, quality,
+                    create_uid, create_date, write_uid, write_date)
+            VALUES """ + ','.join(rows) + """
+            ON CONFLICT (device_id, user_key, slot_start) DO UPDATE SET
+                   conn_type = EXCLUDED.conn_type,
+                   metered = EXCLUDED.metered,
+                   signal_bars = EXCLUDED.signal_bars,
+                   rtt_ms = EXCLUDED.rtt_ms,
+                   m365_ms = EXCLUDED.m365_ms,
+                   down_mbps = COALESCE(EXCLUDED.down_mbps,
+                                        xn_activity_net.down_mbps),
+                   sends_ok = EXCLUDED.sends_ok,
+                   sends_failed = EXCLUDED.sends_failed,
+                   quality = EXCLUDED.quality,
+                   write_date = EXCLUDED.write_date
+        """)
+        latest = max(p['net'], key=lambda n: n['start_utc'])
+        speed = max((n for n in p['net'] if n['mbps'] is not None),
+                    key=lambda n: n['start_utc'], default=None)
+        cr.execute("""
+            UPDATE xn_activity_device
+               SET net_connection = %s, net_quality = %s, net_rtt_ms = %s,
+                   net_m365_ms = %s, net_checked_at = %s,
+                   net_mbps = COALESCE(%s, net_mbps),
+                   net_speed_at = COALESCE(%s, net_speed_at)
+             WHERE id = %s AND (net_checked_at IS NULL OR net_checked_at <= %s)
+        """, (net_label(latest['conn'], latest['metered'], latest['bars']),
+              net_quality(latest['conn'], latest['rtt'], latest['m365'],
+                          latest['mbps'], latest['ok'], latest['fail']),
+              latest['rtt'], latest['m365'], latest['start_utc'],
+              speed and speed['mbps'], speed and speed['start_utc'],
+              device_id, latest['start_utc']))
+        env['xn.activity.net'].invalidate_model()
+        env['xn.activity.device'].invalidate_model()
 
     # ------------------------------------------------------------------
     # Installer download

@@ -15,6 +15,8 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Component, onWillStart, useState } from "@odoo/owl";
 import {
+    XnNetLegend,
+    XnNetStrip,
     XnTimelineAxis,
     XnTimelineBar,
     XnTimelineLegend,
@@ -67,7 +69,13 @@ function delta(now, prev, fmt, better = 1) {
 
 export class XnActivityDashboard extends Component {
     static template = "xn_activity.Dashboard";
-    static components = { XnTimelineAxis, XnTimelineBar, XnTimelineLegend };
+    static components = {
+        XnTimelineAxis,
+        XnTimelineBar,
+        XnTimelineLegend,
+        XnNetStrip,
+        XnNetLegend,
+    };
     static props = ["*"];
 
     setup() {
@@ -229,7 +237,21 @@ export class XnActivityDashboard extends Component {
     get today() {
         const days = this.state.data.today || [];
         const labels = Object.fromEntries(TIMELINE_STATES);
-        return { days, labels, bounds: timelineWindow(days) };
+        const hasNet = days.some((d) => d.net && d.net.length);
+        return { days, labels, hasNet, bounds: timelineWindow(days) };
+    }
+
+    get connections() {
+        const dash = (h) => (h ? hoursMinutes(h) : "-");
+        return (this.state.data.connections || []).map((c) => ({
+            ...c,
+            slowText: dash(c.slow_hours),
+            offlineText: dash(c.offline_hours),
+            meteredText: dash(c.metered_hours),
+            wifiText: `${Math.round(c.wifi_pct)}%`,
+            mbpsText: c.mbps === null ? "-" : `${c.mbps.toFixed(1)} Mbps`,
+            rttText: c.rtt === null ? "-" : `${Math.round(c.rtt)} ms`,
+        }));
     }
 
     // ------------------------------------------------------------------

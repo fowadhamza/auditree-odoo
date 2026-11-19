@@ -37,6 +37,26 @@
         </div>
     </t>
 
+    <t t-name="xn_activity.NetStrip">
+        <div class="o_xn_net_strip">
+            <t t-foreach="blocks" t-as="b" t-key="b.key">
+                <span t-att-class="b.cls" t-att-style="b.style" t-att-title="b.title"/>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="xn_activity.NetLegend">
+        <div class="o_xn_tl_legend o_xn_net_legend">
+            <span class="o_xn_tl_legend_item">Connection:</span>
+            <t t-foreach="qualities" t-as="q" t-key="q[0]">
+                <span class="o_xn_tl_legend_item">
+                    <span t-att-class="'o_xn_tl_swatch o_xn_net_' + q[0]"/>
+                    <t t-esc="q[1]"/>
+                </span>
+            </t>
+        </div>
+    </t>
+
     <t t-name="xn_activity.DayTimeline">
         <div class="o_xn_tl o_xn_tl_day mb-3">
             <t t-if="!state.loaded">
@@ -45,7 +65,12 @@
             <t t-elif="state.day and state.day.slots.length">
                 <XnTimelineAxis lo="bounds.lo" hi="bounds.hi"/>
                 <XnTimelineBar slots="state.day.slots" lo="bounds.lo" hi="bounds.hi" labels="labels"/>
+                <XnNetStrip t-if="state.day.net.length" net="state.day.net" lo="bounds.lo" hi="bounds.hi"/>
                 <XnTimelineLegend states="state.states"/>
+                <t t-if="state.day.net.length">
+                    <XnNetLegend/>
+                    <div class="small text-muted o_xn_net_summary" t-esc="state.day.net_summary"/>
+                </t>
             </t>
             <t t-else="">
                 <div class="text-muted small">
@@ -80,6 +105,7 @@
             </div>
 
             <XnTimelineLegend states="state.data.states"/>
+            <XnNetLegend t-if="hasNet"/>
 
             <t t-if="state.loading">
                 <div class="text-muted p-3">Loading...</div>
@@ -107,6 +133,7 @@
                             </div>
                             <div class="o_xn_tl_track">
                                 <XnTimelineBar slots="row.slots" lo="bounds.lo" hi="bounds.hi" labels="labels"/>
+                                <XnNetStrip t-if="row.net.length" net="row.net" lo="bounds.lo" hi="bounds.hi"/>
                             </div>
                             <div class="o_xn_tl_totals">
                                 <span t-esc="row.screen"/> / <strong t-esc="row.productive"/>

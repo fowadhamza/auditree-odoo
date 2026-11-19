@@ -120,7 +120,53 @@ export class XnTimelineLegend extends Component {
     static props = { states: Array };
 }
 
-const timelineComponents = { XnTimelineAxis, XnTimelineBar, XnTimelineLegend };
+/**
+ * Thin strip under a timeline bar: connection quality per 5-minute slot
+ * (agent 1.3+). Each entry {m, q, title}; q is excellent / good / fair /
+ * slow / offline / unknown.
+ */
+export class XnNetStrip extends Component {
+    static template = "xn_activity.NetStrip";
+    static props = { net: Array, lo: Number, hi: Number };
+
+    get blocks() {
+        const { lo, hi } = this.props;
+        const span = hi - lo;
+        return this.props.net
+            .filter((n) => n.m >= lo && n.m < hi)
+            .map((n) => ({
+                key: n.m,
+                cls: `o_xn_tl_block o_xn_net_${n.q}`,
+                style: `left:${((n.m - lo) / span) * 100}%;width:${(SLOT / span) * 100}%`,
+                title: `${hhmm(n.m)}-${hhmm(n.m + SLOT)}  Connection: ${n.title}`,
+            }));
+    }
+}
+
+export const NET_QUALITIES = [
+    ["excellent", "Excellent"],
+    ["good", "Good"],
+    ["fair", "Fair"],
+    ["slow", "Slow"],
+    ["offline", "Offline"],
+];
+
+export class XnNetLegend extends Component {
+    static template = "xn_activity.NetLegend";
+    static props = {};
+
+    get qualities() {
+        return NET_QUALITIES;
+    }
+}
+
+const timelineComponents = {
+    XnTimelineAxis,
+    XnTimelineBar,
+    XnTimelineLegend,
+    XnNetStrip,
+    XnNetLegend,
+};
 
 // ---------------------------------------------------------------------------
 // Day form widget
@@ -249,6 +295,10 @@ export class XnTeamTimeline extends Component {
 
     get bounds() {
         return timelineWindow(this.rows);
+    }
+
+    get hasNet() {
+        return this.state.data.days.some((d) => d.net && d.net.length);
     }
 
     openDay(id) {

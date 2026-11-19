@@ -133,6 +133,16 @@ class HrEmployee(models.Model):
             if not emp._xn_activity_is_excluded():
                 continue
             keys = list(emp._xn_activity_keys())
+            # Connection checks are keyed by sign-in, not employee: delete
+            # those of their keys and of any sign-in their slots carry,
+            # before the slots go.
+            cr.execute("""
+                DELETE FROM xn_activity_net
+                 WHERE user_key = ANY(%s)
+                    OR user_key IN (SELECT DISTINCT user_key
+                                      FROM xn_activity_slot
+                                     WHERE employee_id = %s)
+            """, (keys, emp.id))
             cr.execute("""
                 DELETE FROM xn_activity_slot
                  WHERE employee_id = %s OR user_key = ANY(%s)

@@ -2,6 +2,11 @@
 # Runs hidden in the signed-in user's session. Every 15 seconds it records
 # whether the user is active, idle or locked and which program is in front
 # (process name only). Every 5 minutes it sends the totals to Odoo.
+# It also checks the connection every 5 minutes: wired / Wi-Fi / mobile,
+# whether Windows treats it as metered, Wi-Fi signal bars, and how long a
+# connection to our server and to Microsoft 365 takes; and, a few times an
+# hour while the user is active on a non-metered connection, how fast a small
+# file downloads from our own server. No network names or addresses.
 # Nothing else is collected: no window titles, URLs, keystrokes or screens.
 # Do not edit: download a new installer from Odoo > Employees > Activity >
 # Agent Setup instead.
@@ -15,7 +20,12 @@ $SampleSeconds = 15
 $SlotMinutes   = 5
 $MaxPerPost    = 500
 $MaxQueue      = 20000          # about 2 weeks of slots
+$MaxNetQueue   = 4000           # about 2 weeks of connection checks
+$MaxNetPerPost = 300
 $MaxLogBytes   = 512KB
+$M365Host      = 'outlook.office365.com'
+$SpeedUrl      = ''             # from the server's reply (agent 1.3+)
+$SpeedPerHour  = 0
 
 # --- one copy per user session ------------------------------------------
 $created = $false
@@ -25,6 +35,7 @@ if (-not $created) { exit 0 }
 $Dir = Join-Path $env:LOCALAPPDATA 'XnActivity'
 if (-not (Test-Path $Dir)) { New-Item -ItemType Directory -Path $Dir | Out-Null }
 $QueueFile = Join-Path $Dir 'queue.json'
+$NetQueueFile = Join-Path $Dir 'netqueue.json'
 $LogFile   = Join-Path $Dir 'agent.log'
 
 function Write-Log([string]$msg) {
@@ -157,6 +168,97 @@ function Get-ForegroundApp {
     return $name
 }
 
+# --- connection checks ----------------------------------------------------
+$ServerHost = ([Uri]$ServerUrl).Host
+try {
+    $null = [Windows.Networking.Connectivity.NetworkInformation, Windows.Networking.Connectivity, ContentType = WindowsRuntime]
+    $WinRtNet = $true
+} catch { $WinRtNet = $false }
+
+function Get-Connection {
+    # Type of the connection Windows uses for the internet, its metered
+    # flag (phone hotspots usually set it) and Wi-Fi signal bars (0-5).
+    $out = @{ type = 'other'; metered = $false; bars = $null }
+    if (-not $WinRtNet) { return $out }
+    try {
+        $p = [Windows.Networking.Connectivity.NetworkInformation]::GetInternetConnectionProfile()
+        if ($null -eq $p) { $out.type = 'none'; return $out }
+        if ($p.IsWlanConnectionProfile) { $out.type = 'wifi' }
+        elseif ($p.IsWwanConnectionProfile) { $out.type = 'mobile' }
+        elseif ($p.NetworkAdapter -and $p.NetworkAdapter.IanaInterfaceType -eq 6) { $out.type = 'wired' }
+        $cost = [string]$p.GetConnectionCost().NetworkCostType
+        $out.metered = ($cost -eq 'Fixed' -or $cost -eq 'Variable')
+        if ($out.type -eq 'wifi') {
+            $b = $p.GetSignalBars()
+            if ($null -ne $b) { $out.bars = [int]$b }
+        }
+    } catch { }
+    return $out
+}
+
+function Measure-Connect([string]$hostName) {
+    # TCP connect time in ms (name lookup not counted), $null on failure.
+    $c = $null
+    try {
+        $ip = [Net.Dns]::GetHostAddresses($hostName) | Where-Object { $_.AddressFamily -eq 'InterNetwork' } | Select-Object -First 1
+        if (-not $ip) { return $null }
+        $c = New-Object Net.Sockets.TcpClient
+        $sw = [Diagnostics.Stopwatch]::StartNew()
+        $t = $c.ConnectAsync($ip, 443)
+        if (-not $t.Wait(5000)) { return $null }
+        $sw.Stop()
+        if (-not $c.Connected) { return $null }
+        return [int]$sw.ElapsedMilliseconds
+    } catch { return $null } finally { if ($c) { $c.Close() } }
+}
+
+function Measure-Speed([string]$url) {
+    # Download speed in Mbps of the speed test file, $null on failure.
+    $resp = $null
+    try {
+        $sep = if ($url.Contains('?')) { '&' } else { '?' }
+        $req = [Net.HttpWebRequest]::Create("$url$($sep)r=$(Get-Random)")
+        # Short limits: the sampling loop waits for this, and a gap over a
+        # minute would be counted as the laptop sleeping.
+        $req.Timeout = 10000; $req.ReadWriteTimeout = 10000
+        $req.Headers.Add('Cache-Control', 'no-cache')
+        $sw = [Diagnostics.Stopwatch]::StartNew()
+        $resp = $req.GetResponse()
+        $stream = $resp.GetResponseStream()
+        $buf = New-Object byte[] 65536
+        $total = 0
+        while (($n = $stream.Read($buf, 0, $buf.Length)) -gt 0) {
+            $total += $n
+            if ($total -ge 8MB -or $sw.Elapsed.TotalSeconds -gt 15) { break }
+        }
+        $sw.Stop()
+        if ($total -lt 256KB -or $sw.Elapsed.TotalSeconds -le 0) { return $null }
+        return [Math]::Round(($total * 8 / 1000000) / $sw.Elapsed.TotalSeconds, 1)
+    } catch { return $null } finally { if ($resp) { $resp.Close() } }
+}
+
+function New-NetRecord {
+    return @{ type = $null; metered = $false; bars = $null; rtt = $null; m365 = $null; mbps = $null; ok = 0; fail = 0; checked = $false }
+}
+
+function Update-Net {
+    # Fill the current slot's record: connection type and response times.
+    $c = Get-Connection
+    $script:Net.type = $c.type; $script:Net.metered = $c.metered; $script:Net.bars = $c.bars
+    if ($c.type -ne 'none') {
+        $script:Net.rtt = Measure-Connect $ServerHost
+        $script:Net.m365 = Measure-Connect $M365Host
+    }
+    $script:Net.checked = $true
+}
+
+function Set-NextSpeedTest {
+    # Random time within the next interval, so laptops do not test together.
+    if ($SpeedPerHour -le 0 -or -not $SpeedUrl) { $script:NextSpeedAt = $null; return }
+    $interval = [int](3600 / $SpeedPerHour)
+    $script:NextSpeedAt = (Get-Date).AddSeconds((Get-Random -Minimum ([int]($interval / 2)) -Maximum ([int]($interval * 3 / 2))))
+}
+
 function Get-SlotStart([datetime]$t) {
     $m = $t.Minute - ($t.Minute % $SlotMinutes)
     return New-Object DateTime($t.Year, $t.Month, $t.Day, $t.Hour, $m, 0, [DateTimeKind]::Local)
@@ -175,26 +277,43 @@ if (Test-Path $QueueFile) {
     } catch { Write-Log "queue file unreadable, starting empty: $_" }
 }
 
+$NetQueue = New-Object System.Collections.ArrayList
+if (Test-Path $NetQueueFile) {
+    try {
+        $saved = Get-Content -Path $NetQueueFile -Raw | ConvertFrom-Json
+        foreach ($s in @($saved)) { if ($s) { [void]$NetQueue.Add($s) } }
+    } catch { Write-Log "connection queue unreadable, starting empty: $_" }
+}
+
 function Save-Queue {
     while ($Queue.Count -gt $MaxQueue) { $Queue.RemoveAt(0) }
+    while ($NetQueue.Count -gt $MaxNetQueue) { $NetQueue.RemoveAt(0) }
     try {
         $json = ConvertTo-Json -InputObject @($Queue.ToArray()) -Depth 3 -Compress
         Set-Content -Path "$QueueFile.tmp" -Value $json -Encoding ASCII
         Move-Item "$QueueFile.tmp" $QueueFile -Force
+        $json = ConvertTo-Json -InputObject @($NetQueue.ToArray()) -Depth 3 -Compress
+        Set-Content -Path "$NetQueueFile.tmp" -Value $json -Encoding ASCII
+        Move-Item "$NetQueueFile.tmp" $NetQueueFile -Force
     } catch { Write-Log "could not save queue: $_" }
 }
 
 function Send-Queue {
     # Always posts once (a heartbeat when the queue is empty), then keeps
-    # going while full batches go through.
+    # going while full batches go through. Connection checks ride along on
+    # the first post; whether each post went through is itself recorded.
+    $nn = [Math]::Min($NetQueue.Count, $MaxNetPerPost)
     do {
         $n = [Math]::Min($Queue.Count, $MaxPerPost)
         $batch = @()
         if ($n -gt 0) { $batch = $Queue.GetRange(0, $n).ToArray() }
+        $netBatch = @()
+        if ($nn -gt 0) { $netBatch = $NetQueue.GetRange(0, $nn).ToArray() }
         $body = @{
             upn = $Upn; login = $Login; device = $Device; agent = $AgentVersion
             sent_at = Format-Start (Get-Date)
             slots = @($batch)
+            net = @($netBatch)
         }
         $json = ConvertTo-Json -InputObject $body -Depth 4 -Compress
         try {
@@ -202,21 +321,50 @@ function Send-Queue {
                 -Headers @{ 'X-Activity-Key' = $ApiKey } -ContentType 'application/json' `
                 -Body ([Text.Encoding]::UTF8.GetBytes($json)) -UseBasicParsing -TimeoutSec 30
         } catch {
+            $script:Net.fail++
             $code = 0
             try { $code = [int]$_.Exception.Response.StatusCode } catch { }
             Write-Log "send failed ($code, $($Queue.Count) queued): $($_.Exception.Message)"
             # 400/413: the server will never take this batch. Keeping it
             # would block everything queued behind it, so drop it. Any other
             # failure (network, 403 key, 429 rate limit, 5xx) is retried.
-            if (($code -eq 400 -or $code -eq 413) -and $n -gt 0) {
-                $Queue.RemoveRange(0, $n); Save-Queue
-                Write-Log "dropped $n slots rejected by the server"
+            if (($code -eq 400 -or $code -eq 413) -and ($n -gt 0 -or $nn -gt 0)) {
+                if ($n -gt 0) { $Queue.RemoveRange(0, $n) }
+                if ($nn -gt 0) { $NetQueue.RemoveRange(0, $nn) }
+                Save-Queue
+                Write-Log "dropped $n slots and $nn connection checks rejected by the server"
             }
             return
         }
-        if ($n -gt 0) { $Queue.RemoveRange(0, $n); Save-Queue }
+        $script:Net.ok++
+        if ($n -gt 0) { $Queue.RemoveRange(0, $n) }
+        if ($nn -gt 0) { $NetQueue.RemoveRange(0, $nn); $nn = 0 }
+        Save-Queue
         if ($resp.idle_seconds -and [int]$resp.idle_seconds -gt 0) { $script:IdleSeconds = [int]$resp.idle_seconds }
+        # Speed test settings (server 17.0.1.8.0+); an older server sends none.
+        if ($null -ne $resp.speed_per_hour) {
+            $url = [string]$resp.speed_url
+            $per = [Math]::Max(0, [Math]::Min(4, [int]$resp.speed_per_hour))
+            if (-not $url.StartsWith('https://')) { $url = ''; $per = 0 }
+            if ($url -ne $script:SpeedUrl -or $per -ne $script:SpeedPerHour) {
+                $script:SpeedUrl = $url; $script:SpeedPerHour = $per
+                Set-NextSpeedTest
+            }
+        }
     } while ($n -eq $MaxPerPost -and $Queue.Count -gt 0)
+}
+
+function Close-NetSlot([datetime]$slotStart) {
+    # Queue the finished slot's connection record (if anything was checked).
+    $r = $script:Net
+    if ($r.checked -or $r.ok -or $r.fail) {
+        [void]$NetQueue.Add([pscustomobject]@{
+            start = Format-Start $slotStart; type = $r.type; metered = $r.metered
+            bars = $r.bars; rtt = $r.rtt; m365 = $r.m365; mbps = $r.mbps
+            ok = $r.ok; fail = $r.fail
+        })
+    }
+    $script:Net = New-NetRecord
 }
 
 # --- main loop ------------------------------------------------------------
@@ -224,6 +372,9 @@ Write-Log "agent $AgentVersion started for $Login ($Upn) on $Device"
 $Current = @{}                   # app -> @{active; idle; locked}
 $CurrentSlot = Get-SlotStart (Get-Date)
 $SendAt = $null
+$NextSpeedAt = $null
+$Net = New-NetRecord
+try { Update-Net } catch { Write-Log "connection check failed: $_" }
 Send-Queue
 $LastTick = Get-Date
 
@@ -237,6 +388,7 @@ while ($true) {
     # random point in the next 2 minutes spreads the load on the server.
     if ($SendAt -and $now -ge $SendAt) {
         $SendAt = $null
+        try { Update-Net } catch { Write-Log "connection check failed: $_" }
         Send-Queue
     }
 
@@ -250,6 +402,7 @@ while ($true) {
                 locked = [Math]::Min($c.locked, 300)
             })
         }
+        Close-NetSlot $CurrentSlot
         $Current = @{}
         $CurrentSlot = $slot
         Save-Queue
@@ -277,5 +430,19 @@ while ($true) {
         $Current[$app][$state] += [int][Math]::Round($gap)
     } catch {
         Write-Log "sample failed: $_"
+    }
+
+    # Speed test when due, but only while the person is working and never
+    # on a metered connection (phone hotspot, mobile data): otherwise wait
+    # for the next active sample, or skip this round when metered.
+    if ($NextSpeedAt -and $now -ge $NextSpeedAt -and $state -eq 'active') {
+        $conn = Get-Connection
+        if ($conn.metered -or $conn.type -eq 'mobile' -or $conn.type -eq 'none') {
+            Set-NextSpeedTest
+        } else {
+            $mbps = Measure-Speed $SpeedUrl
+            if ($null -ne $mbps) { $Net.mbps = $mbps }
+            Set-NextSpeedTest
+        }
     }
 }

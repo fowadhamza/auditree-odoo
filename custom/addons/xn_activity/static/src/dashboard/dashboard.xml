@@ -180,16 +180,58 @@
                             </div>
                             <t t-if="today.days.length">
                                 <XnTimelineLegend states="timelineStates"/>
+                                <XnNetLegend t-if="today.hasNet"/>
                                 <div class="o_xn_dash_today">
                                     <span/>
                                     <XnTimelineAxis lo="today.bounds.lo" hi="today.bounds.hi"/>
                                     <t t-foreach="today.days" t-as="row" t-key="row.id">
                                         <a href="#" class="o_xn_dash_today_name" t-on-click.prevent="() => this.openDay(row.id)" t-esc="row.label"/>
-                                        <XnTimelineBar slots="row.slots" lo="today.bounds.lo" hi="today.bounds.hi" labels="today.labels"/>
+                                        <div>
+                                            <XnTimelineBar slots="row.slots" lo="today.bounds.lo" hi="today.bounds.hi" labels="today.labels"/>
+                                            <XnNetStrip t-if="row.net.length" net="row.net" lo="today.bounds.lo" hi="today.bounds.hi"/>
+                                        </div>
                                     </t>
                                 </div>
                             </t>
                             <p t-else="" class="text-muted mb-0">Nothing reported yet today.</p>
+                        </section>
+
+                        <section class="o_xn_dash_card" t-if="state.data.connections" aria-labelledby="xn-dash-conn">
+                            <div class="o_xn_dash_card_head">
+                                <h2 id="xn-dash-conn">Connections</h2>
+                                <span class="text-muted small">Laptops with an hour or more slow, offline or on a metered connection (usually a phone hotspot). Agent 1.3+.</span>
+                            </div>
+                            <div class="o_xn_dash_table_wrap" t-if="connections.length">
+                                <table class="o_xn_dash_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Computer</th>
+                                            <th>Person</th>
+                                            <th class="text-end">Slow</th>
+                                            <th class="text-end">Offline</th>
+                                            <th class="text-end">Metered</th>
+                                            <th class="text-end">On Wi-Fi</th>
+                                            <th class="text-end">Median speed</th>
+                                            <th class="text-end">Median server time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="connections" t-as="c" t-key="c.name">
+                                            <tr>
+                                                <td class="fw-medium" t-esc="c.name"/>
+                                                <td t-esc="c.who"/>
+                                                <td t-att-class="'text-end' + (c.slow_hours ? ' o_xn_dash_down' : '')" t-esc="c.slowText"/>
+                                                <td t-att-class="'text-end' + (c.offline_hours ? ' o_xn_dash_down' : '')" t-esc="c.offlineText"/>
+                                                <td t-att-class="'text-end' + (c.metered_hours ? ' o_xn_dash_warn' : '')" t-esc="c.meteredText"/>
+                                                <td class="text-end" t-esc="c.wifiText"/>
+                                                <td class="text-end" t-esc="c.mbpsText"/>
+                                                <td class="text-end" t-esc="c.rttText"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p t-else="" class="text-muted mb-0">No connection problems this period.</p>
                         </section>
 
                         <div class="o_xn_dash_row3">
@@ -251,8 +293,9 @@
                             </section>
                         </div>
 
-                        <p class="text-muted small">Process names and active, idle and locked time only. No window titles,
-                            websites, keystrokes or screenshots are collected. Opening someone's 5-minute detail is logged.</p>
+                        <p class="text-muted small">Process names and active, idle and locked time, plus connection type,
+                            Wi-Fi signal, response times and occasional download speed. No window titles, websites, network
+                            names, IP addresses, keystrokes or screenshots are collected. Opening someone's 5-minute detail is logged.</p>
                     </div>
                 </t>
             </div>

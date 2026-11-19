@@ -19,6 +19,16 @@
                 <field name="clock_flag" optional="show"/>
                 <field name="stale"/>
                 <field name="stale_alerted_on" optional="hide"/>
+                <field name="net_connection" optional="show"/>
+                <field name="net_quality" optional="show" widget="badge"
+                       decoration-success="net_quality in ('excellent', 'good')"
+                       decoration-warning="net_quality == 'fair'"
+                       decoration-danger="net_quality in ('slow', 'offline')"/>
+                <field name="net_rtt_ms" optional="hide"/>
+                <field name="net_m365_ms" optional="hide"/>
+                <field name="net_mbps" optional="show"/>
+                <field name="net_speed_at" optional="hide"/>
+                <field name="net_checked_at" optional="hide"/>
                 <field name="active" column_invisible="1"/>
             </tree>
         </field>
@@ -35,6 +45,8 @@
                 <filter name="stale" string="Not Reporting" domain="[('stale', '=', True)]"/>
                 <filter name="clock_flag" string="Clock Off" domain="[('clock_flag', '=', True)]"/>
                 <filter name="rejected" string="Rejected Sign-ins" domain="[('rejected_user_key', '!=', False)]"/>
+                <filter name="net_poor" string="Slow or Offline Now" domain="[('net_quality', 'in', ('slow', 'offline'))]"/>
+                <filter name="net_metered" string="On Metered Connection" domain="[('net_connection', 'ilike', 'metered')]"/>
                 <separator/>
                 <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Group By">

@@ -17,10 +17,17 @@ DEFAULTS = {
     # Store only sign-ins whose Microsoft 365 UPN matches an employee's
     # work email; local Windows accounts and unknown users are dropped.
     'work_accounts_only': False,
+    # Connection speed test (agent 1.3+): a small file the agent downloads
+    # at random minutes, only while the user is active and the connection
+    # is not metered. Our own public bucket in Mumbai, which holds nothing
+    # else. 0 tests per hour turns the speed test off.
+    'speed_test_url': 'https://storage.googleapis.com/auditree-agent-speedtest/speedtest-2mb.bin',
+    'speed_tests_per_hour': 2,
 }
 
 MIN_RETENTION_DAYS = 7
-AGENT_VERSION = '1.2'
+MAX_SPEED_TESTS_PER_HOUR = 4
+AGENT_VERSION = '1.3'
 
 
 def _num(value, default, cast):

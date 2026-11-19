@@ -65,6 +65,23 @@ class XnActivityDevice(models.Model):
     # Rate limiting, per device, updated in SQL by the ingest endpoint.
     rate_window_start = fields.Datetime(readonly=True)
     rate_count = fields.Integer(readonly=True)
+    # Latest connection check (agent 1.3+), set in SQL by the ingest
+    # endpoint from the newest slot it receives. History: xn.activity.net.
+    net_connection = fields.Char(
+        string='Connection', readonly=True,
+        help="At the last check: Wired, Wi-Fi with signal bars (0-5), Mobile "
+             "Data; 'metered' when Windows treats it as metered (usually a "
+             "phone hotspot).")
+    net_quality = fields.Selection(
+        [('excellent', 'Excellent'), ('good', 'Good'), ('fair', 'Fair'),
+         ('slow', 'Slow'), ('offline', 'Offline'), ('unknown', 'Unknown')],
+        string='Connection Quality', readonly=True)
+    net_rtt_ms = fields.Integer(string='Server (ms)', readonly=True)
+    net_m365_ms = fields.Integer(string='Microsoft 365 (ms)', readonly=True)
+    net_checked_at = fields.Datetime(string='Checked At', readonly=True)
+    net_mbps = fields.Float(string='Last Speed (Mbps)', digits=(16, 1),
+                            readonly=True)
+    net_speed_at = fields.Datetime(string='Speed Tested At', readonly=True)
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'This computer already exists.'),

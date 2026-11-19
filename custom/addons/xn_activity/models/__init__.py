@@ -2,6 +2,7 @@
 from . import activity_settings
 from . import activity_app
 from . import activity_device
+from . import activity_net
 from . import activity_slot
 from . import activity_day
 from . import activity_digest

@@ -655,6 +655,9 @@ class XnActivityDay(models.Model):
         cr.execute("DELETE FROM xn_activity_slot WHERE local_date < %s",
                    (raw_cut,))
         slots = cr.rowcount
+        # Connection checks follow the 5-minute data.
+        cr.execute("DELETE FROM xn_activity_net WHERE local_date < %s",
+                   (raw_cut,))
         cr.execute("DELETE FROM xn_activity_day WHERE date < %s", (sum_cut,))
         days = cr.rowcount
         cr.execute("DELETE FROM xn_activity_view_log WHERE date < %s",
