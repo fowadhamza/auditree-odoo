@@ -31,6 +31,15 @@ app's category or a department override changes (every day using that app),
 when a note changes, and when an employee's work email / Windows user name
 changes (re-link). Changing the productive target re-grades all rows in SQL.
 
+Target labels (17.0.1.7.0): `_day_target()` sets the day's target (none on
+weekends, public holidays and full-day leave; half on half-day leave; less
+the hours of hourly leave) and `_status()` grades against it. Weekends,
+holidays and full-day leave show Weekend / Holiday / On Leave, never a
+grade. Today (company calendar time zone) shows In Progress; the hourly
+cron *Activity: grade finished days* grades it once the day is over.
+`_xn_refresh_status()` is the same rules in SQL over the stored columns
+(`day_kind`, `leave_kind`, `leave_hours`) -- keep the two in step.
+
 Days older than the oldest stored slot (summaries are kept longer than the
 5-minute data) cannot be rebuilt: a rebuild leaves their metrics alone and
 only updates the note. Re-linking and category changes therefore do not
@@ -161,7 +170,8 @@ the record rules' (all / team / self, shown under the title).
 
 - Headline figures, averages per person by day, where screen time goes, by
   department, today's timeline, laptops, top apps. Averages and "days on
-  target" count working days with screen time and no time off.
+  target" count finished working days with screen time and no time off
+  (today is left out until it is over).
 - *Worth a conversation* (names of people under half the target on 3+
   working days, with day notes): sent by the server only to the Board of
   Directors; everyone else sees the count in the headline figures.
@@ -215,7 +225,6 @@ Still open:
    indicative, not disciplinary evidence.
 6. Stale-laptop alert counts Mon-Fri only (`_working_days_back`), so a
    multi-day public holiday flags every laptop. Use the company calendar.
-7. Half-day leave is graded against the full productive target.
 9. The view log covers only the Detail button; App Usage and the timelines
    show per-person detail unlogged.
 10. HR Managers can unlink slots, but that does not rebuild the day row.

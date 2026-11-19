@@ -75,10 +75,13 @@ class XnActivityDayDashboard(models.Model):
 
     @staticmethod
     def _xn_counted(days):
-        """Working days with screen time and no time off: the days the
-        averages and the target percentage are measured on."""
+        """Finished working days with screen time and no time off: the days
+        the averages and the target percentage are measured on. Today (In
+        Progress) is left out, so a half-finished day does not pull them
+        down."""
         return days.filtered(lambda d: d.screen_hours > 0
-                             and d.day_kind == 'working' and not d.time_off)
+                             and d.day_kind == 'working' and not d.time_off
+                             and d.productive_status != 'pending')
 
     def _xn_stats(self):
         counted = self._xn_counted(self)

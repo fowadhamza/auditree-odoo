@@ -18,6 +18,17 @@ STATUSES = [
     ('fair', 'Below Target'),
     ('low', 'Under Half'),
     ('none', 'No Activity'),
+    # Not graded: the day is still going, or no work was expected.
+    ('pending', 'In Progress'),
+    ('weekend', 'Weekend'),
+    ('holiday', 'Holiday'),
+    ('leave', 'On Leave'),
+]
+
+LEAVE_KINDS = [
+    ('full', 'Full Day'),
+    ('half', 'Half Day'),
+    ('hours', 'Hours'),
 ]
 
 DAY_KINDS = [
@@ -45,18 +56,42 @@ _UPDATE_COLUMNS = [
     ('day_kind', 'varchar'),
     ('out_of_hours', 'bool'),
     ('time_off', 'varchar'),
+    ('leave_kind', 'varchar'),
+    ('leave_hours', 'float8'),
+    ('target_hours', 'float8'),
     ('note', 'text'),
     ('has_note', 'bool'),
 ]
 UPDATE_CHUNK = 1000
 
 
-def _status(productive, screen, target):
+def _day_target(target, kind, leave_kind, leave_hours):
+    """The productive target for one day: none on weekends, holidays and
+    full-day leave, half on half-day leave, less the hours of hourly leave."""
+    if kind in ('weekend', 'holiday') or leave_kind == 'full':
+        return 0.0
+    if leave_kind == 'half':
+        return target / 2.0
+    if leave_kind == 'hours':
+        return max(target - (leave_hours or 0.0), 0.0)
+    return target
+
+
+def _status(productive, screen, day_target, kind, leave_kind, pending):
+    """Keep in step with the SQL in _xn_refresh_status()."""
+    if kind == 'holiday':
+        return 'holiday'
+    if kind == 'weekend':
+        return 'weekend'
+    if leave_kind == 'full':
+        return 'leave'
+    if pending:
+        return 'pending'
     if not screen:
         return 'none'
-    if target <= 0 or productive >= target:
+    if day_target <= 0 or productive >= day_target:
         return 'good'
-    if productive >= target / 2.0:
+    if productive >= day_target / 2.0:
         return 'fair'
     return 'low'
 
@@ -92,8 +127,18 @@ class XnActivityDay(models.Model):
                               group_operator='sum')
     locked_hours = fields.Float(string='Locked', readonly=True,
                                 group_operator='sum')
-    productive_status = fields.Selection(STATUSES, string='Target',
-                                         readonly=True, index=True)
+    productive_status = fields.Selection(
+        STATUSES, string='Target', readonly=True, index=True,
+        help="Productive time against the day's target. Today shows In "
+             "Progress until the day is over; weekends, public holidays and "
+             "full-day leave are not graded.")
+    target_hours = fields.Float(
+        string='Day Target', readonly=True,
+        help="The daily productive target for this day: none on weekends, "
+             "holidays and full-day leave, half on half-day leave, less the "
+             "hours of hourly leave.")
+    leave_kind = fields.Selection(LEAVE_KINDS, readonly=True)
+    leave_hours = fields.Float(readonly=True)
     first_activity = fields.Datetime(readonly=True)
     last_activity = fields.Datetime(readonly=True)
     day_kind = fields.Selection(DAY_KINDS, string='Schedule', readonly=True)
@@ -184,6 +229,7 @@ class XnActivityDay(models.Model):
         leaves = self._xn_time_off(employees, dates)
         schedule = self._xn_schedule(employees, dates)
         target = get_settings(self.env)['productive_target']
+        today = self._xn_today()
 
         existing = Day.search([('day_key', 'in', list(set(keys))),
                                ('date', 'in', list(set(dates)))])
@@ -218,7 +264,7 @@ class XnActivityDay(models.Model):
                     to_unlink |= current
                 continue
             vals = self._xn_vals(key, date, row, emp, note,
-                                 leaves, schedule, target)
+                                 leaves, schedule, target, today)
             if current:
                 to_update.append((current.id, vals))
             else:
@@ -308,8 +354,12 @@ class XnActivityDay(models.Model):
         self.invalidate_model(cols + ['write_uid', 'write_date'])
 
     @api.model
-    def _xn_vals(self, key, date, row, emp, note, leaves, schedule, target):
+    def _xn_vals(self, key, date, row, emp, note, leaves, schedule, target,
+                 today):
         row = row or {}
+        leave = leaves.get((emp.id, date)) if emp else None
+        leave_kind = leave['kind'] if leave else False
+        leave_hours = leave['hours'] if leave else 0.0
         screen = row.get('screen', 0.0)
         productive = row.get('productive', 0.0)
         last = row.get('last')
@@ -328,6 +378,7 @@ class XnActivityDay(models.Model):
                 if last_m is not None and \
                         last_m + SLOT_MINUTES > end_h * 60 + OUT_OF_HOURS_GRACE:
                     out_of_hours = True
+        day_target = _day_target(target, kind, leave_kind, leave_hours)
         return {
             'day_key': key,
             'date': date,
@@ -340,14 +391,18 @@ class XnActivityDay(models.Model):
             'work_hours': max(screen - row.get('unproductive', 0.0), 0.0),
             'idle_hours': row.get('idle', 0.0),
             'locked_hours': row.get('locked', 0.0),
-            'productive_status': _status(productive, screen, target),
+            'productive_status': _status(productive, screen, day_target, kind,
+                                         leave_kind, date >= today),
+            'target_hours': day_target,
+            'leave_kind': leave_kind,
+            'leave_hours': leave_hours,
             'first_activity': row.get('first') or False,
             'last_activity': (last + timedelta(minutes=SLOT_MINUTES))
             if last else False,
             'computers': row.get('computers') or False,
             'day_kind': kind,
             'out_of_hours': out_of_hours,
-            'time_off': leaves.get((emp.id, date)) if emp else False,
+            'time_off': leave['label'] if leave else False,
             'note': note or False,
             'has_note': bool(note),
         }
@@ -368,7 +423,10 @@ class XnActivityDay(models.Model):
 
     @api.model
     def _xn_time_off(self, employees, dates):
-        """Approved leave per (employee id, date) -> 'Leave Type (half day)'."""
+        """Approved leave per (employee id, date) ->
+        {'label': 'Leave Type (half day)', 'kind': full|half|hours,
+         'hours': hours of hourly leave}. Two leaves on one day add up: two
+        half days make a full day, hourly leave adds its hours."""
         if not employees:
             return {}
         lo, hi = min(dates), max(dates)
@@ -382,14 +440,39 @@ class XnActivityDay(models.Model):
         for leave in leaves:
             label = leave.holiday_status_id.name or _('Time Off')
             if leave.request_unit_half:
-                label = _('%s (half day)', label)
+                label, kind, hours = _('%s (half day)', label), 'half', 0.0
             elif leave.request_unit_hours:
-                label = _('%s (hours)', label)
+                label, kind, hours = (_('%s (hours)', label), 'hours',
+                                      leave.number_of_hours or 0.0)
+            else:
+                kind, hours = 'full', 0.0
             d = leave.request_date_from
             while d <= leave.request_date_to:
-                out[(leave.employee_id.id, d)] = label
+                k = (leave.employee_id.id, d)
+                prev = out.get(k)
+                if prev:
+                    kinds = {prev['kind'], kind}
+                    if 'full' in kinds or kinds == {'half'}:
+                        new_kind = 'full'
+                    elif 'half' in kinds:
+                        new_kind = 'half'    # half + hours: grade as half
+                    else:
+                        new_kind = 'hours'
+                    out[k] = {'label': prev['label'] + ', ' + label,
+                              'kind': new_kind,
+                              'hours': prev['hours'] + hours}
+                else:
+                    out[k] = {'label': label, 'kind': kind, 'hours': hours}
                 d += timedelta(days=1)
         return out
+
+    @api.model
+    def _xn_today(self):
+        """Today in the company's working-time zone: the day that is still
+        going and shows In Progress."""
+        cal = self.env.company.resource_calendar_id
+        tz = pytz.timezone((cal and cal.tz) or self.env.user.tz or 'UTC')
+        return datetime.now(tz).date()
 
     @api.model
     def _xn_schedule(self, employees, dates):
@@ -471,18 +554,48 @@ class XnActivityDay(models.Model):
         self._xn_recompute(self.env.cr.fetchall())
 
     @api.model
-    def _xn_refresh_status(self):
-        """Re-grade every row after the productive target changes."""
+    def _xn_refresh_status(self, only_pending=False):
+        """Re-grade rows from their stored columns: every row after the
+        productive target changes, or (only_pending) the In Progress rows
+        whose day is over. Same rules as _day_target() and _status()."""
         target = get_settings(self.env)['productive_target']
         self.env.flush_all()
+        where = ("WHERE productive_status = 'pending' AND date < %(today)s"
+                 if only_pending else "")
         self.env.cr.execute("""
-            UPDATE xn_activity_day SET productive_status = CASE
-                WHEN COALESCE(screen_hours, 0) = 0 THEN 'none'
-                WHEN %(t)s <= 0 OR productive_hours >= %(t)s THEN 'good'
-                WHEN productive_hours >= %(t)s / 2.0 THEN 'fair'
+            WITH g AS (
+                SELECT id, CASE
+                    WHEN day_kind IN ('weekend', 'holiday')
+                      OR leave_kind = 'full' THEN 0.0
+                    WHEN leave_kind = 'half' THEN %(t)s / 2.0
+                    WHEN leave_kind = 'hours'
+                      THEN GREATEST(%(t)s - COALESCE(leave_hours, 0), 0)
+                    ELSE %(t)s END AS dt
+                  FROM xn_activity_day """ + where + """
+            )
+            UPDATE xn_activity_day d SET target_hours = g.dt,
+                   productive_status = CASE
+                WHEN d.day_kind = 'holiday' THEN 'holiday'
+                WHEN d.day_kind = 'weekend' THEN 'weekend'
+                WHEN d.leave_kind = 'full' THEN 'leave'
+                WHEN d.date >= %(today)s THEN 'pending'
+                WHEN COALESCE(d.screen_hours, 0) = 0 THEN 'none'
+                WHEN g.dt <= 0 OR d.productive_hours >= g.dt THEN 'good'
+                WHEN d.productive_hours >= g.dt / 2.0 THEN 'fair'
                 ELSE 'low' END
-        """, {'t': target})
-        self.invalidate_model(['productive_status'])
+              FROM g WHERE d.id = g.id
+        """, {'t': target, 'today': self._xn_today()})
+        count = self.env.cr.rowcount
+        self.invalidate_model(['productive_status', 'target_hours'])
+        return count
+
+    @api.model
+    def _cron_finalize_days(self):
+        """Grade the In Progress rows once their day is over. A laptop that
+        is off after midnight sends nothing, so nothing else would."""
+        count = self._xn_refresh_status(only_pending=True)
+        if count:
+            _logger.info("xn_activity: graded %s finished days", count)
 
     # ------------------------------------------------------------------
     # Actions

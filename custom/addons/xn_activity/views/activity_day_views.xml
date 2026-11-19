@@ -17,7 +17,9 @@
                 <field name="productive_status" widget="badge"
                        decoration-success="productive_status == 'good'"
                        decoration-warning="productive_status == 'fair'"
-                       decoration-danger="productive_status == 'low'"/>
+                       decoration-danger="productive_status == 'low'"
+                       decoration-info="productive_status == 'pending'"/>
+                <field name="target_hours" widget="float_time" optional="show"/>
                 <field name="work_hours" widget="float_time" sum="Total" optional="show"/>
                 <field name="idle_hours" widget="float_time" sum="Total" optional="show"/>
                 <field name="locked_hours" widget="float_time" sum="Total" optional="show"/>
@@ -67,7 +69,9 @@
                             <field name="productive_status" widget="badge"
                                    decoration-success="productive_status == 'good'"
                                    decoration-warning="productive_status == 'fair'"
-                                   decoration-danger="productive_status == 'low'"/>
+                                   decoration-danger="productive_status == 'low'"
+                                   decoration-info="productive_status == 'pending'"/>
+                            <field name="target_hours" widget="float_time"/>
                             <field name="work_hours" widget="float_time"/>
                         </group>
                         <group>

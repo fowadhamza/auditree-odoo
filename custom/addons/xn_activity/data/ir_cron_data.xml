@@ -36,4 +36,17 @@
         <field name="nextcall" eval="(DateTime.now() + timedelta(days=7 - DateTime.now().weekday())).strftime('%Y-%m-%d 03:00:00')"/>
         <field name="active" eval="True"/>
     </record>
+    <!-- Hourly: grades yesterday's In Progress rows once the day is over
+         (laptops that are off after midnight send nothing to trigger it).
+         One SQL update, no email. -->
+    <record id="cron_xn_activity_finalize_days" model="ir.cron">
+        <field name="name">Activity: grade finished days</field>
+        <field name="model_id" ref="model_xn_activity_day"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_finalize_days()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
 </odoo>

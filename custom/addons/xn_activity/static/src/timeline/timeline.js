@@ -177,6 +177,10 @@ const STATUS = {
     fair: "Below Target",
     low: "Under Half",
     none: "No Activity",
+    pending: "In Progress",
+    weekend: "Weekend",
+    holiday: "Holiday",
+    leave: "On Leave",
 };
 
 export class XnTeamTimeline extends Component {

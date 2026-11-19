@@ -150,7 +150,11 @@ $xn-tl-track: #eceff2;
     .o_xn_tl_status_good { color: $xn-tl-productive; }
     .o_xn_tl_status_fair { color: darken($xn-tl-unclassified, 15%); }
     .o_xn_tl_status_low { color: $xn-tl-unproductive; }
-    .o_xn_tl_status_none { color: $text-muted; }
+    .o_xn_tl_status_none,
+    .o_xn_tl_status_weekend,
+    .o_xn_tl_status_holiday,
+    .o_xn_tl_status_leave { color: $text-muted; }
+    .o_xn_tl_status_pending { color: $info; }
 
     @media (max-width: 767.98px) {
         padding: 12px 16px;
