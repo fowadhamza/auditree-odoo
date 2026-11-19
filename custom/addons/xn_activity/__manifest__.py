@@ -10,7 +10,8 @@ the signed-in user was active, idle or locked, per foreground program. Odoo
 stores the 5-minute slots and a daily summary per person.
 
 * Employees are linked by their Microsoft 365 sign-in (UPN = work email), or
-  by a Windows user name set on the employee.
+  by a Windows user name set on the employee. Work Accounts Only (Agent
+  Setup) drops everything but Microsoft 365 work sign-ins.
 * Programs are classified Productive / Neutral / Unproductive, with
   per-department overrides.
 * HR sees everyone; each employee sees only their own days and can add a day
@@ -21,7 +22,7 @@ stores the 5-minute slots and a daily summary per person.
 
 No titles, URLs, keystrokes or screenshots are collected. See README.md.
     """,
-    "version": "17.0.1.5.0",
+    "version": "17.0.1.6.0",
     "category": "Human Resources",
     "author": "Auditree",
     "license": "LGPL-3",

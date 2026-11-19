@@ -17,6 +17,7 @@
                             <field name="server_url"/>
                             <field name="api_key" password="True"/>
                             <field name="old_key_until" invisible="not old_key_until"/>
+                            <field name="work_accounts_only"/>
                         </group>
                         <group string="Report">
                             <field name="productive_target" widget="float_time"/>

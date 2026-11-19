@@ -233,11 +233,13 @@ class XnActivityController(http.Controller):
             return None
         return dev_id
 
-    def _match_employee(self, env, p):
-        """(employee id or None, stop?) for this sign-in.
+    def _match_employee(self, env, p, work_only=False):
+        """(employee id or None, stop?, rejected?) for this sign-in.
 
         stop = True means the person is excluded (partner/director, shared
         mailbox) or archived: store nothing.
+        rejected = True means Work Accounts Only is on and the sign-in is not
+        a work account (UPN) matching an employee: store nothing.
         """
         cr = env.cr
         emp_id = None
@@ -249,6 +251,8 @@ class XnActivityController(http.Controller):
             """, (p['upn'],))
             row = cr.fetchone()
             emp_id = row and row[0]
+        if work_only and not emp_id:
+            return None, True, True
         if not emp_id and p['login']:
             cr.execute("""
                 SELECT id FROM hr_employee
@@ -258,15 +262,31 @@ class XnActivityController(http.Controller):
             row = cr.fetchone()
             emp_id = row and row[0]
         if not emp_id:
-            return None, False
+            return None, False, False
         emp = env['hr.employee'].with_context(active_test=False).browse(emp_id)
         if emp._xn_activity_is_excluded() or not emp.active:
-            return emp_id, True
-        return emp_id, False
+            return emp_id, True, False
+        return emp_id, False, False
 
     def _store(self, env, device_id, p):
-        emp_id, stop = self._match_employee(env, p)
+        work_only = get_settings(env)['work_accounts_only']
+        emp_id, stop, rejected = self._match_employee(env, p, work_only)
         cr = env.cr
+        if rejected:
+            # The laptop is alive (no stale alert), but this sign-in is not
+            # stored. Last Sign-in / Last Employee keep the last accepted one.
+            cr.execute("""
+                UPDATE xn_activity_device
+                   SET last_seen = %s, agent_version = %s, clock_offset = %s,
+                       clock_flag = abs(%s) > 300, active = true,
+                       stale_alerted_on = NULL, rejected_user_key = %s,
+                       rejected_at = %s, write_date = %s
+                 WHERE id = %s
+            """, (fields.Datetime.now(), p['agent'] or None, p['clock_offset'],
+                  p['clock_offset'], p['user_key'], fields.Datetime.now(),
+                  fields.Datetime.now(), device_id))
+            env['xn.activity.device'].invalidate_model()
+            return 0
         cr.execute("""
             UPDATE xn_activity_device
                SET last_seen = %s, agent_version = %s, clock_offset = %s,

@@ -43,6 +43,13 @@ step with `_xn_vals()` when adding a field to the summary.
 - UPN (`whoami /upn`) matched to `hr.employee.work_email`, then the
   employee's *Windows User Name* field. Unmatched data is kept under the raw
   sign-in and shows as "Not Linked".
+- *Work Accounts Only* (Agent Setup, off by default, 17.0.1.6.0): only a
+  UPN matching an employee's work email is stored. Local Windows accounts
+  and unknown UPNs are dropped (the server still answers 200, so every agent
+  version clears its queue), the laptop counts as reporting, and Devices
+  shows the refused name in *Rejected Sign-in* / *Rejected At*. The
+  *Windows User Name* field is not used while it is on. Already stored data
+  is not touched.
 - Never stored: *Exclude from Activity Tracking* (partners/directors) and
   `employee_type = 'system'` (shared mailboxes). Ticking the box deletes what
   was stored. Archived employees: new data is dropped, history is kept.

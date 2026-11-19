@@ -40,6 +40,12 @@ class XnActivityDevice(models.Model):
         help="When the 'not reporting' alert went out. Cleared when the "
              "laptop reports again, so each silence alerts once.")
     last_user_key = fields.Char(string='Last Sign-in')
+    rejected_user_key = fields.Char(
+        string='Rejected Sign-in', readonly=True,
+        help="Last sign-in from this laptop that Work Accounts Only refused "
+             "(a local Windows account, or a work account that matches no "
+             "employee). Nothing was stored for it.")
+    rejected_at = fields.Datetime(string='Rejected At', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Last Employee',
                                   ondelete='set null')
     first_seen = fields.Datetime()

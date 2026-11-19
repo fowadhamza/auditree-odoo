@@ -92,6 +92,13 @@ class XnActivitySetup(models.TransientModel):
     digest_to = fields.Char(
         string='Weekly Digest To',
         help="Comma-separated emails. Empty sends to every HR Manager.")
+    work_accounts_only = fields.Boolean(
+        string='Work Accounts Only',
+        help="Store activity only for Windows sign-ins with a Microsoft 365 "
+             "work account that matches an employee's work email. Local "
+             "Windows accounts and unknown users are dropped and shown as "
+             "Rejected Sign-in on Devices. The Windows User Name field on "
+             "employees is then not used.")
 
     @api.model
     def default_get(self, fields_list):

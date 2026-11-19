@@ -14,6 +14,9 @@ DEFAULTS = {
     'key_grace_days': 14,
     'digest_to': '',                 # empty = HR Managers' emails
     'alert_to': '',                  # empty = same as the digest
+    # Store only sign-ins whose Microsoft 365 UPN matches an employee's
+    # work email; local Windows accounts and unknown users are dropped.
+    'work_accounts_only': False,
 }
 
 MIN_RETENTION_DAYS = 7
@@ -32,7 +35,11 @@ def get_settings(env):
     out = {}
     for key, default in DEFAULTS.items():
         raw = params.get_param('xn_activity.%s' % key)
-        if isinstance(default, str):
+        if isinstance(default, bool):
+            # bool('False') is True, so parse the text explicitly.
+            out[key] = (str(raw).strip().lower() in ('1', 'true', 'yes')
+                        if raw else default)
+        elif isinstance(default, str):
             out[key] = raw or default
         else:
             out[key] = _num(raw, default, type(default)) if raw else default

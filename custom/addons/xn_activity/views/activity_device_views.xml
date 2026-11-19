@@ -9,6 +9,8 @@
                 <field name="name"/>
                 <field name="last_user_key"/>
                 <field name="employee_id"/>
+                <field name="rejected_user_key" optional="show"/>
+                <field name="rejected_at" optional="show"/>
                 <field name="first_seen"/>
                 <field name="last_seen"/>
                 <field name="days_reported"/>
@@ -32,6 +34,7 @@
                 <field name="employee_id"/>
                 <filter name="stale" string="Not Reporting" domain="[('stale', '=', True)]"/>
                 <filter name="clock_flag" string="Clock Off" domain="[('clock_flag', '=', True)]"/>
+                <filter name="rejected" string="Rejected Sign-ins" domain="[('rejected_user_key', '!=', False)]"/>
                 <separator/>
                 <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Group By">
